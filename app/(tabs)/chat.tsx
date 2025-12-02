@@ -1,13 +1,16 @@
 
-import { StyleSheet } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
+import { StyleSheet, View, SafeAreaView } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
+import { ChatHeader } from '@/components/chat/ChatHeader';
+import { ChatList } from '@/components/chat/ChatList';
 
 export default function ChatScreen() {
   return (
     <ThemedView style={styles.container}>
-      <ThemedText type="title" style={styles.title}>Chat</ThemedText>
-      <ThemedText>Ini adalah halaman Chat</ThemedText>
+      <SafeAreaView style={styles.safeArea}>
+        <ChatHeader />
+        <ChatList />
+      </SafeAreaView>
     </ThemedView>
   );
 }
@@ -15,11 +18,9 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
+    backgroundColor: '#fff',
   },
-  title: {
-    marginBottom: 20,
+  safeArea: {
+    flex: 1,
   },
 });
