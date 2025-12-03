@@ -31,6 +31,7 @@ export default function ProfileScreen() {
 
   const handleOfficialComment = () => {
     console.log('Official Comment pressed');
+    router.push('/official-comment');
   };
 
   const handleGiftStore = () => {
