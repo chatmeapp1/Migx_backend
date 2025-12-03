@@ -76,7 +76,7 @@ export default function TransferCreditScreen() {
       <SafeAreaView style={styles.safeArea}>
         {/* Coin Balance */}
         <View style={styles.balanceContainer}>
-          <Text style={styles.balanceLabel}>Coin Balance</Text>
+          <Text style={styles.balanceLabel}>IDR Balance</Text>
           <View style={styles.balanceRow}>
             <Image 
               source={require('@/assets/icons/ic_coin.png')} 

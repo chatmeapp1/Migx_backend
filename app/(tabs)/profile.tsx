@@ -70,7 +70,7 @@ export default function ProfileScreen() {
             
             <ProfileMenuItem 
               icon={<CommentIcon size={24} />}
-              title="Official Anonymous Comment"
+              title="Official Comment"
               onPress={handleOfficialComment}
             />
             
