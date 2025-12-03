@@ -193,7 +193,7 @@ export default function PeoplePage() {
           onPress={() => router.back()}
         />
         
-        <View style={[styles.modalContainer, { maxHeight: SCREEN_HEIGHT * 0.9 }]}>
+        <View style={[styles.modalContainer, { height: SCREEN_HEIGHT * 0.5 }]}>
           {/* Header */}
           <View style={[styles.header, { backgroundColor: '#9B59B6' }]}>
             <Text style={styles.headerTitle}>People</Text>
