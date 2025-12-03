@@ -40,6 +40,7 @@ export default function ProfileScreen() {
 
   const handlePeople = () => {
     console.log('People pressed');
+    router.push('/people');
   };
 
   const handleLeaderboard = () => {
