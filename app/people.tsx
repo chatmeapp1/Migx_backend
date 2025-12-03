@@ -193,9 +193,9 @@ export default function PeoplePage() {
           onPress={() => router.back()}
         />
         
-        <View style={[styles.modalContainer, { height: SCREEN_HEIGHT * 0.5 }]}>
+        <View style={[styles.modalContainer, { height: SCREEN_HEIGHT * 0.7 }]}>
           {/* Header */}
-          <View style={[styles.header, { backgroundColor: '#9B59B6' }]}>
+          <View style={[styles.header, { backgroundColor: '#4A90E2' }]}>
             <Text style={styles.headerTitle}>People</Text>
             <TouchableOpacity
               style={styles.closeButton}
