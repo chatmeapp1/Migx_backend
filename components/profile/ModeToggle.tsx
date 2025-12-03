@@ -1,14 +1,14 @@
-
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, Switch } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { useThemeCustom } from '@/theme/provider';
 
-const MoonIcon = ({ size = 24 }: { size?: number }) => (
+const MoonIcon = ({ size = 24, color = "#4A90E2" }: { size?: number; color?: string }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <Path 
       d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" 
-      fill="#4A90E2" 
-      stroke="#4A90E2" 
+      fill={color} 
+      stroke={color} 
       strokeWidth="2" 
       strokeLinecap="round" 
       strokeLinejoin="round"
@@ -17,23 +17,23 @@ const MoonIcon = ({ size = 24 }: { size?: number }) => (
 );
 
 export function ModeToggle() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { theme, isDark, toggleTheme } = useThemeCustom();
 
   return (
     <>
-      <View style={styles.container}>
-        <View style={styles.iconContainer}>
-          <MoonIcon size={24} />
+      <View style={[styles.container, { backgroundColor: theme.card }]}>
+        <View style={[styles.iconContainer, { backgroundColor: theme.border }]}>
+          <MoonIcon size={24} color={theme.primary} />
         </View>
-        <Text style={styles.title}>Dark Mode</Text>
+        <Text style={[styles.title, { color: theme.text }]}>Dark Mode</Text>
         <Switch
-          value={isDarkMode}
-          onValueChange={setIsDarkMode}
-          trackColor={{ false: '#D0D0D0', true: '#4A90E2' }}
-          thumbColor={isDarkMode ? '#fff' : '#f4f3f4'}
+          value={isDark}
+          onValueChange={toggleTheme}
+          trackColor={{ false: theme.border, true: theme.primary }}
+          thumbColor={isDark ? '#fff' : '#f4f3f4'}
         />
       </View>
-      <View style={styles.divider} />
+      <View style={[styles.divider, { backgroundColor: theme.border }]} />
     </>
   );
 }
@@ -44,25 +44,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 16,
-    backgroundColor: '#fff',
   },
   iconContainer: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F0F0F0',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   title: {
     fontSize: 16,
-    color: '#333',
     flex: 1,
   },
   divider: {
     height: 1,
-    backgroundColor: '#E0E0E0',
     marginLeft: 68,
   },
 });

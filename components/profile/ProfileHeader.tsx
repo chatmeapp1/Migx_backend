@@ -1,7 +1,7 @@
-
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import Svg, { Path, Circle } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
+import { useThemeCustom } from '@/theme/provider';
 
 const EditIcon = ({ size = 20 }: { size?: number }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -30,8 +30,10 @@ interface ProfileHeaderProps {
 }
 
 export function ProfileHeader({ avatar, username, level, onEditPress }: ProfileHeaderProps) {
+  const { theme } = useThemeCustom();
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.primary }]}>
       <View style={styles.headerContent}>
         <View style={styles.leftSection}>
           <View style={styles.avatarContainer}>
@@ -64,7 +66,6 @@ export function ProfileHeader({ avatar, username, level, onEditPress }: ProfileH
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#4A90E2',
     paddingTop: 8,
     paddingBottom: 16,
   },
@@ -127,7 +128,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   editButton: {
-    backgroundColor: '#5BA3E8',
+    backgroundColor: 'rgba(255,255,255,0.2)',
     width: 40,
     height: 40,
     borderRadius: 20,

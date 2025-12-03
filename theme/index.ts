@@ -1,5 +1,15 @@
-export const LightTheme = {
-  mode: "light" as const,
+export interface ThemeType {
+  mode: "light" | "dark";
+  background: string;
+  text: string;
+  primary: string;
+  secondary: string;
+  card: string;
+  border: string;
+}
+
+export const LightTheme: ThemeType = {
+  mode: "light",
   background: "#FFFFFF",
   text: "#111111",
   primary: "#3B82F6",
@@ -8,8 +18,8 @@ export const LightTheme = {
   border: "#E5E7EB",
 };
 
-export const DarkTheme = {
-  mode: "dark" as const,
+export const DarkTheme: ThemeType = {
+  mode: "dark",
   background: "#0F0F0F",
   text: "#FFFFFF",
   primary: "#60A5FA",
@@ -18,5 +28,4 @@ export const DarkTheme = {
   border: "#2C2C2C",
 };
 
-export type ThemeType = typeof LightTheme;
 export type ThemeMode = "light" | "dark" | "system";

@@ -1,14 +1,35 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { DarkTheme as NavigationDarkTheme, DefaultTheme as NavigationDefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useFonts } from "expo-font";
-import { useColorScheme } from "@/hooks/useColorScheme";
+import { ThemeProviderCustom, useThemeCustom } from "@/theme/provider";
 import "react-native-reanimated";
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
+function RootLayoutNav() {
+  const { isDark } = useThemeCustom();
 
+  return (
+    <ThemeProvider value={isDark ? NavigationDarkTheme : NavigationDefaultTheme}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: "none",
+        }}
+      >
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="chatroom/[id]" />
+        <Stack.Screen name="transfer-credit" />
+        <Stack.Screen name="transfer-history" />
+        <Stack.Screen name="official-comment" />
+        <Stack.Screen name="+not-found" />
+      </Stack>
+      <StatusBar style={isDark ? "light" : "dark"} />
+    </ThemeProvider>
+  );
+}
+
+export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
@@ -17,23 +38,9 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <Stack
-          screenOptions={{
-            headerShown: false, // PENTING: Matikan semua header global
-            animation: "none",
-          }}
-        >
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="chatroom/[id]" />
-          <Stack.Screen name="transfer-credit" />
-          <Stack.Screen name="transfer-history" />
-          <Stack.Screen name="official-comment" />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-
-        <StatusBar style="auto" />
-      </ThemeProvider>
+      <ThemeProviderCustom>
+        <RootLayoutNav />
+      </ThemeProviderCustom>
     </GestureHandlerRootView>
   );
 }

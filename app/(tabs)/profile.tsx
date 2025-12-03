@@ -1,7 +1,6 @@
 
 import { StyleSheet, View, SafeAreaView, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { ThemedView } from '@/components/ThemedView';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { ModeToggle } from '@/components/profile/ModeToggle';
 import { ProfileMenuItem } from '@/components/profile/ProfileMenuItem';
@@ -13,15 +12,16 @@ import {
   LeaderboardIcon, 
   DashboardIcon 
 } from '@/components/profile/ProfileIcons';
+import { useThemeCustom } from '@/theme/provider';
 
 export default function ProfileScreen() {
-  // Simulasi data user
-  const userRole = 'merchant'; // Ganti dengan 'user' untuk role biasa
+  const { theme } = useThemeCustom();
+  
+  const userRole = 'merchant';
   const isMerchant = userRole === 'merchant';
 
   const handleEditProfile = () => {
     console.log('Edit profile pressed');
-    // Implementasi navigasi ke halaman edit profile
   };
 
   const handleMyAccount = () => {
@@ -51,7 +51,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <SafeAreaView style={styles.safeArea}>
         <ProfileHeader 
           username="JohnDoe123"
@@ -60,7 +60,7 @@ export default function ProfileScreen() {
         />
         
         <ScrollView style={styles.scrollView}>
-          <View style={styles.menuSection}>
+          <View style={[styles.menuSection, { backgroundColor: theme.card }]}>
             <ModeToggle />
             
             <ProfileMenuItem 
@@ -105,14 +105,13 @@ export default function ProfileScreen() {
           </View>
         </ScrollView>
       </SafeAreaView>
-    </ThemedView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
   },
   safeArea: {
     flex: 1,
@@ -122,6 +121,5 @@ const styles = StyleSheet.create({
   },
   menuSection: {
     marginTop: 1,
-    backgroundColor: '#fff',
   },
 });

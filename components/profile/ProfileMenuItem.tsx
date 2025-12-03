@@ -1,6 +1,6 @@
-
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useThemeCustom } from '@/theme/provider';
 
 interface ProfileMenuItemProps {
   icon: React.ReactNode;
@@ -10,19 +10,21 @@ interface ProfileMenuItemProps {
 }
 
 export function ProfileMenuItem({ icon, title, onPress, showDivider = true }: ProfileMenuItemProps) {
+  const { theme } = useThemeCustom();
+
   return (
     <>
       <TouchableOpacity 
-        style={styles.container}
+        style={[styles.container, { backgroundColor: theme.card }]}
         onPress={onPress}
         activeOpacity={0.7}
       >
-        <View style={styles.iconContainer}>
+        <View style={[styles.iconContainer, { backgroundColor: theme.border }]}>
           {icon}
         </View>
-        <Text style={styles.title}>{title}</Text>
+        <Text style={[styles.title, { color: theme.text }]}>{title}</Text>
       </TouchableOpacity>
-      {showDivider && <View style={styles.divider} />}
+      {showDivider && <View style={[styles.divider, { backgroundColor: theme.border }]} />}
     </>
   );
 }
@@ -33,25 +35,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 16,
-    backgroundColor: '#fff',
   },
   iconContainer: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F0F0F0',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
   title: {
     fontSize: 16,
-    color: '#333',
     flex: 1,
   },
   divider: {
     height: 1,
-    backgroundColor: '#E0E0E0',
     marginLeft: 68,
   },
 });
