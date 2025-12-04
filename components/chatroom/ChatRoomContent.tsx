@@ -12,6 +12,7 @@ interface Message {
   isSystem?: boolean;
   isNotice?: boolean;
   userType?: 'creator' | 'admin' | 'normal';
+  isOwnMessage?: boolean;
 }
 
 interface ChatRoomContentProps {

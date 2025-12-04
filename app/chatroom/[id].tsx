@@ -73,10 +73,11 @@ export default function ChatRoomScreen() {
     if (currentTabIndex !== -1) {
       const newMessage = {
         id: Date.now().toString(),
-        username: 'You',
+        username: 'migx',
         message,
         timestamp: '',
         userType: 'normal' as const,
+        isOwnMessage: true,
       };
 
       const updatedTabs = [...tabs];

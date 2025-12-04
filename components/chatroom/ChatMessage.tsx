@@ -11,15 +11,22 @@ interface ChatMessageProps {
   isSystem?: boolean;
   isNotice?: boolean;
   userType?: 'creator' | 'admin' | 'normal';
+  isOwnMessage?: boolean;
 }
 
-export function ChatMessage({ username, message, timestamp, isSystem, isNotice, userType }: ChatMessageProps) {
+export function ChatMessage({ username, message, timestamp, isSystem, isNotice, userType, isOwnMessage }: ChatMessageProps) {
   const { theme } = useThemeCustom();
   
   const getUsernameColor = () => {
     if (isSystem) return '#FF8C00';
     if (userType === 'creator') return '#FF8C00';
     if (userType === 'admin') return '#FF8C00';
+    if (isOwnMessage) return '#2d7a4f';
+    return theme.text;
+  };
+
+  const getMessageColor = () => {
+    if (isOwnMessage) return '#2d7a4f';
     return theme.text;
   };
 
@@ -35,9 +42,11 @@ export function ChatMessage({ username, message, timestamp, isSystem, isNotice, 
 
   return (
     <View style={styles.messageContainer}>
-      <Text style={[styles.username, { color: getUsernameColor() }]}>
-        {username}
-      </Text>
+      <View style={styles.usernameContainer}>
+        <Text style={[styles.username, { color: getUsernameColor() }]}>
+          {username}:
+        </Text>
+      </View>
       <View style={styles.messageContent}>
         {parsedMessage.map((item) => {
           if (item.type === 'emoji') {
@@ -51,7 +60,7 @@ export function ChatMessage({ username, message, timestamp, isSystem, isNotice, 
             );
           }
           return (
-            <Text key={item.key} style={[styles.message, { color: theme.text }]}>
+            <Text key={item.key} style={[styles.message, { color: getMessageColor() }]}>
               {item.content}
             </Text>
           );
@@ -66,12 +75,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingVertical: 4,
     paddingHorizontal: 12,
-    flexWrap: 'wrap',
+  },
+  usernameContainer: {
+    marginRight: 4,
   },
   username: {
     fontSize: 13,
     fontWeight: 'bold',
-    marginRight: 4,
   },
   messageContent: {
     flexDirection: 'row',
@@ -81,6 +91,7 @@ const styles = StyleSheet.create({
   },
   message: {
     fontSize: 13,
+    lineHeight: 18,
   },
   emojiImage: {
     width: 18,
