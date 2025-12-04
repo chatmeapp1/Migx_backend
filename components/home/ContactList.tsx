@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
 import { useThemeCustom } from '@/theme/provider';
 import { ContactItem } from './ContactItem';
+import { UserProfileSection } from './UserProfileSection';
 
 const onlineFriends = [
   { name: 'acun', status: '👑', isOnline: true, lastSeen: 'Last seen 04-Dec 17:30', avatar: '👤' },
@@ -28,6 +29,13 @@ export function ContactList() {
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.background }]} showsVerticalScrollIndicator={false}>
+      <UserProfileSection 
+        username="h________"
+        level={1}
+        initialStatus=""
+        presenceStatus="online"
+      />
+      
       <View style={styles.section}>
         {onlineFriends.map((friend, index) => (
           <ContactItem
