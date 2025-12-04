@@ -6,23 +6,19 @@ import {
   Platform,
   Keyboard,
   Alert,
-  Modal,
-  Text,
-  TouchableOpacity,
-  FlatList,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeCustom } from '@/theme/provider';
 import { io, Socket } from 'socket.io-client';
-import Svg, { EllipsisVertical } from 'react-native-svg'; // Import Svg components
 
 import { ChatRoomHeader } from '@/components/chatroom/ChatRoomHeader';
 import { ChatRoomContent } from '@/components/chatroom/ChatRoomContent';
 import { ChatRoomInput } from '@/components/chatroom/ChatRoomInput';
 import { MenuKickModal } from '@/components/chatroom/MenuKickModal';
+import { MenuParticipantsModal } from '@/components/chatroom/MenuParticipantsModal';
 import { VoteKickButton } from '@/components/chatroom/VoteKickButton';
-import { ChatRoomMenu } from '@/components/chatroom/ChatRoomMenu'; // Assuming ChatRoomMenu is imported
+import { ChatRoomMenu } from '@/components/chatroom/ChatRoomMenu';
 
 interface ChatTab {
   id: string;
@@ -244,7 +240,7 @@ export default function ChatRoomScreen() {
   };
 
   const handleOpenParticipants = () => {
-    setParticipantsModalVisible(true);
+    setParticipantsModalVisible(!participantsModalVisible);
   };
 
   const handleUserMenuPress = (username: string) => {
@@ -316,39 +312,12 @@ export default function ChatRoomScreen() {
         onSelectUser={handleSelectUserToKick}
       />
 
-      {/* Participants Modal */}
-      <Modal
+      <MenuParticipantsModal
         visible={participantsModalVisible}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={handleOpenParticipants}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.participantsModalContent, { backgroundColor: theme.background }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: theme.text }]}>Participants</Text>
-              <TouchableOpacity onPress={handleOpenParticipants}>
-                {/* Close icon or text */}
-                <Text style={[styles.closeButton, { color: theme.primary }]}>X</Text>
-              </TouchableOpacity>
-            </View>
-            <FlatList
-              data={roomUsers}
-              keyExtractor={(item) => item}
-              renderItem={({ item }) => (
-                <View style={styles.userItem}>
-                  <Text style={{ color: theme.text }}>{item}</Text>
-                  <TouchableOpacity onPress={() => handleUserMenuPress(item)}>
-                    <Svg height="24" width="24" viewBox="0 0 24 24">
-                      <EllipsisVertical fill={theme.text} />
-                    </Svg>
-                  </TouchableOpacity>
-                </View>
-              )}
-            />
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setParticipantsModalVisible(false)}
+        users={roomUsers}
+        onUserMenuPress={handleUserMenuPress}
+      />
 
       <ChatRoomMenu
         visible={menuVisible}
@@ -368,40 +337,5 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   inputWrapper: {
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'flex-end', // Align to the right
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    paddingRight: 10, // Add some padding from the right edge
-  },
-  participantsModalContent: {
-    width: '70%', // Adjust width as needed
-    height: '80%', // Adjust height as needed
-    borderRadius: 10,
-    padding: 20,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  closeButton: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  userItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderColor: '#ccc',
   },
 });
