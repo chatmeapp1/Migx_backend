@@ -27,21 +27,21 @@ export function Header() {
   const { theme } = useThemeCustom();
   
   return (
-    <View style={[styles.container, { backgroundColor: theme.card }]}>
-      <View style={[styles.topBar, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
+    <View style={[styles.container, { backgroundColor: '#FF8C00' }]}>
+      <View style={[styles.topBar, { backgroundColor: '#FF8C00', borderBottomColor: theme.border }]}>
         <View style={styles.leftSection}>
-          <UserIcon size={20} color={theme.primary} />
-          <Text style={[styles.title, { color: theme.text }]}>My Friends</Text>
+          <UserIcon size={20} color="#FFFFFF" />
+          <Text style={[styles.title, { color: '#FFFFFF' }]}>My Friends</Text>
         </View>
         <View style={styles.rightSection}>
-          <TouchableOpacity style={[styles.iconButton, { backgroundColor: theme.primary }]}>
-            <MenuIcon size={20} color={theme.background} />
+          <TouchableOpacity style={[styles.iconButton, { backgroundColor: 'rgba(255, 255, 255, 0.3)' }]}>
+            <MenuIcon size={20} color="#FFFFFF" />
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.iconButton, { backgroundColor: theme.primary }]}>
-            <ListIcon size={20} color={theme.background} />
+          <TouchableOpacity style={[styles.iconButton, { backgroundColor: 'rgba(255, 255, 255, 0.3)' }]}>
+            <ListIcon size={20} color="#FFFFFF" />
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.iconButton, { backgroundColor: theme.primary }]}>
-            <ListIcon size={20} color={theme.background} />
+          <TouchableOpacity style={[styles.iconButton, { backgroundColor: 'rgba(255, 255, 255, 0.3)' }]}>
+            <ListIcon size={20} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </View>
@@ -51,14 +51,14 @@ export function Header() {
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 8,
+    paddingTop: 40,
   },
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderBottomWidth: 1,
   },
   leftSection: {
