@@ -74,6 +74,7 @@ export function ChatRoomHeader({ tabs, activeTab, onTabChange, onCloseTab }: Cha
 
 const styles = StyleSheet.create({
   container: {
+    paddingTop: 40,
   },
   topBar: {
     flexDirection: 'row',

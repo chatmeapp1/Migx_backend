@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { StyleSheet, View, SafeAreaView } from 'react-native';
+import { StyleSheet, View, KeyboardAvoidingView, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useThemeCustom } from '@/theme/provider';
 import { ChatRoomHeader } from '@/components/chatroom/ChatRoomHeader';
@@ -109,22 +109,24 @@ export default function ChatRoomScreen() {
   const currentTab = tabs.find(tab => tab.id === activeTab);
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-        <ChatRoomHeader
-          tabs={tabs}
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-          onCloseTab={handleCloseTab}
-        />
-        {currentTab && (
-          <>
-            <ChatRoomContent messages={currentTab.messages} />
-            <ChatRoomInput onSend={handleSendMessage} />
-          </>
-        )}
-      </SafeAreaView>
-    </View>
+    <KeyboardAvoidingView 
+      style={[styles.container, { backgroundColor: theme.background }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={0}
+    >
+      <ChatRoomHeader
+        tabs={tabs}
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        onCloseTab={handleCloseTab}
+      />
+      {currentTab && (
+        <>
+          <ChatRoomContent messages={currentTab.messages} />
+          <ChatRoomInput onSend={handleSendMessage} />
+        </>
+      )}
+    </KeyboardAvoidingView>
   );
 }
 
