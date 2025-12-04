@@ -51,7 +51,7 @@ export function RoomHeader() {
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 8,
+    paddingTop: 40,
   },
   topBar: {
     flexDirection: 'row',
