@@ -4,8 +4,8 @@ import { Platform } from 'react-native';
 let socket: any = null;
 
 const API_BASE_URL = Platform.OS === 'web'
-  ? 'https://39a92673-735e-4054-b921-48dce70c2664-00-3jcu8mla3p9d4.pike.replit.dev:3000'
-  : 'https://39a92673-735e-4054-b921-48dce70c2664-00-3jcu8mla3p9d4.pike.replit.dev:3000';
+  ? 'https://1c055300-4b0f-4d99-8511-14d526f50594-00-12yiom0ahzwge.sisko.replit.dev:3000'
+  : 'https://1c055300-4b0f-4d99-8511-14d526f50594-00-12yiom0ahzwge.sisko.replit.dev:3000';
 
 console.log('🌐 API_BASE_URL configured as:', API_BASE_URL);
 
@@ -16,6 +16,9 @@ export const API_ENDPOINTS = {
     COUNTRIES: `${API_BASE_URL}/api/auth/countries`,
     GENDERS: `${API_BASE_URL}/api/auth/genders`,
     FORGOT_PASSWORD: `${API_BASE_URL}/api/auth/forgot-password`,
+    CHANGE_PASSWORD: `${API_BASE_URL}/api/auth/change-password`,
+    SEND_EMAIL_OTP: `${API_BASE_URL}/api/auth/send-email-otp`,
+    CHANGE_EMAIL: `${API_BASE_URL}/api/auth/change-email`,
   },
   USER: {
     PROFILE: `${API_BASE_URL}/api/user/profile`,
@@ -59,7 +62,7 @@ export const createSocket = () => {
     console.log('✅ Socket.IO connected to backend! ID:', socket?.id);
   });
 
-  socket.on('connect_error', (err) => {
+  socket.on('connect_error', (err: Error) => {
     console.error('❌ Socket.IO connection error:', err.message);
   });
 

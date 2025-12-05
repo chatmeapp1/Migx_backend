@@ -15,6 +15,7 @@ import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useThemeCustom } from '@/theme/provider';
 import { LinearGradient } from 'expo-linear-gradient';
+import { API_ENDPOINTS } from '@/utils/api';
 
 export default function SettingsScreen() {
   const { theme } = useThemeCustom();
@@ -99,7 +100,7 @@ export default function SettingsScreen() {
     }
 
     try {
-      const response = await fetch(`https://019dc04a-520c-426e-ab86-33121a2a32a7-00-2x89umyicsh55.pike.replit.dev/api/auth/change-password`, {
+      const response = await fetch(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -137,7 +138,7 @@ export default function SettingsScreen() {
     }
 
     try {
-      const response = await fetch(`https://019dc04a-520c-426e-ab86-33121a2a32a7-00-2x89umyicsh55.pike.replit.dev/api/auth/send-email-otp`, {
+      const response = await fetch(API_ENDPOINTS.AUTH.SEND_EMAIL_OTP, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -167,7 +168,7 @@ export default function SettingsScreen() {
     }
 
     try {
-      const response = await fetch(`https://019dc04a-520c-426e-ab86-33121a2a32a7-00-2x89umyicsh55.pike.replit.dev/api/auth/change-email`, {
+      const response = await fetch(API_ENDPOINTS.AUTH.CHANGE_EMAIL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

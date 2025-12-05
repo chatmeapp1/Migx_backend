@@ -11,6 +11,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeCustom } from '@/theme/provider';
 import { io, Socket } from 'socket.io-client';
+import API_BASE_URL from '@/utils/api';
 
 import { ChatRoomHeader } from '@/components/chatroom/ChatRoomHeader';
 import { ChatRoomContent } from '@/components/chatroom/ChatRoomContent';
@@ -56,8 +57,13 @@ export default function ChatRoomScreen() {
 
   // Initialize socket connection
   useEffect(() => {
-    const newSocket = io('YOUR_SOCKET_SERVER_URL', {
-      transports: ['websocket'],
+    console.log('🔌 Connecting to socket server:', API_BASE_URL);
+    const newSocket = io(API_BASE_URL, {
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5,
+      timeout: 10000,
     });
 
     newSocket.on('connect', () => {

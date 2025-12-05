@@ -136,8 +136,15 @@ app/
 
 ### API Configuration
 - **Centralized API utility** at `utils/api.ts` with base URL and endpoints
-- **API Base URL**: `https://39a92673-735e-4054-b921-48dce70c2664-00-3jcu8mla3p9d4.pike.replit.dev`
+- **API Base URL**: `https://1c055300-4b0f-4d99-8511-14d526f50594-00-12yiom0ahzwge.sisko.replit.dev:3000`
 - All API calls should use `API_ENDPOINTS` from `utils/api.ts`
+- Socket.IO connection also uses `API_BASE_URL` (default export from `utils/api.ts`)
+
+### Socket.IO Configuration
+- **Server**: Backend runs Socket.IO on port 3000
+- **Namespace**: `/chat` for chat events (also supports main namespace `/`)
+- **Client**: Import `API_BASE_URL` from `@/utils/api` for socket connections
+- **Events**: join_room, leave_room, chat:message, pm:send, credit:transfer, game:play
 
 ### Authentication Screens
 - **Login screen** (`app/login.tsx`) with teal/cyan gradient, remember me, invisible mode, show/hide password
