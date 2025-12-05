@@ -77,7 +77,7 @@ export default function SplashScreen() {
         }}
       >
         <Image
-          source={require('@/assets/logo/logo_migx.png')}
+          source={require('../assets/logo/logo_migx.png')}
           style={styles.logo}
           resizeMode="contain"
         />
