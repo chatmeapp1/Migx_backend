@@ -206,7 +206,7 @@ io.on('connection', (socket) => {
   gameEvents(io, socket);
 });
 
-const PORT = process.env.BACKEND_PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 const startServer = async () => {
   try {
@@ -221,12 +221,13 @@ const startServer = async () => {
     console.log('Database initialized successfully');
     
     server.listen(PORT, '0.0.0.0', () => {
+      console.log('Server running on port ' + PORT);
       console.log(`
 ╔═══════════════════════════════════════════════════════╗
 ║           MIG33 Clone Backend Server                  ║
 ╠═══════════════════════════════════════════════════════╣
-║  HTTP Server:  http://0.0.0.0:${PORT}                   ║
-║  Socket.IO:    ws://0.0.0.0:${PORT}                     ║
+║  HTTP Server:  http://0.0.0.0:${PORT}                    ║
+║  Socket.IO:    ws://0.0.0.0:${PORT}                      ║
 ║  Namespace:    /chat                                  ║
 ╠═══════════════════════════════════════════════════════╣
 ║  API Endpoints:                                       ║

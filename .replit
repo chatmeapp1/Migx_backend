@@ -5,8 +5,16 @@ modules = ["nodejs-22"]
 channel = "stable-24_05"
 
 [[ports]]
+localPort = 3000
+externalPort = 5173
+
+[[ports]]
 localPort = 3001
-externalPort = 3001
+externalPort = 5000
+
+[[ports]]
+localPort = 5000
+externalPort = 80
 
 [[ports]]
 localPort = 5001
@@ -19,10 +27,6 @@ externalPort = 80
 [[ports]]
 localPort = 8082
 externalPort = 3000
-
-[[ports]]
-localPort = 33513
-externalPort = 5173
 
 [[ports]]
 localPort = 35667
@@ -114,7 +118,7 @@ outputType = "console"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "cd backend && node server/server.js"
-waitForPort = 3001
+waitForPort = 3000
 
 [agent]
 expertMode = true
