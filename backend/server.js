@@ -221,8 +221,8 @@ const startServer = async () => {
     await initDatabase();
     console.log('Database initialized successfully');
     
-    server.listen(PORT, HOST, () => {
-      console.log(`Server running on ${HOST}:${PORT}`);
+    server.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server running on 0.0.0.0:${PORT}`);
       console.log(`
 ╔═══════════════════════════════════════════════════════╗
 ║           MIG33 Clone Backend Server                  ║

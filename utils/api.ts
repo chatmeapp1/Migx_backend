@@ -4,8 +4,8 @@ import { Platform } from 'react-native';
 let socket: any = null;
 
 const API_BASE_URL = Platform.OS === 'web'
-  ? 'https://39a92673-735e-4054-b921-48dce70c2664-00-3jcu8mla3p9d4.pike.replit.dev'
-  : 'https://39a92673-735e-4054-b921-48dce70c2664-00-3jcu8mla3p9d4.pike.replit.dev';
+  ? 'https://39a92673-735e-4054-b921-48dce70c2664-00-3jcu8mla3p9d4.pike.replit.dev:3000'
+  : 'https://39a92673-735e-4054-b921-48dce70c2664-00-3jcu8mla3p9d4.pike.replit.dev:3000';
 
 console.log('🌐 API_BASE_URL configured as:', API_BASE_URL);
 
