@@ -50,7 +50,8 @@ const connectRedis = async () => {
   }
 };
 
-module.exports = {
-  client,
-  connectRedis
+const getRedisClient = () => {
+  return client;
 };
+
+module.exports = { connectRedis, getRedisClient };
