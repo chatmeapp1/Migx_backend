@@ -149,8 +149,8 @@ app.get('/', (req, res) => {
 });
 
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+  res.json({
+    status: 'ok',
     timestamp: new Date().toISOString(),
     server: 'MigX Backend',
     port: PORT,
@@ -232,10 +232,10 @@ app.use('/api/merchants', merchantRoutes);
 // 404 handler - must be after all routes
 app.use((req, res, next) => {
   console.log(`404 - Route not found: ${req.method} ${req.url}`);
-  res.status(404).json({ 
+  res.status(404).json({
     success: false,
     error: 'Route not found',
-    path: req.url 
+    path: req.url
   });
 });
 
@@ -243,10 +243,10 @@ app.use((req, res, next) => {
 app.use((err, req, res, next) => {
   console.error('GLOBAL ERROR:', err);
   console.error('Stack:', err.stack);
-  
+
   // Ensure we always send JSON
   if (!res.headersSent) {
-    res.status(err.status || 500).json({ 
+    res.status(err.status || 500).json({
       success: false,
       error: err.message || 'Internal server error',
       ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
@@ -258,7 +258,7 @@ const chatNamespace = io.of('/chat');
 
 chatNamespace.on('connection', (socket) => {
   console.log(`Client connected: ${socket.id}`);
-  
+
   roomEvents(io.of('/chat'), socket);
   chatEvents(io.of('/chat'), socket);
   pmEvents(io.of('/chat'), socket);
@@ -266,11 +266,11 @@ chatNamespace.on('connection', (socket) => {
   creditEvents(io.of('/chat'), socket);
   merchantEvents(io.of('/chat'), socket);
   gameEvents(io.of('/chat'), socket);
-  
+
   socket.on('ping', () => {
     socket.emit('pong', { timestamp: Date.now() });
   });
-  
+
   socket.on('error', (error) => {
     console.error(`Socket error for ${socket.id}:`, error);
   });
@@ -278,7 +278,7 @@ chatNamespace.on('connection', (socket) => {
 
 io.on('connection', (socket) => {
   console.log(`Main namespace client connected: ${socket.id}`);
-  
+
   roomEvents(io, socket);
   chatEvents(io, socket);
   pmEvents(io, socket);
@@ -288,29 +288,29 @@ io.on('connection', (socket) => {
   gameEvents(io, socket);
 });
 
-const PORT = process.env.PORT || 3000;
-const HOST = process.env.HOST || '0.0.0.0';
+const PORT = process.env.PORT || 5000;
+const HOST = '0.0.0.0';
 
 const startServer = async () => {
   try {
     console.log('Initializing MIG33 Clone Backend...');
-    
+
     console.log('Connecting to Redis Cloud...');
     await connectRedis();
     console.log('Redis Cloud connected successfully');
-    
+
     console.log('Initializing database...');
     await initDatabase();
     console.log('Database initialized successfully');
-    
+
     server.listen(PORT, '0.0.0.0', () => {
       console.log(`Server running on 0.0.0.0:${PORT}`);
       console.log(`
 ╔═══════════════════════════════════════════════════════╗
 ║           MIG33 Clone Backend Server                  ║
 ╠═══════════════════════════════════════════════════════╣
-║  HTTP Server:  http://0.0.0.0:${PORT}                    ║
-║  Socket.IO:    ws://0.0.0.0:${PORT}                      ║
+║  HTTP Server:  http://0.0.0.0:5000                    ║
+║  Socket.IO:    ws://0.0.0.0:5000                      ║
 ║  Namespace:    /chat                                  ║
 ╠═══════════════════════════════════════════════════════╣
 ║  API Endpoints:                                       ║
@@ -330,7 +330,7 @@ const startServer = async () => {
 ╚═══════════════════════════════════════════════════════╝
       `);
     });
-    
+
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);
