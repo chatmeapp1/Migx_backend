@@ -116,12 +116,12 @@ export default function SignupScreen() {
   };
 
   const validateUsername = (username: string) => {
-    const usernameRegex = /^[a-z][a-z0-9._]{5,31}$/;
+    const usernameRegex = /^[a-z][a-z0-9._]{5,11}$/;
     if (!usernameRegex.test(username)) {
       return {
         valid: false,
         message:
-          'Username must be 6-32 characters, start with a letter, and contain only lowercase letters, numbers, dots, and underscores'
+          'Username must be 6-12 characters, start with a letter, and contain only lowercase letters, numbers, dots, and underscores'
       };
     }
     return { valid: true, message: '' };
@@ -387,7 +387,7 @@ export default function SignupScreen() {
             <View style={styles.form}>
               <TextInput
                 style={styles.input}
-                placeholder="Username (min 6 chars, lowercase)"
+                placeholder="Username (6-12 chars, lowercase)"
                 placeholderTextColor="#666"
                 value={username}
                 onChangeText={(text) => setUsername(text.toLowerCase())}

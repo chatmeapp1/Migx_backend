@@ -424,6 +424,49 @@ const activateUserById = async (userId) => {
   }
 };
 
+const storeForgotPasswordOtp = async (userId, otp) => {
+  try {
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    await query(
+      `DELETE FROM forgot_password_otp WHERE user_id = $1`,
+      [userId]
+    );
+    await query(
+      `INSERT INTO forgot_password_otp (user_id, otp, expires_at)
+       VALUES ($1, $2, $3)`,
+      [userId, otp, expiresAt]
+    );
+    return true;
+  } catch (error) {
+    console.error('Error storing forgot password OTP:', error);
+    return false;
+  }
+};
+
+const verifyForgotPasswordOtp = async (userId, otp) => {
+  try {
+    const result = await query(
+      `SELECT * FROM forgot_password_otp 
+       WHERE user_id = $1 AND otp = $2 AND expires_at > CURRENT_TIMESTAMP`,
+      [userId, otp]
+    );
+    return result.rows.length > 0;
+  } catch (error) {
+    console.error('Error verifying forgot password OTP:', error);
+    return false;
+  }
+};
+
+const deleteForgotPasswordOtp = async (userId) => {
+  try {
+    await query('DELETE FROM forgot_password_otp WHERE user_id = $1', [userId]);
+    return true;
+  } catch (error) {
+    console.error('Error deleting forgot password OTP:', error);
+    return false;
+  }
+};
+
 module.exports = {
   createUser,
   createUserWithRegistration,
@@ -451,5 +494,8 @@ module.exports = {
   verifyEmailOtp,
   updateEmail,
   storeRegistrationOtp,
-  verifyRegistrationOtp
+  verifyRegistrationOtp,
+  storeForgotPasswordOtp,
+  verifyForgotPasswordOtp,
+  deleteForgotPasswordOtp
 };

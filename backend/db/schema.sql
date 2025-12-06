@@ -147,9 +147,19 @@ CREATE TABLE IF NOT EXISTS game_results (
 
 -- Email OTP Table for email change verification
 CREATE TABLE IF NOT EXISTS email_otp (
-  user_id BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-  otp VARCHAR(6) NOT NULL,
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE UNIQUE,
+  otp VARCHAR(10) NOT NULL,
   new_email VARCHAR(255) NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create forgot_password_otp table
+CREATE TABLE IF NOT EXISTS forgot_password_otp (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE UNIQUE,
+  otp VARCHAR(10) NOT NULL,
   expires_at TIMESTAMP NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -164,7 +174,7 @@ CREATE INDEX IF NOT EXISTS idx_merchant_spend_logs_merchant ON merchant_spend_lo
 CREATE INDEX IF NOT EXISTS idx_game_history_user ON game_history(user_id);
 
 -- Insert default rooms
-INSERT INTO rooms (name, description, max_users) VALUES 
+INSERT INTO rooms (name, description, max_users) VALUES
   ('Indonesia', 'Welcome to Indonesia room', 100),
   ('Dhaka cafe', 'Welcome to Dhaka cafe', 50),
   ('Mobile fun', 'Fun chat for mobile users', 50)

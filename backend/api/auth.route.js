@@ -8,7 +8,7 @@ const crypto = require('crypto');
 const { sendOtpEmail, sendActivationEmail, sendPasswordChangeOtp } = require('../utils/emailService');
 
 // Username validation regex (MIG33 rules)
-const usernameRegex = /^[a-z][a-z0-9._]{5,31}$/;
+const usernameRegex = /^[a-z][a-z0-9._]{5,11}$/;
 
 // Email validation
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -105,7 +105,7 @@ router.post('/register', async (req, res, next) => {
       console.log('REGISTER FAILED: Invalid username');
       return res.status(400).json({ 
         success: false,
-        error: 'Username must be 6-32 characters, start with a letter, and contain only lowercase letters, numbers, dots, and underscores' 
+        error: 'Username must be 6-12 characters, start with a letter, and contain only lowercase letters, numbers, dots, and underscores' 
       });
     }
     
@@ -522,6 +522,101 @@ router.post('/change-email', async (req, res) => {
   } catch (error) {
     console.error('Change email error:', error);
     res.status(500).json({ error: 'Failed to change email' });
+  }
+});
+
+// Forgot password - Send OTP
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ success: false, error: 'Email is required' });
+    }
+
+    const user = await userService.getUserByEmail(email);
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'Email not found' });
+    }
+
+    // Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Store OTP
+    const otpStored = await userService.storeForgotPasswordOtp(user.id, otp);
+    if (!otpStored) {
+      return res.status(500).json({ success: false, error: 'Failed to generate OTP' });
+    }
+
+    // Send OTP email
+    const emailResult = await sendPasswordChangeOtp(email, user.username, otp);
+    if (!emailResult.success) {
+      return res.status(500).json({ success: false, error: 'Failed to send OTP email' });
+    }
+
+    res.json({ success: true, userId: user.id, message: 'OTP sent to your email' });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ success: false, error: 'Failed to process request' });
+  }
+});
+
+// Verify forgot password OTP
+router.post('/verify-forgot-otp', async (req, res) => {
+  try {
+    const { userId, otp } = req.body;
+    
+    if (!userId || !otp) {
+      return res.status(400).json({ success: false, error: 'User ID and OTP are required' });
+    }
+
+    const isValid = await userService.verifyForgotPasswordOtp(userId, otp);
+    if (!isValid) {
+      return res.status(400).json({ success: false, error: 'Invalid or expired OTP' });
+    }
+
+    res.json({ success: true, message: 'OTP verified' });
+  } catch (error) {
+    console.error('Verify forgot OTP error:', error);
+    res.status(500).json({ success: false, error: 'Verification failed' });
+  }
+});
+
+// Reset password
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { userId, newPassword, otp } = req.body;
+    
+    if (!userId || !newPassword || !otp) {
+      return res.status(400).json({ success: false, error: 'All fields are required' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ success: false, error: 'Password must be at least 6 characters' });
+    }
+
+    // Verify OTP again
+    const isValid = await userService.verifyForgotPasswordOtp(userId, otp);
+    if (!isValid) {
+      return res.status(400).json({ success: false, error: 'Invalid or expired OTP' });
+    }
+
+    // Hash new password
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+    
+    // Update password
+    const result = await userService.updatePassword(userId, newPasswordHash);
+    
+    if (result) {
+      // Delete OTP
+      await userService.deleteForgotPasswordOtp(userId);
+      res.json({ success: true, message: 'Password reset successfully' });
+    } else {
+      res.status(500).json({ success: false, error: 'Failed to reset password' });
+    }
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ success: false, error: 'Failed to reset password' });
   }
 });
 
