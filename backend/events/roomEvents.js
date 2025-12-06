@@ -24,6 +24,11 @@ module.exports = (io, socket) => {
       socket.userId = userId;
       socket.username = username;
       
+      // Add to room members cache
+      const { addMemberToRoom, setPresence } = require('../utils/presence');
+      await addMemberToRoom(roomId, username);
+      await setPresence(username, 'online');
+      
       await addXp(userId, XP_REWARDS.JOIN_ROOM, 'join_room', io);
       
       const users = await roomService.getRoomUsers(roomId);
@@ -65,6 +70,10 @@ module.exports = (io, socket) => {
       const actualUsername = username || socket.username;
       
       await roomService.leaveRoom(roomId, actualUserId, actualUsername);
+      
+      // Remove from room members cache
+      const { removeMemberFromRoom } = require('../utils/presence');
+      await removeMemberFromRoom(roomId, actualUsername);
       
       socket.leave(`room:${roomId}`);
       

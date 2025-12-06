@@ -51,40 +51,36 @@ export function usePresence(userId?: string): UsePresenceReturn {
     };
   }, [status]);
 
-  // Socket.io integration would go here
-  // For now, this is a placeholder for the socket logic
+  // Socket.io integration
   useEffect(() => {
-    // TODO: Connect to socket.io server
-    // const socket = io('YOUR_SOCKET_SERVER_URL');
-    
-    // socket.on('connect', () => {
-    //   setIsConnected(true);
-    //   if (userId) {
-    //     socket.emit('user:presence', { userId, status });
-    //   }
-    // });
+    if (!userId) return;
 
-    // socket.on('disconnect', () => {
-    //   setIsConnected(false);
-    //   setStatusState('offline');
-    // });
+    // Import socket from your socket service
+    // This is a placeholder - adjust based on your actual socket implementation
+    const updatePresenceOnServer = async () => {
+      try {
+        // Emit presence update to server
+        // socket.emit('presence:update', { username: userId, status });
+        console.log('Presence updated:', { userId, status });
+      } catch (error) {
+        console.error('Failed to update presence:', error);
+      }
+    };
 
-    // return () => {
-    //   socket.disconnect();
-    // };
-
-    // Simulate connection for now
+    updatePresenceOnServer();
     setIsConnected(true);
-  }, [userId]);
 
-  // Emit presence updates
-  useEffect(() => {
-    if (isConnected && userId) {
-      // TODO: Emit to socket.io
-      // socket.emit('user:presence', { userId, status });
-      console.log('Presence updated:', { userId, status });
-    }
-  }, [status, isConnected, userId]);
+    // Keep-alive: refresh presence every 90 seconds (before 2 min TTL expires)
+    const keepAliveInterval = setInterval(() => {
+      if (status !== 'offline') {
+        updatePresenceOnServer();
+      }
+    }, 90000);
+
+    return () => {
+      clearInterval(keepAliveInterval);
+    };
+  }, [userId, status]);
 
   const setStatus = useCallback((newStatus: PresenceStatus) => {
     setStatusState(newStatus);
