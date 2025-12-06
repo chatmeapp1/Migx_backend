@@ -125,7 +125,7 @@ mode = "sequential"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "node backend/server.js & sleep 3 && npx expo start --port 8081"
+args = "node backend/server.js & sleep 3 && npx expo start --tunnel --port 8081"
 
 [agent]
 expertMode = true
