@@ -1,18 +1,24 @@
 
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Create Gmail transporter
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD
+  }
+});
 
-const FROM_ADDRESS = 'MIGX <onboarding@resend.dev>';
+const FROM_ADDRESS = process.env.GMAIL_USER || 'noreply@migx.app';
 
 async function sendOtpEmail(email, otp, username) {
   try {
     console.log('Sending OTP email to:', email);
-    console.log('Using RESEND_API_KEY:', process.env.RESEND_API_KEY ? 'SET' : 'NOT SET');
-    console.log('From address:', FROM_ADDRESS);
+    console.log('Using Gmail:', FROM_ADDRESS);
     
-    const result = await resend.emails.send({
-      from: FROM_ADDRESS,
+    const mailOptions = {
+      from: `"MIGX Community" <${FROM_ADDRESS}>`,
       to: email,
       subject: 'Your MIGX Verification Code',
       html: `
@@ -32,18 +38,13 @@ async function sendOtpEmail(email, otp, username) {
           </div>
         </div>
       `
-    });
+    };
 
-    if (result.error) {
-      console.error('OTP Email Error from Resend:', result.error);
-      return { success: false, error: result.error.message || 'Failed to send OTP' };
-    }
-
-    console.log('OTP Email sent successfully:', result.data);
-    return { success: true, data: result.data };
+    const result = await transporter.sendMail(mailOptions);
+    console.log('OTP Email sent successfully:', result.messageId);
+    return { success: true, data: result };
   } catch (err) {
     console.error('OTP Email Error:', err);
-    console.error('OTP Email Error Details:', JSON.stringify(err, null, 2));
     return { success: false, error: err.message || 'Failed to send OTP' };
   }
 }
@@ -56,8 +57,9 @@ async function sendActivationEmail(email, username, token) {
   
   try {
     console.log('Sending activation email to:', email);
-    const result = await resend.emails.send({
-      from: FROM_ADDRESS,
+    
+    const mailOptions = {
+      from: `"MIGX Community" <${FROM_ADDRESS}>`,
       to: email,
       subject: 'Activate Your MIGX Account',
       html: `
@@ -79,18 +81,13 @@ async function sendActivationEmail(email, username, token) {
           </div>
         </div>
       `
-    });
+    };
 
-    if (result.error) {
-      console.error('Activation Email Error from Resend:', result.error);
-      return { success: false, error: result.error.message || 'Failed to send activation email' };
-    }
-
-    console.log('Activation email sent successfully:', result.data);
-    return { success: true, data: result.data };
+    const result = await transporter.sendMail(mailOptions);
+    console.log('Activation email sent successfully:', result.messageId);
+    return { success: true, data: result };
   } catch (error) {
     console.error('Error sending activation email:', error);
-    console.error('Activation Email Error Details:', JSON.stringify(error, null, 2));
     return { success: false, error: error.message };
   }
 }
@@ -98,8 +95,9 @@ async function sendActivationEmail(email, username, token) {
 async function sendPasswordChangeOtp(email, username, otp) {
   try {
     console.log('Sending password change OTP to:', email);
-    const result = await resend.emails.send({
-      from: FROM_ADDRESS,
+    
+    const mailOptions = {
+      from: `"MIGX Community" <${FROM_ADDRESS}>`,
       to: email,
       subject: 'MIGX Email Change Verification',
       html: `
@@ -119,18 +117,13 @@ async function sendPasswordChangeOtp(email, username, otp) {
           </div>
         </div>
       `
-    });
+    };
 
-    if (result.error) {
-      console.error('Password Change OTP Error from Resend:', result.error);
-      return { success: false, error: result.error.message || 'Failed to send OTP' };
-    }
-
-    console.log('Password change OTP sent successfully:', result.data);
-    return { success: true, data: result.data };
+    const result = await transporter.sendMail(mailOptions);
+    console.log('Password change OTP sent successfully:', result.messageId);
+    return { success: true, data: result };
   } catch (error) {
     console.error('Error sending email change OTP:', error);
-    console.error('Password Change OTP Error Details:', JSON.stringify(error, null, 2));
     return { success: false, error: error.message };
   }
 }
