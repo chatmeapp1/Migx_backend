@@ -149,7 +149,62 @@ app.get('/', (req, res) => {
 });
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    server: 'MigX Backend',
+    port: PORT,
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Health check with visual HTML response
+app.get('/status', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>MigX Server Status</title>
+      <meta charset="UTF-8">
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 100vh;
+          margin: 0;
+          background: linear-gradient(135deg, #8FE9FF 0%, #00936A 100%);
+        }
+        .status-card {
+          background: white;
+          padding: 40px;
+          border-radius: 20px;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+          text-align: center;
+        }
+        .status-ok {
+          color: #00936A;
+          font-size: 2em;
+          margin-bottom: 20px;
+        }
+        .info {
+          color: #666;
+          margin: 10px 0;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="status-card">
+        <div class="status-ok">✅ Server Online</div>
+        <div class="info"><strong>Server:</strong> MigX Backend</div>
+        <div class="info"><strong>Port:</strong> ${PORT}</div>
+        <div class="info"><strong>Time:</strong> ${new Date().toISOString()}</div>
+        <div class="info"><strong>Status:</strong> Running</div>
+      </div>
+    </body>
+    </html>
+  `);
 });
 
 app.get('/api', (req, res) => {
