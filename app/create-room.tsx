@@ -64,22 +64,27 @@ export default function CreateRoomScreen() {
           name: name.trim(),
           ownerId: userData.id,
           description: description.trim(),
-          maxUsers: MAX_USERS,
-          isPrivate: false, 
-          password: null,
         }),
       });
 
       const data = await response.json();
 
-      if (!response.ok) {
+      if (!response.ok || !data.success) {
         setError(data.error || 'Failed to create room');
         return;
       }
 
-      Alert.alert('Room Created', `${name} has been created`, [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
+      // Show success popup
+      Alert.alert(
+        'Create Room Success', 
+        `Room "${data.room.name}" has been created successfully!\n\nRoom ID: ${data.room.roomId}`, 
+        [
+          { 
+            text: 'OK', 
+            onPress: () => router.back() 
+          },
+        ]
+      );
 
     } catch (err) {
       console.log(err);

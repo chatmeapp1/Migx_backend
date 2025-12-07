@@ -21,21 +21,19 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Rooms table
 CREATE TABLE IF NOT EXISTS rooms (
-  id BIGSERIAL PRIMARY KEY,
-  name VARCHAR(100) NOT NULL,
+  id VARCHAR(20) PRIMARY KEY,
+  name VARCHAR(100) NOT NULL UNIQUE,
+  owner_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
   description TEXT,
-  owner_id BIGINT REFERENCES users(id),
-  max_users INT DEFAULT 50,
-  is_private BOOLEAN DEFAULT FALSE,
-  password VARCHAR(255),
+  max_users INTEGER DEFAULT 25,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Room admins table
 CREATE TABLE IF NOT EXISTS room_admins (
-  id BIGSERIAL PRIMARY KEY,
-  room_id BIGINT REFERENCES rooms(id) ON DELETE CASCADE,
+  id SERIAL PRIMARY KEY,
+  room_id VARCHAR(20) REFERENCES rooms(id) ON DELETE CASCADE,
   user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(room_id, user_id)
@@ -44,7 +42,7 @@ CREATE TABLE IF NOT EXISTS room_admins (
 -- Messages table
 CREATE TABLE IF NOT EXISTS messages (
   id BIGSERIAL PRIMARY KEY,
-  room_id BIGINT REFERENCES rooms(id) ON DELETE CASCADE,
+  room_id VARCHAR(20) REFERENCES rooms(id) ON DELETE CASCADE,
   user_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
   username VARCHAR(50) NOT NULL,
   message TEXT NOT NULL,
@@ -112,7 +110,7 @@ CREATE TABLE IF NOT EXISTS user_levels (
 -- Room bans table (persistent bans)
 CREATE TABLE IF NOT EXISTS room_bans (
   id BIGSERIAL PRIMARY KEY,
-  room_id BIGINT REFERENCES rooms(id) ON DELETE CASCADE,
+  room_id VARCHAR(20) REFERENCES rooms(id) ON DELETE CASCADE,
   user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
   banned_by BIGINT REFERENCES users(id),
   reason TEXT,
@@ -172,10 +170,12 @@ CREATE INDEX IF NOT EXISTS idx_credit_logs_from_user ON credit_logs(from_user_id
 CREATE INDEX IF NOT EXISTS idx_credit_logs_to_user ON credit_logs(to_user_id);
 CREATE INDEX IF NOT EXISTS idx_merchant_spend_logs_merchant ON merchant_spend_logs(merchant_id);
 CREATE INDEX IF NOT EXISTS idx_game_history_user ON game_history(user_id);
+CREATE INDEX IF NOT EXISTS idx_room_bans_room_id ON room_bans(room_id);
+
 
 -- Insert default rooms
-INSERT INTO rooms (name, description, max_users) VALUES
-  ('Indonesia', 'Welcome to Indonesia room', 100),
-  ('Dhaka cafe', 'Welcome to Dhaka cafe', 50),
-  ('Mobile fun', 'Fun chat for mobile users', 50)
+INSERT INTO rooms (id, name, description, max_users) VALUES
+  ('MIGX-00001', 'Indonesia', 'Welcome to Indonesia room', 100),
+  ('MIGX-00002', 'Dhaka cafe', 'Welcome to Dhaka cafe', 50),
+  ('MIGX-00003', 'Mobile fun', 'Fun chat for mobile users', 50)
 ON CONFLICT DO NOTHING;

@@ -176,31 +176,73 @@ router.get('/more', async (req, res) => {
 
 router.post('/create', async (req, res) => {
   try {
-    const { name, ownerId, description, maxUsers, isPrivate, password } = req.body;
+    const { name, ownerId, description } = req.body;
     
+    // Validasi required fields
     if (!name || !ownerId) {
-      return res.status(400).json({ error: 'Name and owner ID are required' });
+      return res.status(400).json({ 
+        success: false,
+        error: 'Name and owner ID are required' 
+      });
     }
     
-    const existingRoom = await roomService.getRoomByName(name);
+    // Validasi panjang name
+    if (name.trim().length < 3) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Room name must be at least 3 characters' 
+      });
+    }
+    
+    if (name.trim().length > 50) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Room name must not exceed 50 characters' 
+      });
+    }
+    
+    // Cek apakah room name sudah ada
+    const existingRoom = await roomService.getRoomByName(name.trim());
     if (existingRoom) {
-      return res.status(400).json({ error: 'Room name already exists' });
+      return res.status(400).json({ 
+        success: false,
+        error: 'Room name already exists' 
+      });
     }
     
-    const room = await roomService.createRoom(name, ownerId, description, maxUsers, isPrivate, password);
+    // Create room dengan maxUsers fixed 25
+    const room = await roomService.createRoom(
+      name.trim(), 
+      ownerId, 
+      description ? description.trim() : ''
+    );
     
     if (!room) {
-      return res.status(400).json({ error: 'Failed to create room' });
+      return res.status(500).json({ 
+        success: false,
+        error: 'Failed to create room' 
+      });
     }
     
-    res.json({
+    // Response dengan format yang benar
+    res.status(200).json({
       success: true,
-      room
+      message: 'Room created successfully',
+      room: {
+        roomId: room.id,
+        name: room.name,
+        description: room.description,
+        ownerId: room.owner_id,
+        maxUsers: room.max_users
+      }
     });
     
   } catch (error) {
     console.error('Create room error:', error);
-    res.status(500).json({ error: 'Failed to create room' });
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to create room' 
+    });
   }
 });
 
@@ -263,30 +305,7 @@ router.get('/:id/banned', async (req, res) => {
   }
 });
 
-router.post('/', async (req, res) => {
-  try {
-    const { name, ownerId, description, maxUsers, isPrivate, password } = req.body;
-    
-    if (!name || !ownerId) {
-      return res.status(400).json({ error: 'Name and owner ID are required' });
-    }
-    
-    const room = await roomService.createRoom(name, ownerId, description, maxUsers, isPrivate, password);
-    
-    if (!room) {
-      return res.status(400).json({ error: 'Failed to create room' });
-    }
-    
-    res.json({
-      success: true,
-      room
-    });
-    
-  } catch (error) {
-    console.error('Create room error:', error);
-    res.status(500).json({ error: 'Failed to create room' });
-  }
-});
+
 
 router.put('/:id', async (req, res) => {
   try {

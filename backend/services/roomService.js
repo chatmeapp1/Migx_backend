@@ -1,18 +1,25 @@
 const { query } = require('../db/db');
 const presence = require('../utils/presence');
 
-const createRoom = async (name, ownerId, description = '', maxUsers = 50, isPrivate = false, password = null) => {
+const createRoom = async (name, ownerId, description = '') => {
   try {
+    // Generate MIGX-xxxxx format roomId
+    const randomDigits = Math.floor(10000 + Math.random() * 90000);
+    const roomId = `MIGX-${randomDigits}`;
+    
+    // Fixed maxUsers to 25 for MIG33 Classic
+    const maxUsers = 25;
+    
     const result = await query(
-      `INSERT INTO rooms (name, owner_id, description, max_users, is_private, password)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO rooms (id, name, owner_id, description, max_users, created_at)
+       VALUES ($1, $2, $3, $4, $5, NOW())
        RETURNING *`,
-      [name, ownerId, description, maxUsers, isPrivate, password]
+      [roomId, name, ownerId, description, maxUsers]
     );
     
     await query(
       'INSERT INTO room_admins (room_id, user_id) VALUES ($1, $2)',
-      [result.rows[0].id, ownerId]
+      [roomId, ownerId]
     );
     
     return result.rows[0];
