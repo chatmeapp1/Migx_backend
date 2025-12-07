@@ -1,4 +1,5 @@
-import { StyleSheet, View, SafeAreaView } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeCustom } from '@/theme/provider';
 import { Header } from '@/components/home/Header';
 import { ContactList } from '@/components/home/ContactList';
