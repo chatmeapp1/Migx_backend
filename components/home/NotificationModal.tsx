@@ -1,0 +1,256 @@
+
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Modal,
+  TouchableOpacity,
+  FlatList,
+  ActivityIndicator,
+} from 'react-native';
+import { useThemeCustom } from '@/theme/provider';
+import Svg, { Path } from 'react-native-svg';
+
+const CloseIcon = ({ size = 24, color = '#fff' }: { size?: number; color?: string }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path d="M18 6L6 18M6 6l12 12" stroke={color} strokeWidth="2" strokeLinecap="round" />
+  </Svg>
+);
+
+const CreditIcon = ({ size = 20, color = '#4A90E2' }: { size?: number; color?: string }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" fill={color} opacity="0.3" />
+    <Path d="M12 7v10M8 11h8" stroke={color} strokeWidth="2" strokeLinecap="round" />
+  </Svg>
+);
+
+const GiftIcon = ({ size = 20, color = '#E91E63' }: { size?: number; color?: string }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path d="M20 12v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8M4 8h16v4H4z" stroke={color} strokeWidth="2" fill="none" />
+    <Path d="M12 8V4M12 4a2 2 0 00-2-2 2 2 0 00-2 2c0 1.1.9 2 2 2h2zM12 4a2 2 0 012-2 2 2 0 012 2c0 1.1-.9 2-2 2h-2z" stroke={color} strokeWidth="2" fill="none" />
+  </Svg>
+);
+
+const FollowIcon = ({ size = 20, color = '#4CAF50' }: { size?: number; color?: string }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M12.5 7a4 4 0 100-8 4 4 0 000 8zM20 8v6M23 11h-6" stroke={color} strokeWidth="2" strokeLinecap="round" />
+  </Svg>
+);
+
+interface Notification {
+  type: 'credit' | 'gift' | 'follow';
+  from: string;
+  amount?: number;
+  giftName?: string;
+  message: string;
+  timestamp: number;
+}
+
+interface NotificationModalProps {
+  visible: boolean;
+  onClose: () => void;
+  username: string;
+  socket: any;
+}
+
+export function NotificationModal({ visible, onClose, username, socket }: NotificationModalProps) {
+  const { theme } = useThemeCustom();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (visible && username) {
+      fetchNotifications();
+    }
+  }, [visible, username]);
+
+  const fetchNotifications = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `https://5b4697a9-a207-4dc0-b787-64f8249a493b-00-1mo41brot76f2.sisko.replit.dev/api/notifications/${username}`
+      );
+      const data = await response.json();
+      setNotifications(data.notifications || []);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const clearNotifications = async () => {
+    try {
+      await fetch(
+        `https://5b4697a9-a207-4dc0-b787-64f8249a493b-00-1mo41brot76f2.sisko.replit.dev/api/notifications/${username}`,
+        { method: 'DELETE' }
+      );
+      setNotifications([]);
+      onClose();
+    } catch (error) {
+      console.error('Error clearing notifications:', error);
+    }
+  };
+
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'credit':
+        return <CreditIcon />;
+      case 'gift':
+        return <GiftIcon />;
+      case 'follow':
+        return <FollowIcon />;
+      default:
+        return <CreditIcon />;
+    }
+  };
+
+  const formatTime = (timestamp: number) => {
+    const now = Date.now();
+    const diff = now - timestamp;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    return `${days}d ago`;
+  };
+
+  const renderNotification = ({ item }: { item: Notification }) => (
+    <View style={[styles.notificationItem, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
+      <View style={styles.notificationIcon}>
+        {getNotificationIcon(item.type)}
+      </View>
+      <View style={styles.notificationContent}>
+        <Text style={[styles.notificationMessage, { color: theme.text }]}>
+          {item.message}
+        </Text>
+        <Text style={[styles.notificationTime, { color: theme.textSecondary }]}>
+          {formatTime(item.timestamp)}
+        </Text>
+      </View>
+    </View>
+  );
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent={true}
+      onRequestClose={onClose}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
+          <View style={[styles.header, { borderBottomColor: theme.border }]}>
+            <Text style={[styles.title, { color: theme.text }]}>Notifications</Text>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <CloseIcon color={theme.text} />
+            </TouchableOpacity>
+          </View>
+
+          {loading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#4A90E2" />
+            </View>
+          ) : notifications.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
+                No notifications
+              </Text>
+            </View>
+          ) : (
+            <>
+              <FlatList
+                data={notifications}
+                renderItem={renderNotification}
+                keyExtractor={(item, index) => `${item.timestamp}-${index}`}
+                style={styles.list}
+              />
+              <TouchableOpacity
+                style={[styles.clearButton, { backgroundColor: '#E91E63' }]}
+                onPress={clearNotifications}
+              >
+                <Text style={styles.clearButtonText}>Clear All</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    maxHeight: '80%',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  closeButton: {
+    padding: 4,
+  },
+  list: {
+    flex: 1,
+  },
+  notificationItem: {
+    flexDirection: 'row',
+    padding: 16,
+    borderBottomWidth: 1,
+  },
+  notificationIcon: {
+    marginRight: 12,
+    justifyContent: 'center',
+  },
+  notificationContent: {
+    flex: 1,
+  },
+  notificationMessage: {
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  notificationTime: {
+    fontSize: 12,
+  },
+  loadingContainer: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  emptyContainer: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+  },
+  clearButton: {
+    margin: 16,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  clearButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+});

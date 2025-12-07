@@ -19,7 +19,7 @@ export default function HomeScreen() {
     try {
       const userDataStr = await AsyncStorage.getItem('user_data');
       if (userDataStr) {
-        const data = JSON.parse( كانت);
+        const data = JSON.parse(userDataStr);
         setUserData(data);
       }
     } catch (error) {

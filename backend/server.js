@@ -14,6 +14,7 @@ const roomRoutes = require('./api/room.route');
 const messageRoutes = require('./api/message.route');
 const creditRoutes = require('./api/credit.route');
 const merchantRoutes = require('./api/merchant.route');
+const notificationRoutes = require('./api/notification.route');
 
 const roomEvents = require('./events/roomEvents');
 const chatEvents = require('./events/chatEvents');
@@ -22,6 +23,7 @@ const systemEvents = require('./events/systemEvents');
 const creditEvents = require('./events/creditEvents');
 const merchantEvents = require('./events/merchantEvents');
 const gameEvents = require('./events/gameEvents');
+const notificationEvents = require('./events/notificationEvents');
 
 const app = express();
 const server = http.createServer(app);
@@ -228,6 +230,7 @@ app.use('/api/rooms', roomRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/credits', creditRoutes);
 app.use('/api/merchants', merchantRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // 404 handler - must be after all routes
 app.use((req, res, next) => {
@@ -266,6 +269,7 @@ chatNamespace.on('connection', (socket) => {
   creditEvents(io.of('/chat'), socket);
   merchantEvents(io.of('/chat'), socket);
   gameEvents(io.of('/chat'), socket);
+  notificationEvents(io.of('/chat'), socket);
 
   socket.on('ping', () => {
     socket.emit('pong', { timestamp: Date.now() });

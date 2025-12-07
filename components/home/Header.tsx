@@ -1,8 +1,11 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useThemeCustom } from '@/theme/provider';
 import Svg, { Path, Circle } from 'react-native-svg';
+import { NotificationModal } from './NotificationModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createSocket } from '@/utils/api';
 
 const UserIcon = ({ size = 24, color = '#4A90E2' }: { size?: number; color?: string }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -33,6 +36,76 @@ const EggIcon = ({ size = 24, color = '#fff' }: { size?: number; color?: string 
 
 export function Header() {
   const { theme } = useThemeCustom();
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [username, setUsername] = useState('');
+  const [socket, setSocket] = useState<any>(null);
+  
+  useEffect(() => {
+    loadUserData();
+    const socketInstance = createSocket();
+    setSocket(socketInstance);
+    
+    // Listen for notification events
+    socketInstance.on('notif:credit', (data: any) => {
+      fetchNotificationCount();
+    });
+    
+    socketInstance.on('notif:gift', (data: any) => {
+      fetchNotificationCount();
+    });
+    
+    socketInstance.on('notif:follow', (data: any) => {
+      fetchNotificationCount();
+    });
+    
+    return () => {
+      socketInstance.off('notif:credit');
+      socketInstance.off('notif:gift');
+      socketInstance.off('notif:follow');
+    };
+  }, []);
+  
+  useEffect(() => {
+    if (username) {
+      fetchNotificationCount();
+    }
+  }, [username]);
+  
+  const loadUserData = async () => {
+    try {
+      const userDataStr = await AsyncStorage.getItem('user_data');
+      if (userDataStr) {
+        const data = JSON.parse(userDataStr);
+        setUsername(data.username);
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    }
+  };
+  
+  const fetchNotificationCount = async () => {
+    if (!username) return;
+    
+    try {
+      const response = await fetch(
+        `https://5b4697a9-a207-4dc0-b787-64f8249a493b-00-1mo41brot76f2.sisko.replit.dev/api/notifications/${username}/count`
+      );
+      const data = await response.json();
+      setNotificationCount(data.count || 0);
+    } catch (error) {
+      console.error('Error fetching notification count:', error);
+    }
+  };
+  
+  const handleBellPress = () => {
+    setShowNotifications(true);
+  };
+  
+  const handleCloseNotifications = () => {
+    setShowNotifications(false);
+    fetchNotificationCount();
+  };
   
   return (
     <View style={[styles.container, { backgroundColor: '#0a5229' }]}>
@@ -42,8 +115,15 @@ export function Header() {
           <Text style={[styles.title, { color: '#FFFFFF' }]}>My Friends</Text>
         </View>
         <View style={styles.rightSection}>
-          <TouchableOpacity style={styles.iconButton}>
+          <TouchableOpacity style={styles.iconButton} onPress={handleBellPress}>
             <BellIcon size={24} color="#FFFFFF" />
+            {notificationCount > 0 && (
+              <View style={[styles.notifBadge, { backgroundColor: '#E91E63' }]}>
+                <Text style={styles.notifBadgeText}>
+                  {notificationCount > 99 ? '99+' : notificationCount}
+                </Text>
+              </View>
+            )}
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconButton}>
             <MessageIcon size={24} color="#FFFFFF" />
@@ -56,6 +136,13 @@ export function Header() {
           </View>
         </View>
       </View>
+      
+      <NotificationModal
+        visible={showNotifications}
+        onClose={handleCloseNotifications}
+        username={username}
+        socket={socket}
+      />
     </View>
   );
 }
@@ -105,6 +192,22 @@ const styles = StyleSheet.create({
   },
   badgeNumber: {
     fontSize: 12,
+    fontWeight: 'bold',
+  },
+  notifBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  notifBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
     fontWeight: 'bold',
   },
 });
