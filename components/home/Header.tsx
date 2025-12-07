@@ -144,15 +144,6 @@ export function Header() {
               </View>
             )}
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
-            <MessageIcon size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-          <View style={styles.badgeContainer}>
-            <EggIcon size={28} color="#FFFFFF" />
-            <View style={[styles.badge, { backgroundColor: '#4A90E2' }]}>
-              <Text style={[styles.badgeNumber, { color: '#FFFFFF' }]}>2</Text>
-            </View>
-          </View>
         </View>
       </View>
       
