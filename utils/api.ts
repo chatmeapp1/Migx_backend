@@ -1,4 +1,3 @@
-
 import { io } from 'socket.io-client';
 import { Platform } from 'react-native';
 
@@ -47,13 +46,8 @@ export const API_ENDPOINTS = {
     SEND: `${API_BASE_URL}/api/message/send`,
     HISTORY: `${API_BASE_URL}/api/message/history`,
   },
-  MERCHANT: {
-    CREATE: `${API_BASE_URL}/api/merchants/create`,
-    INCOME: (id: string) => `${API_BASE_URL}/api/merchants/income/${id}`,
-  },
   NOTIFICATION: {
     LIST: `${API_BASE_URL}/api/notifications`,
-    MARK_READ: (id: string) => `${API_BASE_URL}/api/notifications/${id}/read`,
   },
 };
 

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useThemeCustom } from '@/theme/provider';
 import Svg, { Path } from 'react-native-svg';
-import API_BASE_URL from '@/utils/api';
+import { API_ENDPOINTS } from '@/utils/api';
 
 const StatsIcon = ({ size = 20, color = '#4A90E2' }: { size?: number; color?: string }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -28,7 +28,7 @@ export function ChatHeader() {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/rooms`);
+      const response = await fetch(API_ENDPOINTS.ROOM.LIST);
       const data = await response.json();
       
       if (data.success) {

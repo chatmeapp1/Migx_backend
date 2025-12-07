@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useThemeCustom } from '@/theme/provider';
 import Svg, { Path } from 'react-native-svg';
+import { API_ENDPOINTS } from '@/utils/api';
 
 const CloseIcon = ({ size = 24, color = '#fff' }: { size?: number; color?: string }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -75,9 +76,7 @@ export function NotificationModal({ visible, onClose, username, socket }: Notifi
     setLoading(true);
     try {
       console.log('Fetching notifications for:', username);
-      const response = await fetch(
-        `https://d0dba9b7-ac8a-4020-84d9-4894ec7b1538-00-efarr67watd.sisko.replit.dev/api/notifications/${username}`
-      );
+      const response = await fetch(`${API_ENDPOINTS.NOTIFICATION.LIST}/${username}`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -97,7 +96,7 @@ export function NotificationModal({ visible, onClose, username, socket }: Notifi
   const clearNotifications = async () => {
     try {
       await fetch(
-        `https://5b4697a9-a207-4dc0-b787-64f8249a493b-00-1mo41brot76f2.sisko.replit.dev/api/notifications/${username}`,
+        `${API_ENDPOINTS.NOTIFICATION.LIST}/${username}`,
         { method: 'DELETE' }
       );
       setNotifications([]);
