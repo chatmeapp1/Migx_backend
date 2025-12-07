@@ -3,6 +3,15 @@ const { getRedisClient } = require('../redis');
 const DEFAULT_TTL = 300;
 const ONLINE_PRESENCE_TTL = 180;
 
+const RECENT_ROOMS_KEY = (username) => `recent:${username}`;
+const USER_ROOMS_KEY = (username) => `user:rooms:${username}`;
+const ROOM_USERS_KEY = (roomId) => `room:users:${roomId}`;
+const FAVORITE_ROOMS_KEY = (username) => `favorite:${username}`;
+const HOT_ROOMS_KEY = 'hot:rooms';
+const ROOM_ACTIVE_KEY = (roomId) => `room:active:${roomId}`;
+
+const MAX_RECENT_ROOMS = 10;
+
 const setPresence = async (username, status) => {
   try {
     const redis = getRedisClient();
@@ -396,9 +405,8 @@ const addRecentRoom = async (username, roomId, roomName) => {
 
 const getRecentRooms = async (username) => {
   try {
-    const redis = getRedisClient();
-    const key = `user:recent:${username}`;
-    const rooms = await redis.lrange(key, 0, 9);
+    const client = getRedisClient();
+    const rooms = await client.lRange(RECENT_ROOMS_KEY(username), 0, MAX_RECENT_ROOMS - 1);
     return rooms.map(r => JSON.parse(r));
   } catch (error) {
     console.error('Error getting recent rooms:', error);
@@ -413,6 +421,96 @@ const clearRecentRooms = async (username) => {
     return true;
   } catch (error) {
     console.error('Error clearing recent rooms:', error);
+    return false;
+  }
+};
+
+const getFavoriteRooms = async (username) => {
+  try {
+    const client = getRedisClient();
+    const rooms = await client.sMembers(FAVORITE_ROOMS_KEY(username));
+    return rooms;
+  } catch (error) {
+    console.error('Error getting favorite rooms:', error);
+    return [];
+  }
+};
+
+const addFavoriteRoom = async (username, roomId) => {
+  try {
+    const client = getRedisClient();
+    await client.sAdd(FAVORITE_ROOMS_KEY(username), roomId.toString());
+    return true;
+  } catch (error) {
+    console.error('Error adding favorite room:', error);
+    return false;
+  }
+};
+
+const removeFavoriteRoom = async (username, roomId) => {
+  try {
+    const client = getRedisClient();
+    await client.sRem(FAVORITE_ROOMS_KEY(username), roomId.toString());
+    return true;
+  } catch (error) {
+    console.error('Error removing favorite room:', error);
+    return false;
+  }
+};
+
+const getHotRooms = async (limit = 20) => {
+  try {
+    const client = getRedisClient();
+    const rooms = await client.zRangeWithScores(HOT_ROOMS_KEY, 0, limit - 1, { REV: true });
+    return rooms.map(r => ({ roomId: r.value, score: r.score }));
+  } catch (error) {
+    console.error('Error getting hot rooms:', error);
+    return [];
+  }
+};
+
+const updateHotRooms = async (roomId, increment = true) => {
+  try {
+    const client = getRedisClient();
+    if (increment) {
+      await client.zIncrBy(HOT_ROOMS_KEY, 1, roomId.toString());
+    } else {
+      await client.zIncrBy(HOT_ROOMS_KEY, -1, roomId.toString());
+      const score = await client.zScore(HOT_ROOMS_KEY, roomId.toString());
+      if (score <= 0) {
+        await client.zRem(HOT_ROOMS_KEY, roomId.toString());
+      }
+    }
+    return true;
+  } catch (error) {
+    console.error('Error updating hot rooms:', error);
+    return false;
+  }
+};
+
+const incrementRoomActive = async (roomId) => {
+  try {
+    const client = getRedisClient();
+    await client.incr(ROOM_ACTIVE_KEY(roomId));
+    await updateHotRooms(roomId, true);
+    return true;
+  } catch (error) {
+    console.error('Error incrementing room active:', error);
+    return false;
+  }
+};
+
+const decrementRoomActive = async (roomId) => {
+  try {
+    const client = getRedisClient();
+    const count = await client.decr(ROOM_ACTIVE_KEY(roomId));
+    if (count < 0) {
+      await client.set(ROOM_ACTIVE_KEY(roomId), '0');
+    }
+    await updateHotRooms(roomId, false);
+    return true;
+  } catch (error) {
+    console.error('Error decrementing room active:', error);
     return false;
   }
 };
@@ -451,6 +549,13 @@ module.exports = {
   addRecentRoom,
   getRecentRooms,
   clearRecentRooms,
+  getFavoriteRooms,
+  addFavoriteRoom,
+  removeFavoriteRoom,
+  getHotRooms,
+  updateHotRooms,
+  incrementRoomActive,
+  decrementRoomActive,
   DEFAULT_TTL,
   ONLINE_PRESENCE_TTL
 };

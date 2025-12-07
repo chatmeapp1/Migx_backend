@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const roomService = require('../services/roomService');
 const banService = require('../services/banService');
-const { getRecentRooms, addRecentRoom } = require('../utils/redisUtils');
+const { getRecentRooms, addRecentRoom, getFavoriteRooms, getHotRooms } = require('../utils/redisUtils');
 const presence = require('../utils/presence');
 
 router.get('/', async (req, res) => {
@@ -21,6 +21,46 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.get('/favorites/:username', async (req, res) => {
+  try {
+    const { username } = req.params;
+    
+    if (!username) {
+      return res.status(400).json({ error: 'Username is required' });
+    }
+    
+    const favoriteRooms = await getFavoriteRooms(username);
+    const roomsWithDetails = await Promise.all(
+      favoriteRooms.map(async (roomId) => {
+        const room = await roomService.getRoomById(roomId);
+        if (!room) return null;
+        const userCount = await presence.getRoomUserCount(roomId);
+        return {
+          id: room.id,
+          name: room.name,
+          description: room.description,
+          maxUsers: room.max_users,
+          userCount,
+          ownerId: room.owner_id,
+          ownerName: room.owner_name
+        };
+      })
+    );
+    
+    const validRooms = roomsWithDetails.filter(r => r !== null);
+    
+    res.json({
+      success: true,
+      rooms: validRooms,
+      count: validRooms.length
+    });
+    
+  } catch (error) {
+    console.error('Get favorite rooms error:', error);
+    res.status(500).json({ error: 'Failed to get favorite rooms' });
+  }
+});
+
 router.get('/recent/:username', async (req, res) => {
   try {
     const { username } = req.params;
@@ -33,25 +73,104 @@ router.get('/recent/:username', async (req, res) => {
     const roomsWithDetails = await Promise.all(
       recentRooms.map(async (r) => {
         const room = await roomService.getRoomById(r.roomId);
+        if (!room) return null;
         const userCount = await presence.getRoomUserCount(r.roomId);
         return {
-          ...r,
-          name: room?.name || r.roomName,
-          description: room?.description || '',
-          maxUsers: room?.max_users || 50,
-          userCount
+          id: room.id,
+          roomId: r.roomId,
+          name: room.name || r.roomName,
+          description: room.description || '',
+          maxUsers: room.max_users || 50,
+          userCount,
+          lastVisit: r.timestamp,
+          ownerId: room.owner_id,
+          ownerName: room.owner_name
         };
       })
     );
     
+    const validRooms = roomsWithDetails.filter(r => r !== null);
+    
     res.json({
-      rooms: roomsWithDetails,
-      count: roomsWithDetails.length
+      success: true,
+      rooms: validRooms,
+      count: validRooms.length
     });
     
   } catch (error) {
     console.error('Get recent rooms error:', error);
     res.status(500).json({ error: 'Failed to get recent rooms' });
+  }
+});
+
+router.get('/hot', async (req, res) => {
+  try {
+    const { limit = 20 } = req.query;
+    const hotRooms = await getHotRooms(parseInt(limit));
+    
+    const roomsWithDetails = await Promise.all(
+      hotRooms.map(async (item) => {
+        const room = await roomService.getRoomById(item.roomId);
+        if (!room) return null;
+        const userCount = await presence.getRoomUserCount(item.roomId);
+        return {
+          id: room.id,
+          name: room.name,
+          description: room.description,
+          maxUsers: room.max_users,
+          userCount,
+          activeUsers: item.score,
+          ownerId: room.owner_id,
+          ownerName: room.owner_name,
+          isPrivate: room.is_private
+        };
+      })
+    );
+    
+    const validRooms = roomsWithDetails.filter(r => r !== null);
+    
+    res.json({
+      success: true,
+      rooms: validRooms,
+      count: validRooms.length
+    });
+    
+  } catch (error) {
+    console.error('Get hot rooms error:', error);
+    res.status(500).json({ error: 'Failed to get hot rooms' });
+  }
+});
+
+router.get('/more', async (req, res) => {
+  try {
+    const { limit = 20 } = req.query;
+    const rooms = await roomService.getRandomRooms(parseInt(limit));
+    
+    const roomsWithDetails = await Promise.all(
+      rooms.map(async (room) => {
+        const userCount = await presence.getRoomUserCount(room.id);
+        return {
+          id: room.id,
+          name: room.name,
+          description: room.description,
+          maxUsers: room.max_users,
+          userCount,
+          ownerId: room.owner_id,
+          ownerName: room.owner_name,
+          isPrivate: room.is_private
+        };
+      })
+    );
+    
+    res.json({
+      success: true,
+      rooms: roomsWithDetails,
+      count: roomsWithDetails.length
+    });
+    
+  } catch (error) {
+    console.error('Get more rooms error:', error);
+    res.status(500).json({ error: 'Failed to get more rooms' });
   }
 });
 

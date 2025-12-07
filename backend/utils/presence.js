@@ -1,4 +1,5 @@
-const { client } = require('../redis');
+const { getRedisClient } = require('../redis');
+const client = getRedisClient();
 
 const ROOM_USERS_KEY = (roomId) => `room:users:${roomId}`;
 const USER_ROOM_KEY = (username) => `user:room:${username}`;

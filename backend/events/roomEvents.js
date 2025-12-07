@@ -10,7 +10,13 @@ const {
   removeMemberFromRoom,
   setRoomUsers
 } = require('../utils/presence');
-const { addUserRoom, removeUserRoom, addRecentRoom } = require('../utils/redisUtils');
+const { 
+  addUserRoom, 
+  removeUserRoom, 
+  addRecentRoom,
+  incrementRoomActive,
+  decrementRoomActive
+} = require('../utils/redisUtils');
 
 // Helper function to create system messages
 const createSystemMessage = (roomId, message) => ({
@@ -123,6 +129,7 @@ module.exports = (io, socket) => {
       await addXp(userId, XP_REWARDS.JOIN_ROOM, 'join_room', io);
       
       await addRecentRoom(username, roomId, room.name);
+      await incrementRoomActive(roomId);
       
       io.emit('rooms:updateCount', {
         roomId,
@@ -176,6 +183,8 @@ module.exports = (io, socket) => {
 
       socket.emit('room:left', { roomId });
       socket.emit('chatlist:roomLeft', { roomId });
+      
+      await decrementRoomActive(roomId);
       
       const room = await roomService.getRoomById(roomId);
       io.emit('rooms:updateCount', {

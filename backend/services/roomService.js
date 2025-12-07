@@ -79,6 +79,24 @@ const getAllRooms = async (limit = 50, offset = 0) => {
   }
 };
 
+const getRandomRooms = async (limit = 20) => {
+  try {
+    const result = await query(
+      `SELECT r.*, u.username as owner_name
+       FROM rooms r
+       LEFT JOIN users u ON r.owner_id = u.id
+       ORDER BY RANDOM()
+       LIMIT $1`,
+      [limit]
+    );
+    
+    return result.rows;
+  } catch (error) {
+    console.error('Error getting random rooms:', error);
+    return [];
+  }
+};
+
 const updateRoom = async (roomId, updates) => {
   try {
     const { name, description, maxUsers, isPrivate, password } = updates;
@@ -267,6 +285,7 @@ module.exports = {
   getRoomById,
   getRoomByName,
   getAllRooms,
+  getRandomRooms,
   updateRoom,
   deleteRoom,
   isRoomAdmin,
