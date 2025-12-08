@@ -84,6 +84,24 @@ export default function EditProfileScreen() {
     try {
       setUploading(true);
 
+      // Get token from user_data in AsyncStorage
+      const userDataStr = await AsyncStorage.getItem('user_data');
+      if (!userDataStr) {
+        console.log('❌ No user_data found in AsyncStorage');
+        Alert.alert('Error', 'User not logged in');
+        return;
+      }
+
+      const userData = JSON.parse(userDataStr);
+      const token = userData.token;
+      console.log('🔑 Token retrieved:', token ? `${token.substring(0, 20)}...` : 'null');
+
+      if (!token) {
+        console.log('❌ No token found in user_data');
+        Alert.alert('Error', 'User not logged in');
+        return;
+      }
+
       // Create form data
       const formData = new FormData();
       formData.append('userId', user.id);
@@ -98,31 +116,40 @@ export default function EditProfileScreen() {
         type: `image/${fileType}`,
       } as any);
 
-      // Upload
+      console.log('📤 Uploading avatar to:', API_ENDPOINTS.PROFILE.AVATAR_UPLOAD);
+      console.log('📦 FormData userId:', user.id);
+
+      // Upload with Authorization header
       const response = await fetch(API_ENDPOINTS.PROFILE.AVATAR_UPLOAD, {
         method: 'POST',
         body: formData,
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
         },
       });
 
       const data = await response.json();
+      console.log('📥 Upload response:', JSON.stringify(data));
 
       if (response.ok && data.success) {
         Alert.alert('Success', 'Avatar uploaded successfully');
         
-        // Update user data with full backend response
-        const updatedUser = { ...user, ...data.user };
+        // Update user data with full backend response including new avatar
+        const updatedUser = { ...user, ...data.user, avatar: data.user?.avatar || data.avatarUrl };
         setUser(updatedUser);
+        console.log('✅ Avatar updated:', updatedUser.avatar);
         
-        // Update stored user
+        // Update stored user data
+        const storedData = { ...userData, ...updatedUser };
+        await AsyncStorage.setItem('user_data', JSON.stringify(storedData));
         await storeUser(updatedUser);
       } else {
+        console.log('❌ Upload failed:', data.error);
         Alert.alert('Error', data.error || 'Failed to upload avatar');
       }
     } catch (error) {
-      console.error('Avatar upload error:', error);
+      console.error('❌ Avatar upload error:', error);
       Alert.alert('Error', 'Failed to upload avatar');
     } finally {
       setUploading(false);
