@@ -40,17 +40,6 @@ module.exports = (io, socket) => {
         return;
       }
 
-      const kickCheck = await isTempKicked(username);
-      if (kickCheck.kicked && kickCheck.roomId === roomId.toString()) {
-        socket.emit('system:message', {
-          roomId,
-          message: 'You are temporarily kicked from this room',
-          timestamp: new Date().toISOString(),
-          type: 'error'
-        });
-        return;
-      }
-
       const isBanned = await banService.isBanned(userId, roomId);
       if (isBanned) {
         socket.emit('system:message', {
@@ -68,11 +57,6 @@ module.exports = (io, socket) => {
         return;
       }
 
-      if (room.is_private && room.password) {
-        socket.emit('error', { message: 'Room requires password' });
-        return;
-      }
-
       const currentUsers = await roomService.getRoomUsers(roomId);
       if (currentUsers.length >= room.max_users) {
         socket.emit('system:message', {
@@ -86,8 +70,6 @@ module.exports = (io, socket) => {
 
       socket.join(`room:${roomId}`);
       socket.join(`user:${username}`);
-      await setUserRoom(username, roomId);
-      await addRoomMember(roomId, username);
 
       await addUserRoom(username, roomId, room.name);
 
@@ -111,10 +93,48 @@ module.exports = (io, socket) => {
 
       await setRoomUsers(roomId, usersWithPresence);
 
-      // MIG33-style system message: "Indonesia: migtes4 [1] has entered"
+      // Get current users list for display
+      const currentUsersList = await getRoomUsersList(roomId);
+      const userListString = currentUsersList.join(', ');
+
+      // MIG33-style welcome messages - send to the joining user only
+      const welcomeMessages = [
+        {
+          roomId,
+          username: room.name,
+          message: `Welcome to ${room.name}...`,
+          timestamp: new Date().toISOString(),
+          type: 'system',
+          messageType: 'system'
+        },
+        {
+          roomId,
+          username: room.name,
+          message: `Currently users in the room: ${userListString}`,
+          timestamp: new Date().toISOString(),
+          type: 'system',
+          messageType: 'system'
+        },
+        {
+          roomId,
+          username: room.name,
+          message: `This room created by ${room.creator_name || 'admin'}`,
+          timestamp: new Date().toISOString(),
+          type: 'system',
+          messageType: 'system'
+        }
+      ];
+
+      // Send welcome messages to joining user
+      welcomeMessages.forEach(msg => {
+        socket.emit('chat:message', msg);
+      });
+
+      // MIG33-style enter message to all users in room
       const enterMessage = {
         roomId,
-        message: `${room.name}: ${username} [${userCount}] has entered`,
+        username: room.name,
+        message: `${username} [${userCount}] has entered`,
         timestamp: new Date().toISOString(),
         type: 'system',
         messageType: 'system'
@@ -127,11 +147,10 @@ module.exports = (io, socket) => {
         users: usersWithPresence
       });
 
-      // Send current users list to the user who just joined
-      const currentUsersList = await getRoomUsersList(roomId);
       console.log('📤 Sending room:joined event:', {
         roomId,
         roomName: room.name,
+        description: room.description,
         userCount,
         username
       });
@@ -176,11 +195,7 @@ module.exports = (io, socket) => {
       }
 
       socket.leave(`room:${roomId}`);
-      await removeUserRoom(username);
-      await removeRoomMember(roomId, username);
-
-      const { removeUserRoom: removeFromChatList } = require('../utils/redisUtils');
-      await removeFromChatList(username, roomId);
+      await removeUserRoom(username, roomId);
 
       // Remove user from Redis room tracking
       await removeUserFromRoom(roomId, username);
@@ -196,22 +211,23 @@ module.exports = (io, socket) => {
 
       await setRoomUsers(roomId, usersWithPresence);
 
-      io.to(`room:${roomId}`).emit('room:user:left', {
-        roomId,
-        username,
-        users: usersWithPresence
-      });
-
       // MIG33-style system message: "Indonesia: migtes4 [0] has left"
       const room = await roomService.getRoomById(roomId);
       const leftMessage = {
         roomId,
-        message: `${room.name}: ${username} [${userCount}] has left`,
+        username: room.name,
+        message: `${username} [${userCount}] has left`,
         timestamp: new Date().toISOString(),
         type: 'system',
         messageType: 'system'
       };
       io.to(`room:${roomId}`).emit('chat:message', leftMessage);
+
+      io.to(`room:${roomId}`).emit('room:user:left', {
+        roomId,
+        username,
+        users: usersWithPresence
+      });
 
       socket.emit('room:left', { roomId });
       socket.emit('chatlist:roomLeft', { roomId });
@@ -221,7 +237,7 @@ module.exports = (io, socket) => {
       io.emit('rooms:updateCount', {
         roomId,
         userCount: usersWithPresence.length,
-        maxUsers: room?.max_users || 50
+        maxUsers: room?.max_users || 25
       });
 
     } catch (error) {

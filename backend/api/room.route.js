@@ -184,9 +184,9 @@ router.get('/more', async (req, res) => {
 
 router.post('/create', async (req, res) => {
   try {
-    const { name, ownerId, description } = req.body;
+    const { name, ownerId, creatorName, description } = req.body;
     
-    console.log('Create room request:', { name, ownerId, description });
+    console.log('Create room request:', { name, ownerId, creatorName, description });
     
     // Validasi required fields
     if (!name) {
@@ -199,7 +199,14 @@ router.post('/create', async (req, res) => {
     if (!ownerId) {
       return res.status(400).json({ 
         success: false,
-        error: 'ownerId missing' 
+        error: 'ownerId is required' 
+      });
+    }
+    
+    if (!creatorName) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'creatorName is required' 
       });
     }
     
@@ -230,7 +237,8 @@ router.post('/create', async (req, res) => {
     // Create room dengan maxUsers fixed 25
     const room = await roomService.createRoom(
       name.trim(), 
-      ownerId, 
+      ownerId,
+      creatorName.trim(),
       description ? description.trim() : ''
     );
     
@@ -247,11 +255,11 @@ router.post('/create', async (req, res) => {
       message: 'Room created successfully',
       room: {
         id: room.id,
-        roomId: room.room_code || room.id,
-        roomCode: room.room_code,
+        roomId: room.id,
         name: room.name,
         description: room.description,
         ownerId: room.owner_id,
+        creatorName: room.creator_name,
         maxUsers: room.max_users
       }
     });

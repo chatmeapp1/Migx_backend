@@ -1,17 +1,15 @@
-import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { useThemeCustom } from '@/theme/provider';
+import React, { useRef, useEffect } from 'react';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { ChatMessage } from './ChatMessage';
 
 interface Message {
   id: string;
   username: string;
   message: string;
-  timestamp: string;
+  isOwnMessage?: boolean;
   isSystem?: boolean;
   isNotice?: boolean;
-  userType?: 'creator' | 'admin' | 'normal';
-  isOwnMessage?: boolean;
+  userType?: 'creator' | 'admin' | 'normal' | 'mentor' | 'merchant';
 }
 
 interface ChatRoomContentProps {
@@ -19,31 +17,42 @@ interface ChatRoomContentProps {
 }
 
 export function ChatRoomContent({ messages }: ChatRoomContentProps) {
-  const { theme } = useThemeCustom();
+  const flatListRef = useRef<FlatList>(null);
+
+  useEffect(() => {
+    if (messages.length > 0 && flatListRef.current) {
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [messages]);
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <ScrollView 
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-      >
-        {messages.map((msg) => (
-          <ChatMessage key={msg.id} {...msg} />
-        ))}
-        <View style={styles.spacer} />
-      </ScrollView>
-    </View>
+    <FlatList
+      ref={flatListRef}
+      data={messages}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => (
+        <ChatMessage
+          username={item.username}
+          message={item.message}
+          timestamp=""
+          isSystem={item.isSystem}
+          isNotice={item.isNotice}
+          userType={item.userType}
+          isOwnMessage={item.isOwnMessage}
+        />
+      )}
+      contentContainerStyle={styles.container}
+      onContentSizeChange={() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }}
+    />
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  spacer: {
-    height: 20,
   },
 });

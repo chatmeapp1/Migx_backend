@@ -1,7 +1,7 @@
 const { query } = require('../db/db');
 const presence = require('../utils/presence');
 
-const createRoom = async (name, ownerId, description = '') => {
+const createRoom = async (name, ownerId, creatorName, description = '') => {
   try {
     // Generate MIGX-xxxxx format room_code
     const randomDigits = Math.floor(10000 + Math.random() * 90000);
@@ -11,10 +11,10 @@ const createRoom = async (name, ownerId, description = '') => {
     const maxUsers = 25;
     
     const result = await query(
-      `INSERT INTO rooms (name, owner_id, description, max_users, room_code, created_at)
-       VALUES ($1, $2, $3, $4, $5, NOW())
+      `INSERT INTO rooms (id, name, owner_id, creator_name, description, max_users, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW())
        RETURNING *`,
-      [name, ownerId, description, maxUsers, roomCode]
+      [roomCode, name, ownerId, creatorName, description, maxUsers]
     );
     
     const roomId = result.rows[0].id;
