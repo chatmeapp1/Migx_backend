@@ -1,11 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
 import { useThemeCustom } from '@/theme/provider';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { NotificationModal } from './NotificationModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createSocket } from '@/utils/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const UserIcon = ({ size = 24, color = '#4A90E2' }: { size?: number; color?: string }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -36,6 +37,7 @@ const EggIcon = ({ size = 24, color = '#fff' }: { size?: number; color?: string 
 
 export function Header() {
   const { theme } = useThemeCustom();
+  const insets = useSafeAreaInsets();
   const [showNotifications, setShowNotifications] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
   const [username, setUsername] = useState('');
@@ -127,7 +129,8 @@ export function Header() {
   };
   
   return (
-    <View style={[styles.container, { backgroundColor: '#0a5229' }]}>
+    <View style={[styles.container, { backgroundColor: '#0a5229', paddingTop: insets.top }]}>
+      <StatusBar backgroundColor="#0a5229" barStyle="light-content" />
       <View style={[styles.topBar, { backgroundColor: '#0a5229', borderBottomColor: theme.border }]}>
         <View style={styles.leftSection}>
           <UserIcon size={20} color="#FFFFFF" />
@@ -158,9 +161,7 @@ export function Header() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    paddingTop: 0,
-  },
+  container: {},
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',

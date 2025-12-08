@@ -85,7 +85,7 @@ function CustomTabBar({ state, descriptors, navigation }: CustomTabBarProps) {
         styles.tabBar, 
         { 
           backgroundColor: isDark ? '#1A1A1A' : '#FFFFFF',
-          paddingBottom: insets.bottom || 8,
+          paddingBottom: Math.max(insets.bottom, 8),
           borderTopColor: theme.border,
         }
       ]}
