@@ -4,6 +4,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const path = require('path'); // Import path module
 
 const { connectRedis } = require('./redis');
 const { initDatabase } = require('./db/db');
@@ -227,14 +228,20 @@ app.get('/api', (req, res) => {
 
 const chatRoutes = require('./api/chat.route');
 
+// API Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
+app.use('/api/user', userRoutes);
+app.use('/api/profile', require('./api/profile.route'));
 app.use('/api/rooms', roomRoutes);
 app.use('/api/messages', messageRoutes);
-app.use('/api/credits', creditRoutes);
-app.use('/api/merchants', merchantRoutes);
+app.use('/api/credit', creditRoutes);
+app.use('/api/merchant', merchantRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/chat', chatRoutes);
+
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 
 // 404 handler - must be after all routes
 app.use((req, res, next) => {
@@ -330,6 +337,11 @@ const startServer = async () => {
 ║    - GET  /api/messages/:roomId                       ║
 ║    - POST /api/credits/transfer                       ║
 ║    - POST /api/merchants/create                       ║
+║    - POST /api/profile/upload-avatar                  ║
+║    - POST /api/profile/post                           ║
+║    - POST /api/profile/gift                           ║
+║    - GET  /api/profile/followers/:userId             ║
+║    - GET  /api/profile/following/:userId              ║
 ╠═══════════════════════════════════════════════════════╣
 ║  Socket Events:                                       ║
 ║    - join_room, leave_room                            ║

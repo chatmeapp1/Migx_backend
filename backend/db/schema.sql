@@ -41,6 +41,39 @@ CREATE TABLE IF NOT EXISTS room_admins (
   UNIQUE(room_id, user_id)
 );
 
+-- User posts table
+CREATE TABLE IF NOT EXISTS user_posts (
+  id BIGSERIAL PRIMARY KEY,
+  user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  image_url VARCHAR(255),
+  likes_count INTEGER DEFAULT 0,
+  comments_count INTEGER DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- User gifts table
+CREATE TABLE IF NOT EXISTS user_gifts (
+  id BIGSERIAL PRIMARY KEY,
+  sender_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+  receiver_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+  gift_name VARCHAR(100) NOT NULL,
+  gift_icon VARCHAR(50),
+  gift_cost INTEGER DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- User follows table
+CREATE TABLE IF NOT EXISTS user_follows (
+  id BIGSERIAL PRIMARY KEY,
+  follower_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+  following_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(follower_id, following_id),
+  CHECK (follower_id != following_id)
+);
+
 -- Messages table
 CREATE TABLE IF NOT EXISTS messages (
   id BIGSERIAL PRIMARY KEY,
