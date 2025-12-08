@@ -1,110 +1,56 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useThemeCustom } from '@/theme/provider';
 import { ContactItem } from './ContactItem';
-import { API_URL } from '@/utils/api';
 
 type PresenceStatus = 'online' | 'away' | 'busy' | 'offline';
 
 interface Contact {
-  id: string;
   name: string;
   status: string;
   presence: PresenceStatus;
   lastSeen: string;
   avatar: string;
-  role?: string;
 }
+
+const onlineFriends: Contact[] = [
+  { name: 'acun', status: '👑', presence: 'online', lastSeen: 'Last seen 04-Dec 17:30', avatar: '👤' },
+  { name: 'adit_namaq', status: 'sedang mengetik.....l', presence: 'online', lastSeen: 'Last seen 04-Dec 17:28', avatar: '👤' },
+  { name: 'bri', status: 'enter ( cebol sedunia )', presence: 'away', lastSeen: 'Last seen 04-Dec 16:45', avatar: '👤' },
+  { name: 'dee', status: '🏰Togel chātröõm', presence: 'offline', lastSeen: 'Last seen 04-Dec 15:20', avatar: '👤' },
+  { name: 'dessy', status: '😀', presence: 'busy', lastSeen: 'Last seen 04-Dec 17:25', avatar: '👤' },
+  { name: 'ecca', status: 'it\'s a dog🐶', presence: 'online', lastSeen: 'Last seen 04-Dec 17:29', avatar: '👤' },
+  { name: 'gita', status: 'I ❤️ YOU', presence: 'offline', lastSeen: 'Last seen 04-Dec 14:10', avatar: '👤' },
+  { name: 'glez', status: '💕 M♡rЯÿ♡r♡ 💕', presence: 'online', lastSeen: 'Last seen 04-Dec 17:31', avatar: '👤' },
+  { name: 'jib', status: 'MultiGram of War', presence: 'away', lastSeen: 'Last seen 04-Dec 17:27', avatar: '👤' },
+  { name: 'jova', status: '💘💘💘💘💘', presence: 'online', lastSeen: 'Last seen 04-Dec 17:32', avatar: '👤' },
+];
+
+const mig33Contacts: Contact[] = [
+  { name: 'l________', status: 'No pain no gain', presence: 'online', lastSeen: 'Last seen 04-Dec 17:15', avatar: '👤' },
+  { name: 'litz____', status: 'dapat jg orkor, wlpn of di teguin on wkwk', presence: 'busy', lastSeen: 'Last seen 04-Dec 12:30', avatar: '👤' },
+  { name: 'm________', status: 'عَ۞تبنَنہيک شَيُوَتہ،او مَےَوتہ ووَ', presence: 'offline', lastSeen: 'Last seen 04-Dec 10:20', avatar: '👤' },
+  { name: 'q______', status: '???', presence: 'away', lastSeen: 'Last seen 04-Dec 08:45', avatar: '👤' },
+];
 
 export function ContactList() {
   const { theme } = useThemeCustom();
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadUserId();
-  }, []);
-
-  useEffect(() => {
-    if (userId) {
-      fetchContacts();
-    }
-  }, [userId]);
-
-  const loadUserId = async () => {
-    try {
-      const storedUserId = await AsyncStorage.getItem('userId');
-      setUserId(storedUserId);
-    } catch (error) {
-      console.error('Error loading user ID:', error);
-    }
-  };
-
-  const fetchContacts = async () => {
-    if (!userId) return;
-    
-    try {
-      setLoading(true);
-      const response = await fetch(`${API_URL}/api/users/${userId}/contacts`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch contacts');
-      }
-      
-      const data = await response.json();
-      
-      const formattedContacts: Contact[] = data.contacts.map((contact: any) => ({
-        id: contact.id,
-        name: contact.username,
-        status: contact.status_message || '',
-        presence: mapStatusToPresence(contact.status),
-        lastSeen: 'Online',
-        avatar: contact.avatar || '👤',
-        role: contact.role
-      }));
-      
-      setContacts(formattedContacts);
-    } catch (error) {
-      console.error('Error fetching contacts:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const mapStatusToPresence = (status: string): PresenceStatus => {
-    switch (status) {
-      case 'online':
-        return 'online';
-      case 'away':
-        return 'away';
-      case 'busy':
-        return 'busy';
-      default:
-        return 'offline';
-    }
-  };
 
   const handleContactPress = (contact: Contact) => {
+    // Placeholder for handling contact press event
     console.log(`Contact ${contact.name} pressed`);
   };
 
   const updateStatusMessage = async (contactName: string, newStatus: string) => {
+    // Placeholder for API call to update status message
     console.log(`Updating status for ${contactName} to: ${newStatus}`);
+    // In a real application, you would make an API call here.
+    // For now, we'll simulate a delay and then update the local state if needed.
+    await new Promise(resolve => setTimeout(resolve, 500));
+    console.log(`Status for ${contactName} updated successfully.`);
+    // Here you would typically re-fetch contacts or update the specific contact's status
+    // For demonstration purposes, we'll assume the update is successful.
   };
-
-  if (loading) {
-    return (
-      <View style={[styles.container, styles.loadingContainer, { backgroundColor: theme.background }]}>
-        <ActivityIndicator size="large" color={theme.primary} />
-        <Text style={[styles.loadingText, { color: theme.text }]}>Loading contacts...</Text>
-      </View>
-    );
-  }
-
-  const onlineContacts = contacts.filter(c => c.presence === 'online');
-  const otherContacts = contacts.filter(c => c.presence !== 'online');
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.background }]} showsVerticalScrollIndicator={false}>
@@ -112,51 +58,39 @@ export function ContactList() {
         <Text style={[styles.sectionTitle, { color: theme.secondary }]}>Email (0)</Text>
       </View>
 
-      {onlineContacts.length > 0 && (
-        <View style={styles.section}>
-          {onlineContacts.map((contact) => (
-            <ContactItem
-              key={`online-${contact.id}`}
-              name={contact.name}
-              status={contact.status}
-              presence={contact.presence}
-              lastSeen={contact.lastSeen}
-              avatar={contact.avatar}
-              onPress={() => handleContactPress(contact)}
-              onStatusUpdate={(newStatus) => updateStatusMessage(contact.name, newStatus)}
-            />
-          ))}
-        </View>
-      )}
-
-      <View style={[styles.sectionHeader, { backgroundColor: theme.card, borderColor: theme.border, borderWidth: 1 }]}>
-        <Text style={[styles.sectionTitle, { color: theme.secondary }]}>
-          migx Contacts ({contacts.length})
-        </Text>
+      <View style={styles.section}>
+        {onlineFriends.map((friend, index) => (
+          <ContactItem
+            key={`online-${index}`}
+            name={friend.name}
+            status={friend.status}
+            presence={friend.presence}
+            lastSeen={friend.lastSeen}
+            avatar={friend.avatar}
+            onPress={() => handleContactPress(friend)}
+            onStatusUpdate={(newStatus) => updateStatusMessage(friend.name, newStatus)}
+          />
+        ))}
       </View>
 
-      {otherContacts.length > 0 ? (
-        <View style={styles.section}>
-          {otherContacts.map((contact) => (
-            <ContactItem
-              key={`contact-${contact.id}`}
-              name={contact.name}
-              status={contact.status}
-              presence={contact.presence}
-              lastSeen={contact.lastSeen}
-              avatar={contact.avatar}
-              onPress={() => handleContactPress(contact)}
-              onStatusUpdate={(newStatus) => updateStatusMessage(contact.name, newStatus)}
-            />
-          ))}
-        </View>
-      ) : (
-        <View style={styles.section}>
-          <Text style={[styles.emptyText, { color: theme.secondary }]}>
-            No contacts yet. Search and add users to your contact list.
-          </Text>
-        </View>
-      )}
+      <View style={[styles.sectionHeader, { backgroundColor: theme.card, borderColor: theme.border, borderWidth: 1 }]}>
+        <Text style={[styles.sectionTitle, { color: theme.secondary }]}>migx Contacts (0/33)</Text>
+      </View>
+
+      <View style={styles.section}>
+        {mig33Contacts.map((contact, index) => (
+          <ContactItem
+            key={`mig33-${index}`}
+            name={contact.name}
+            status={contact.status}
+            presence={contact.presence}
+            lastSeen={contact.lastSeen}
+            avatar={contact.avatar}
+            onPress={() => handleContactPress(contact)}
+            onStatusUpdate={(newStatus) => updateStatusMessage(contact.name, newStatus)}
+          />
+        ))}
+      </View>
       <View style={styles.spacer} />
     </ScrollView>
   );
@@ -165,14 +99,6 @@ export function ContactList() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  loadingContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
   },
   section: {
     paddingVertical: 4,
@@ -186,12 +112,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-  },
-  emptyText: {
-    padding: 16,
-    textAlign: 'center',
-    fontSize: 14,
-    fontStyle: 'italic',
   },
   spacer: {
     height: 20,

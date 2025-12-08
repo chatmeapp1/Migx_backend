@@ -482,68 +482,6 @@ const updateStatusMessage = async (userId, statusMessage) => {
   }
 };
 
-const addContact = async (userId, contactUserId) => {
-  try {
-    const result = await query(
-      `INSERT INTO contacts (user_id, contact_user_id)
-       VALUES ($1, $2)
-       ON CONFLICT (user_id, contact_user_id) DO NOTHING
-       RETURNING *`,
-      [userId, contactUserId]
-    );
-    return result.rows[0];
-  } catch (error) {
-    console.error('Error adding contact:', error);
-    return null;
-  }
-};
-
-const removeContact = async (userId, contactUserId) => {
-  try {
-    const result = await query(
-      `DELETE FROM contacts
-       WHERE user_id = $1 AND contact_user_id = $2
-       RETURNING *`,
-      [userId, contactUserId]
-    );
-    return result.rows[0];
-  } catch (error) {
-    console.error('Error removing contact:', error);
-    return null;
-  }
-};
-
-const getContacts = async (userId) => {
-  try {
-    const result = await query(
-      `SELECT u.id, u.username, u.avatar, u.status, u.status_message, u.role
-       FROM contacts c
-       JOIN users u ON c.contact_user_id = u.id
-       WHERE c.user_id = $1
-       ORDER BY u.username`,
-      [userId]
-    );
-    return result.rows;
-  } catch (error) {
-    console.error('Error getting contacts:', error);
-    return [];
-  }
-};
-
-const isContact = async (userId, contactUserId) => {
-  try {
-    const result = await query(
-      `SELECT * FROM contacts
-       WHERE user_id = $1 AND contact_user_id = $2`,
-      [userId, contactUserId]
-    );
-    return result.rows.length > 0;
-  } catch (error) {
-    console.error('Error checking contact:', error);
-    return false;
-  }
-};
-
 module.exports = {
   createUser,
   createUserWithRegistration,
@@ -575,9 +513,5 @@ module.exports = {
   storeForgotPasswordOtp,
   verifyForgotPasswordOtp,
   deleteForgotPasswordOtp,
-  updateStatusMessage,
-  addContact,
-  removeContact,
-  getContacts,
-  isContact
+  updateStatusMessage
 };

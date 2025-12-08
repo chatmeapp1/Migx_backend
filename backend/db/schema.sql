@@ -164,15 +164,6 @@ CREATE TABLE IF NOT EXISTS forgot_password_otp (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Contacts table for follow system
-CREATE TABLE IF NOT EXISTS contacts (
-  id BIGSERIAL PRIMARY KEY,
-  user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
-  contact_user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(user_id, contact_user_id)
-);
-
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_messages_room_id ON messages(room_id);
 CREATE INDEX IF NOT EXISTS idx_messages_created_at ON messages(created_at);
@@ -182,8 +173,6 @@ CREATE INDEX IF NOT EXISTS idx_credit_logs_to_user ON credit_logs(to_user_id);
 CREATE INDEX IF NOT EXISTS idx_merchant_spend_logs_merchant ON merchant_spend_logs(merchant_id);
 CREATE INDEX IF NOT EXISTS idx_game_history_user ON game_history(user_id);
 CREATE INDEX IF NOT EXISTS idx_room_bans_room_id ON room_bans(room_id);
-CREATE INDEX IF NOT EXISTS idx_contacts_user_id ON contacts(user_id);
-CREATE INDEX IF NOT EXISTS idx_contacts_contact_user_id ON contacts(contact_user_id);
 
 
 -- Insert default rooms (only if they don't exist)
