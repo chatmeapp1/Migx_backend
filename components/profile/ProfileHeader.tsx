@@ -33,7 +33,7 @@ export function ProfileHeader({ avatar, username, level, onEditPress }: ProfileH
   const { theme } = useThemeCustom();
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.primary }]}>
+    <View style={[styles.container, { backgroundColor: '#1B5E20' }]}>
       <View style={styles.headerContent}>
         <View style={styles.leftSection}>
           <View style={styles.avatarContainer}>
