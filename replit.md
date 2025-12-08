@@ -136,7 +136,7 @@ app/
 
 ### API Configuration
 - **Centralized API utility** at `utils/api.ts` with base URL and endpoints
-- **API Base URL**: `https://1c055300-4b0f-4d99-8511-14d526f50594-00-12yiom0ahzwge.sisko.replit.dev:3000`
+- **API Base URL**: `https://c1a0709e-b20d-4687-ab11-e0584b9914f2-00-pfaqheie55z6.pike.replit.dev`
 - All API calls should use `API_ENDPOINTS` from `utils/api.ts`
 - Socket.IO connection also uses `API_BASE_URL` (default export from `utils/api.ts`)
 
