@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db/db');
-const { authenticateToken } = require('../middleware/auth');
+const authMiddleware = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -39,7 +39,7 @@ const upload = multer({
 });
 
 // Get feed posts with pagination
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query;
     const offset = (page - 1) * limit;
@@ -83,7 +83,7 @@ router.get('/', authenticateToken, async (req, res) => {
 });
 
 // Create new post
-router.post('/create', authenticateToken, upload.single('image'), async (req, res) => {
+router.post('/create', authMiddleware, upload.single('image'), async (req, res) => {
   try {
     const { content } = req.body;
     const userId = req.user.id;
@@ -112,7 +112,7 @@ router.post('/create', authenticateToken, upload.single('image'), async (req, re
 });
 
 // Like/Unlike post
-router.post('/:postId/like', authenticateToken, async (req, res) => {
+router.post('/:postId/like', authMiddleware, async (req, res) => {
   try {
     const { postId } = req.params;
     const userId = req.user.id;
@@ -137,7 +137,7 @@ router.post('/:postId/like', authenticateToken, async (req, res) => {
 });
 
 // Get comments for a post
-router.get('/:postId/comments', authenticateToken, async (req, res) => {
+router.get('/:postId/comments', authMiddleware, async (req, res) => {
   try {
     const { postId } = req.params;
 
@@ -165,7 +165,7 @@ router.get('/:postId/comments', authenticateToken, async (req, res) => {
 });
 
 // Add comment to post
-router.post('/:postId/comment', authenticateToken, async (req, res) => {
+router.post('/:postId/comment', authMiddleware, async (req, res) => {
   try {
     const { postId } = req.params;
     const { content } = req.body;
@@ -194,7 +194,7 @@ router.post('/:postId/comment', authenticateToken, async (req, res) => {
 });
 
 // Delete post
-router.delete('/:postId', authenticateToken, async (req, res) => {
+router.delete('/:postId', authMiddleware, async (req, res) => {
   try {
     const { postId } = req.params;
     const userId = req.user.id;
