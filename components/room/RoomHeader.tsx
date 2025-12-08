@@ -27,21 +27,21 @@ export function RoomHeader() {
   const { theme } = useThemeCustom();
   
   return (
-    <View style={[styles.container, { backgroundColor: theme.card }]}>
-      <View style={[styles.topBar, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
+    <View style={[styles.container, { backgroundColor: '#1B5E20' }]}>
+      <View style={[styles.topBar, { backgroundColor: '#1B5E20', borderBottomColor: theme.border }]}>
         <View style={styles.leftSection}>
-          <HomeIcon size={20} color={theme.primary} />
-          <Text style={[styles.title, { color: theme.text }]}>Chat Rooms</Text>
+          <HomeIcon size={20} color="#FFFFFF" />
+          <Text style={[styles.title, { color: '#FFFFFF' }]}>Chat Rooms</Text>
         </View>
         <View style={styles.rightSection}>
-          <TouchableOpacity style={[styles.iconButton, { backgroundColor: theme.primary }]}>
-            <ChatIcon size={18} color={theme.background} />
+          <TouchableOpacity style={[styles.iconButton, { backgroundColor: '#0a5229' }]}>
+            <ChatIcon size={18} color="#FFFFFF" />
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.iconButton, { backgroundColor: theme.primary }]}>
-            <MenuIcon size={18} color={theme.background} />
+          <TouchableOpacity style={[styles.iconButton, { backgroundColor: '#0a5229' }]}>
+            <MenuIcon size={18} color="#FFFFFF" />
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.iconButton, { backgroundColor: theme.primary }]}>
-            <MenuIcon size={18} color={theme.background} />
+          <TouchableOpacity style={[styles.iconButton, { backgroundColor: '#0a5229' }]}>
+            <MenuIcon size={18} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </View>
