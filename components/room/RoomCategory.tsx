@@ -6,6 +6,7 @@ import Svg, { Path } from 'react-native-svg';
 import { RoomItem } from './RoomItem';
 
 interface Room {
+  id: string;
   name: string;
   userCount: string;
 }
@@ -56,7 +57,8 @@ export function RoomCategory({ title, rooms, backgroundColor = '#B8E6F7', isSpec
         <View style={styles.roomList}>
           {rooms.map((room, index) => (
             <RoomItem
-              key={index}
+              key={room.id || index}
+              id={room.id}
               name={room.name}
               userCount={room.userCount}
             />

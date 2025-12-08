@@ -6,6 +6,7 @@ import { useThemeCustom } from '@/theme/provider';
 import Svg, { Circle } from 'react-native-svg';
 
 interface RoomItemProps {
+  id: string;
   name: string;
   userCount: string;
 }
@@ -16,14 +17,14 @@ const RoomIcon = ({ size = 18, color = '#4A90E2' }: { size?: number; color?: str
   </Svg>
 );
 
-export function RoomItem({ name, userCount }: RoomItemProps) {
+export function RoomItem({ id, name, userCount }: RoomItemProps) {
   const router = useRouter();
   const { theme } = useThemeCustom();
 
   const handlePress = () => {
     router.push({
       pathname: '/chatroom/[id]',
-      params: { id: name.toLowerCase().replace(/\s+/g, '-'), name },
+      params: { id, name },
     });
   };
 
