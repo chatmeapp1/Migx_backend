@@ -1,6 +1,7 @@
 const { getRedisClient } = require('../redis');
 
-const DEFAULT_TTL = 300;
+const FLOOD_TTL = 3;
+const FLOOD_LIMIT = 4;
 
 const FLOOD_KEY = (username) => `flood:${username}`;
 const GLOBAL_RATE_KEY = (userId) => `rate:global:${userId}`;
@@ -14,14 +15,16 @@ const checkFlood = async (username) => {
       return { allowed: true };
     }
     const key = FLOOD_KEY(username);
-    const exists = await client.exists(key);
-
-    if (exists) {
+    const count = await client.incr(key);
+    
+    if (count === 1) {
+      await client.expire(key, FLOOD_TTL);
+    }
+    
+    if (count > FLOOD_LIMIT) {
       return { allowed: false, message: 'Slow down! Wait a moment before sending another message.' };
     }
-
-    await client.set(key, '1');
-    await client.expire(key, DEFAULT_TTL);
+    
     return { allowed: true };
   } catch (error) {
     console.error('Error checking flood:', error);
@@ -127,5 +130,6 @@ module.exports = {
   resetFlood,
   checkTransferLimit,
   checkGameLimit,
-  DEFAULT_TTL
+  FLOOD_TTL,
+  FLOOD_LIMIT
 };

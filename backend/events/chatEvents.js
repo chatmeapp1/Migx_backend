@@ -20,9 +20,12 @@ module.exports = (io, socket) => {
       
       const floodCheck = await checkFlood(username);
       if (!floodCheck.allowed) {
+        const roomService = require('../services/roomService');
+        const roomInfo = await roomService.getRoomById(roomId);
+        const roomName = roomInfo?.name || roomId;
         socket.emit('system:message', {
           roomId,
-          message: floodCheck.message,
+          message: `${roomName} : Slow down! Wait a moment before sending another message.`,
           timestamp: new Date().toISOString(),
           type: 'warning'
         });
