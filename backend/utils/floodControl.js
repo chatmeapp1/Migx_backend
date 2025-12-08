@@ -11,11 +11,11 @@ const checkFlood = async (username) => {
   try {
     const key = FLOOD_KEY(username);
     const exists = await client.exists(key);
-    
+
     if (exists) {
       return { allowed: false, message: 'Slow down! Wait a moment before sending another message.' };
     }
-    
+
     await client.set(key, '1');
     await client.expire(key, DEFAULT_TTL);
     return { allowed: true };
@@ -29,11 +29,11 @@ const checkGlobalRateLimit = async (userId) => {
   try {
     const key = GLOBAL_RATE_KEY(userId);
     const count = await client.incr(key);
-    
+
     if (count === 1) {
       await client.expire(key, GLOBAL_RATE_WINDOW);
     }
-    
+
     if (count > GLOBAL_RATE_LIMIT) {
       const ttl = await client.ttl(key);
       return { 
@@ -42,7 +42,7 @@ const checkGlobalRateLimit = async (userId) => {
         retryAfter: ttl
       };
     }
-    
+
     return { allowed: true, remaining: GLOBAL_RATE_LIMIT - count };
   } catch (error) {
     console.error('Error checking global rate limit:', error);
@@ -65,15 +65,15 @@ const checkTransferLimit = async (userId) => {
   try {
     const key = `transfer:limit:${userId}`;
     const count = await client.incr(key);
-    
+
     if (count === 1) {
       await client.expire(key, 60);
     }
-    
+
     if (count > 5) {
       return { allowed: false, message: 'Transfer limit reached. Maximum 5 transfers per minute.' };
     }
-    
+
     return { allowed: true, remaining: 5 - count };
   } catch (error) {
     console.error('Error checking transfer limit:', error);
@@ -85,15 +85,15 @@ const checkGameLimit = async (userId) => {
   try {
     const key = `game:limit:${userId}`;
     const count = await client.incr(key);
-    
+
     if (count === 1) {
       await client.expire(key, 10);
     }
-    
+
     if (count > 3) {
       return { allowed: false, message: 'Please wait before playing again.' };
     }
-    
+
     return { allowed: true };
   } catch (error) {
     console.error('Error checking game limit:', error);

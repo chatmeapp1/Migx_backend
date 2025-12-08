@@ -320,14 +320,25 @@ const addUserRoom = async (username, roomId, roomName) => {
 const removeUserRoom = async (username, roomId) => {
   try {
     const redis = getRedisClient();
-    const rooms = await redis.smembers(`user:rooms:${username}`);
+    if (!redis || !redis.smembers) {
+      return true;
+    }
+
+    const userRoomsKey = `user:${username}:rooms`;
+    const rooms = await redis.smembers(userRoomsKey);
+
     for (const room of rooms) {
-      const data = JSON.parse(room);
-      if (data.roomId === roomId) {
-        await redis.srem(`user:rooms:${username}`, room);
-        break;
+      try {
+        const roomData = JSON.parse(room);
+        if (roomData.roomId === roomId) {
+          await redis.srem(userRoomsKey, room);
+          break;
+        }
+      } catch (e) {
+        // Skip invalid JSON
       }
     }
+
     return true;
   } catch (error) {
     console.error('Error removing user room:', error);

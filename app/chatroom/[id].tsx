@@ -51,7 +51,12 @@ export default function ChatRoomScreen() {
     description: string;
     creatorName: string;
     currentUsers: string[];
-  } | null>(null);
+  } | null>({
+    name: roomName,
+    description: '',
+    creatorName: '',
+    currentUsers: []
+  });
   const [kickModalVisible, setKickModalVisible] = useState(false);
   const [selectedUserToKick, setSelectedUserToKick] = useState<string | null>(null);
   const [participantsModalVisible, setParticipantsModalVisible] = useState(false); // State for participants modal
@@ -105,12 +110,18 @@ export default function ChatRoomScreen() {
           setTabs(copy);
         }
         
-        // Save room info
+        // Update room info
         setRoomInfo({
           name: data.room.name,
-          description: data.room.description || '',
-          creatorName: data.room.creator_name || 'admin',
+          description: data.room.description || 'Welcome to this chat room',
+          creatorName: data.room.creator_name || data.room.owner_name || 'admin',
           currentUsers: data.currentUsers || []
+        });
+        
+        console.log('📋 Room info updated:', {
+          name: data.room.name,
+          description: data.room.description,
+          creator: data.room.creator_name || data.room.owner_name
         });
       }
     });

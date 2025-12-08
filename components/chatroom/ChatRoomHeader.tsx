@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
   roomName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#FF8C00', // Orange color
   },
   roomInfoContainer: {
     marginTop: 4,
