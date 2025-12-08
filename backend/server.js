@@ -244,6 +244,10 @@ app.use('/api/merchant', merchantRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/chat', chatRoutes);
 
+const announcementRoute = require('./api/announcement.route');
+app.use('/api/announcements', announcementRoute);
+
+
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
@@ -348,13 +352,8 @@ const startServer = async () => {
 ║    - GET  /api/profile/followers/:userId             ║
 ║    - GET  /api/profile/following/:userId              ║
 ║    - GET  /api/viewprofile/:userId                    ║
-╠═══════════════════════════════════════════════════════╣
-║  Socket Events:                                       ║
-║    - join_room, leave_room                            ║
-║    - chat:message, pm:send                            ║
-║    - credit:transfer                                  ║
-║    - game:play, game:result                           ║
-║    - merchant:create, merchant:spend                  ║
+║    - POST /api/announcements/create                   ║
+║    - GET  /api/announcements                          ║
 ╚═══════════════════════════════════════════════════════╝
       `);
     });

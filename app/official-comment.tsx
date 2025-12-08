@@ -1,9 +1,10 @@
 
-import React from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useThemeCustom } from '@/theme/provider';
 import Svg, { Path, Circle } from 'react-native-svg';
+import { API_ENDPOINTS } from '@/utils/api';
 
 const CloseIcon = ({ size = 24, color = '#4A90E2' }: { size?: number; color?: string }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -21,13 +22,75 @@ const CalendarIcon = ({ size = 20, color = '#888' }: { size?: number; color?: st
   </Svg>
 );
 
+interface Announcement {
+  id: number;
+  title: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export default function OfficialCommentScreen() {
   const { theme } = useThemeCustom();
   const router = useRouter();
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchAnnouncements = async () => {
+    try {
+      const response = await fetch(API_ENDPOINTS.ANNOUNCEMENT.LIST);
+      const data = await response.json();
+      
+      if (data.announcements) {
+        setAnnouncements(data.announcements);
+      }
+    } catch (error) {
+      console.error('Error fetching announcements:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAnnouncements();
+  }, []);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchAnnouncements();
+  };
 
   const handleClose = () => {
     router.back();
   };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric' 
+    };
+    return date.toLocaleDateString('en-US', options);
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <View style={[styles.header, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
+          <Text style={[styles.headerTitle, { color: theme.primary }]}>Official Announcements</Text>
+          <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
+            <CloseIcon size={32} color={theme.primary} />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.primary} />
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -38,39 +101,41 @@ export default function OfficialCommentScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <View style={[styles.announcementCard, { backgroundColor: theme.card }]}>
-          <Text style={[styles.announcementTitle, { color: theme.text }]}>Welcome migx community</Text>
-          <Text style={[styles.announcementText, { color: theme.secondary }]}>
-            Coming soon migx chat community
-          </Text>
-          <View style={styles.dateContainer}>
-            <CalendarIcon size={18} color={theme.secondary} />
-            <Text style={[styles.dateText, { color: theme.secondary }]}>Nov 30, 2025</Text>
+      <ScrollView 
+        style={styles.scrollView} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={theme.primary}
+          />
+        }
+      >
+        {announcements.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={[styles.emptyText, { color: theme.secondary }]}>
+              No announcements yet
+            </Text>
           </View>
-        </View>
-
-        <View style={[styles.announcementCard, { backgroundColor: theme.card }]}>
-          <Text style={[styles.announcementTitle, { color: theme.text }]}>Account Verification</Text>
-          <Text style={[styles.announcementText, { color: theme.secondary }]}>
-            We inform all users since we activated the Email verification system, We ask all users to verify their account by sending a...
-          </Text>
-          <View style={styles.dateContainer}>
-            <CalendarIcon size={18} color={theme.secondary} />
-            <Text style={[styles.dateText, { color: theme.secondary }]}>Nov 30, 2025</Text>
-          </View>
-        </View>
-
-        <View style={[styles.announcementCard, { backgroundColor: theme.card }]}>
-          <Text style={[styles.announcementTitle, { color: theme.text }]}>Official Contest</Text>
-          <Text style={[styles.announcementText, { color: theme.secondary }]}>
-            Perhatian ‼️ Mohon maaf atas ketidaknyamanan ini. Kami memberitahukan bahwa event 8Ball haru...
-          </Text>
-          <View style={styles.dateContainer}>
-            <CalendarIcon size={18} color={theme.secondary} />
-            <Text style={[styles.dateText, { color: theme.secondary }]}>Nov 30, 2025</Text>
-          </View>
-        </View>
+        ) : (
+          announcements.map((announcement) => (
+            <View key={announcement.id} style={[styles.announcementCard, { backgroundColor: theme.card }]}>
+              <Text style={[styles.announcementTitle, { color: theme.text }]}>
+                {announcement.title}
+              </Text>
+              <Text style={[styles.announcementText, { color: theme.secondary }]}>
+                {announcement.content}
+              </Text>
+              <View style={styles.dateContainer}>
+                <CalendarIcon size={18} color={theme.secondary} />
+                <Text style={[styles.dateText, { color: theme.secondary }]}>
+                  {formatDate(announcement.created_at)}
+                </Text>
+              </View>
+            </View>
+          ))
+        )}
       </ScrollView>
     </View>
   );
@@ -100,6 +165,21 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 16,
     paddingTop: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyText: {
+    fontSize: 16,
+    fontStyle: 'italic',
   },
   announcementCard: {
     borderRadius: 12,

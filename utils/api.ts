@@ -49,6 +49,13 @@ export const API_ENDPOINTS = {
     GET: (userId: string, viewerId?: string) => 
       `${API_BASE_URL}/api/viewprofile/${userId}${viewerId ? `?viewerId=${viewerId}` : ''}`,
   },
+  ANNOUNCEMENT: {
+    LIST: `${API_BASE_URL}/api/announcements`,
+    GET: (id: string) => `${API_BASE_URL}/api/announcements/${id}`,
+    CREATE: `${API_BASE_URL}/api/announcements/create`,
+    UPDATE: (id: string) => `${API_BASE_URL}/api/announcements/${id}`,
+    DELETE: (id: string) => `${API_BASE_URL}/api/announcements/${id}`,
+  },
   ROOM: {
     LIST: `${API_BASE_URL}/api/rooms`,
     CREATE: `${API_BASE_URL}/api/rooms/create`,
