@@ -36,35 +36,7 @@ export function ChatRoomContent({ messages, roomInfo }: ChatRoomContentProps) {
   }, [messages]);
 
   const buildMessagesWithRoomInfo = () => {
-    if (!roomInfo) return messages;
-
-    const roomInfoMessages: Message[] = [];
-    const roomName = roomInfo.name || 'Room';
-
-    if (roomInfo.description) {
-      roomInfoMessages.push({
-        id: 'room-info-welcome',
-        username: roomName,
-        message: roomInfo.description,
-        isSystem: true,
-      });
-    }
-
-    roomInfoMessages.push({
-      id: 'room-info-users',
-      username: roomName,
-      message: `Currently users in the room: ${roomInfo.currentUsers.length > 0 ? roomInfo.currentUsers.join(', ') : 'No users'}`,
-      isSystem: true,
-    });
-
-    roomInfoMessages.push({
-      id: 'room-info-managed',
-      username: roomName,
-      message: `This room is managed by ${roomInfo.creatorName || 'Unknown'}`,
-      isSystem: true,
-    });
-
-    return [...roomInfoMessages, ...messages];
+    return messages;
   };
 
   const allMessages = buildMessagesWithRoomInfo();

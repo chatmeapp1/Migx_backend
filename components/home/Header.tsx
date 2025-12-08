@@ -100,7 +100,7 @@ export function Header() {
     
     try {
       const response = await fetch(
-        `https://c1a0709e-b20d-4687-ab11-e0584b9914f2-00-pfaqheie55z6.pike.replit.dev/${username}/count`
+        `https://9212ae89-43be-4a31-98db-f91f871d81be-00-xbc1oair0gwx.pike.replit.dev/${username}/count`
       );
       const data = await response.json();
       setNotificationCount(data.count || 0);

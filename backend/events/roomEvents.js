@@ -108,7 +108,7 @@ module.exports = (io, socket) => {
       // MIG33-style welcome messages - send to the joining user only
       const welcomeMsg1 = `Welcome to ${room.name}...`;
       const welcomeMsg2 = `Currently users in the room: ${userListString}`;
-      const welcomeMsg3 = `This room created by ${room.creator_name || 'admin'}`;
+      const welcomeMsg3 = `This room is managed by ${room.owner_name || room.creator_name || 'admin'}`;
 
       // Send welcome messages immediately
       socket.emit('chat:message', {

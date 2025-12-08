@@ -1,4 +1,4 @@
-const { client } = require('../redis');
+const { getRedisClient } = require('../redis');
 
 const DEFAULT_TTL = 300;
 
@@ -9,6 +9,10 @@ const GLOBAL_RATE_WINDOW = 60;
 
 const checkFlood = async (username) => {
   try {
+    const client = getRedisClient();
+    if (!client) {
+      return { allowed: true };
+    }
     const key = FLOOD_KEY(username);
     const exists = await client.exists(key);
 
@@ -27,6 +31,10 @@ const checkFlood = async (username) => {
 
 const checkGlobalRateLimit = async (userId) => {
   try {
+    const client = getRedisClient();
+    if (!client) {
+      return { allowed: true };
+    }
     const key = GLOBAL_RATE_KEY(userId);
     const count = await client.incr(key);
 
@@ -52,6 +60,10 @@ const checkGlobalRateLimit = async (userId) => {
 
 const resetFlood = async (username) => {
   try {
+    const client = getRedisClient();
+    if (!client) {
+      return true;
+    }
     const key = FLOOD_KEY(username);
     await client.del(key);
     return true;
@@ -63,6 +75,10 @@ const resetFlood = async (username) => {
 
 const checkTransferLimit = async (userId) => {
   try {
+    const client = getRedisClient();
+    if (!client) {
+      return { allowed: true };
+    }
     const key = `transfer:limit:${userId}`;
     const count = await client.incr(key);
 
@@ -83,6 +99,10 @@ const checkTransferLimit = async (userId) => {
 
 const checkGameLimit = async (userId) => {
   try {
+    const client = getRedisClient();
+    if (!client) {
+      return { allowed: true };
+    }
     const key = `game:limit:${userId}`;
     const count = await client.incr(key);
 

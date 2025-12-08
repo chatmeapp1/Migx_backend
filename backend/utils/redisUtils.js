@@ -103,7 +103,7 @@ const removeSession = async (username) => {
 const getRoomMembers = async (roomId) => {
   try {
     const redis = getRedisClient();
-    const members = await redis.smembers(`room:${roomId}:members`);
+    const members = await redis.sMembers(`room:${roomId}:members`);
     return members || [];
   } catch (error) {
     console.error('Error getting room members:', error);
@@ -114,7 +114,7 @@ const getRoomMembers = async (roomId) => {
 const addRoomMember = async (roomId, username) => {
   try {
     const redis = getRedisClient();
-    await redis.sadd(`room:${roomId}:members`, username);
+    await redis.sAdd(`room:${roomId}:members`, username);
     await redis.expire(`room:${roomId}:members`, DEFAULT_TTL);
     return true;
   } catch (error) {
@@ -126,7 +126,7 @@ const addRoomMember = async (roomId, username) => {
 const removeRoomMember = async (roomId, username) => {
   try {
     const redis = getRedisClient();
-    await redis.srem(`room:${roomId}:members`, username);
+    await redis.sRem(`room:${roomId}:members`, username);
     return true;
   } catch (error) {
     console.error('Error removing room member:', error);
@@ -141,7 +141,7 @@ const setRoomUsers = async (roomId, users) => {
     await redis.del(key);
     if (users.length > 0) {
       const userData = users.map(u => JSON.stringify(u));
-      await redis.sadd(key, ...userData);
+      await redis.sAdd(key, ...userData);
       await redis.expire(key, DEFAULT_TTL);
     }
     return true;
@@ -154,7 +154,7 @@ const setRoomUsers = async (roomId, users) => {
 const getRoomUsers = async (roomId) => {
   try {
     const redis = getRedisClient();
-    const members = await redis.smembers(`room:users:${roomId}`);
+    const members = await redis.sMembers(`room:users:${roomId}`);
     return members.map(m => {
       try {
         return JSON.parse(m);
@@ -172,7 +172,7 @@ const addUserToRoom = async (roomId, username) => {
   try {
     const redis = getRedisClient();
     const key = `room:users:${roomId}`;
-    await redis.sadd(key, username);
+    await redis.sAdd(key, username);
     await redis.expire(key, DEFAULT_TTL);
     return true;
   } catch (error) {
@@ -185,7 +185,7 @@ const removeUserFromRoom = async (roomId, username) => {
   try {
     const redis = getRedisClient();
     const key = `room:users:${roomId}`;
-    await redis.srem(key, username);
+    await redis.sRem(key, username);
     return true;
   } catch (error) {
     console.error('Error removing user from room:', error);
@@ -197,7 +197,7 @@ const getRoomUserCount = async (roomId) => {
   try {
     const redis = getRedisClient();
     const key = `room:users:${roomId}`;
-    return await redis.scard(key);
+    return await redis.sCard(key);
   } catch (error) {
     console.error('Error getting room user count:', error);
     return 0;
@@ -208,7 +208,7 @@ const getRoomUsersList = async (roomId) => {
   try {
     const redis = getRedisClient();
     const key = `room:users:${roomId}`;
-    return await redis.smembers(key);
+    return await redis.sMembers(key);
   } catch (error) {
     console.error('Error getting room users list:', error);
     return [];
@@ -309,7 +309,7 @@ const addUserRoom = async (username, roomId, roomName) => {
   try {
     const redis = getRedisClient();
     const roomData = JSON.stringify({ roomId, roomName, joinedAt: Date.now() });
-    await redis.sadd(`user:rooms:${username}`, roomData);
+    await redis.sAdd(`user:rooms:${username}`, roomData);
     return true;
   } catch (error) {
     console.error('Error adding user room:', error);
@@ -320,18 +320,18 @@ const addUserRoom = async (username, roomId, roomName) => {
 const removeUserRoom = async (username, roomId) => {
   try {
     const redis = getRedisClient();
-    if (!redis || !redis.smembers) {
+    if (!redis || !redis.sMembers) {
       return true;
     }
 
     const userRoomsKey = `user:${username}:rooms`;
-    const rooms = await redis.smembers(userRoomsKey);
+    const rooms = await redis.sMembers(userRoomsKey);
 
     for (const room of rooms) {
       try {
         const roomData = JSON.parse(room);
         if (roomData.roomId === roomId) {
-          await redis.srem(userRoomsKey, room);
+          await redis.sRem(userRoomsKey, room);
           break;
         }
       } catch (e) {
@@ -349,7 +349,7 @@ const removeUserRoom = async (username, roomId) => {
 const getUserRooms = async (username) => {
   try {
     const redis = getRedisClient();
-    const rooms = await redis.smembers(`user:rooms:${username}`);
+    const rooms = await redis.sMembers(`user:rooms:${username}`);
     return rooms.map(r => JSON.parse(r));
   } catch (error) {
     console.error('Error getting user rooms:', error);
@@ -389,7 +389,7 @@ const addUserDM = async (username, targetUsername) => {
   try {
     const redis = getRedisClient();
     const dmData = JSON.stringify({ username: targetUsername, addedAt: Date.now() });
-    await redis.sadd(`user:dm:${username}`, dmData);
+    await redis.sAdd(`user:dm:${username}`, dmData);
     return true;
   } catch (error) {
     console.error('Error adding user DM:', error);
@@ -400,7 +400,7 @@ const addUserDM = async (username, targetUsername) => {
 const getUserDMs = async (username) => {
   try {
     const redis = getRedisClient();
-    const dms = await redis.smembers(`user:dm:${username}`);
+    const dms = await redis.sMembers(`user:dm:${username}`);
     return dms.map(d => JSON.parse(d));
   } catch (error) {
     console.error('Error getting user DMs:', error);
@@ -444,16 +444,16 @@ const addRecentRoom = async (username, roomId, roomName) => {
     const redis = getRedisClient();
     const key = `user:recent:${username}`;
     const roomData = JSON.stringify({ roomId: roomId.toString(), roomName, visitedAt: Date.now() });
-    const existing = await redis.lrange(key, 0, -1);
+    const existing = await redis.lRange(key, 0, -1);
     for (const item of existing) {
       const data = JSON.parse(item);
       if (data.roomId === roomId.toString()) {
-        await redis.lrem(key, 1, item);
+        await redis.lRem(key, 1, item);
         break;
       }
     }
-    await redis.lpush(key, roomData);
-    await redis.ltrim(key, 0, 9);
+    await redis.lPush(key, roomData);
+    await redis.lTrim(key, 0, 9);
     return true;
   } catch (error) {
     console.error('Error adding recent room:', error);
