@@ -68,8 +68,8 @@ export function ChatRoomHeader({ tabs, activeTab, onTabChange, onCloseTab, roomI
             >
               <Text style={[
                 styles.tabText,
-                { color: theme.secondary },
-                activeTab === tab.id && { color: '#FF8C00' }, // Orange color
+                { color: '#FFFFFF' }, // White color for inactive tabs
+                activeTab === tab.id && { color: '#FFFFFF' }, // White color for active tab
               ]}>
                 {tab.name}
               </Text>
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
   roomName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#FF8C00', // Orange color
+    color: '#FFFFFF', // White color
   },
   roomInfoContainer: {
     marginTop: 4,
