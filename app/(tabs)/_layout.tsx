@@ -84,16 +84,16 @@ function CustomTabBar({ state, descriptors, navigation }: CustomTabBarProps) {
       style={[
         styles.tabBar, 
         { 
-          backgroundColor: isDark ? '#1A1A1A' : '#FFFFFF',
+          backgroundColor: '#0a5229',
           paddingBottom: Math.max(insets.bottom, 8),
-          borderTopColor: theme.border,
+          borderTopColor: '#0a5229',
         }
       ]}
     >
       <Animated.View
         style={[
           styles.indicator,
-          { backgroundColor: theme.primary },
+          { backgroundColor: '#FFFFFF' },
           indicatorStyle,
         ]}
       />
@@ -101,7 +101,7 @@ function CustomTabBar({ state, descriptors, navigation }: CustomTabBarProps) {
       <View style={styles.tabsRow}>
         {TABS.map((tab, index) => {
           const isActive = state.index === index;
-          const color = isActive ? theme.primary : theme.secondary;
+          const color = isActive ? '#FFFFFF' : 'rgba(255,255,255,0.6)';
 
           return (
             <TouchableOpacity
