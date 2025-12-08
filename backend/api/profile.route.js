@@ -45,15 +45,42 @@ const upload = multer({
 
 router.post('/avatar/upload', upload.single('avatar'), async (req, res) => {
   try {
+    console.log('📥 Avatar upload request received');
+    console.log('📋 Headers:', req.headers);
+    console.log('📋 Body:', req.body);
+    console.log('📋 File:', req.file ? req.file.filename : 'No file');
+    
+    // Check authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('❌ No authorization header');
+      return res.status(401).json({ 
+        success: false,
+        error: 'User not logged in',
+        message: 'Authorization token required' 
+      });
+    }
+    
     const { userId } = req.body;
     
     if (!userId) {
-      return res.status(400).json({ error: 'User ID is required' });
+      console.log('❌ No userId provided');
+      return res.status(400).json({ 
+        success: false,
+        error: 'User ID is required' 
+      });
     }
     
     if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
+      console.log('❌ No file uploaded');
+      return res.status(400).json({ 
+        success: false,
+        error: 'No file uploaded' 
+      });
     }
+    
+    console.log('✅ Uploading avatar for user:', userId);
+    console.log('📁 File saved as:', req.file.filename);
     
     // Generate avatar URL
     const avatarUrl = `/uploads/avatars/${req.file.filename}`;
@@ -62,18 +89,29 @@ router.post('/avatar/upload', upload.single('avatar'), async (req, res) => {
     const result = await profileService.updateAvatar(userId, avatarUrl);
     
     if (!result) {
-      return res.status(500).json({ error: 'Failed to update avatar' });
+      console.log('❌ Failed to update avatar in database');
+      return res.status(500).json({ 
+        success: false,
+        error: 'Failed to update avatar' 
+      });
     }
+    
+    console.log('✅ Avatar updated successfully:', avatarUrl);
     
     res.json({
       success: true,
+      avatarUrl: avatarUrl,
       avatar: avatarUrl,
       user: result
     });
     
   } catch (error) {
-    console.error('Avatar upload error:', error);
-    res.status(500).json({ error: 'Failed to upload avatar' });
+    console.error('❌ Avatar upload error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to upload avatar',
+      message: error.message 
+    });
   }
 });
 

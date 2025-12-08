@@ -20,6 +20,20 @@ export default function EditProfileScreen() {
   }, []);
 
   const loadUserData = async () => {
+    // Try to get from user_data first (has token)
+    const userDataStr = await AsyncStorage.getItem('user_data');
+    if (userDataStr) {
+      const userData = JSON.parse(userDataStr);
+      setUser(userData);
+      console.log('✅ User data loaded:', {
+        id: userData.id,
+        username: userData.username,
+        avatar: userData.avatar
+      });
+      return;
+    }
+    
+    // Fallback to stored user
     const userData = await getStoredUser();
     if (userData) {
       setUser(userData);
@@ -86,25 +100,34 @@ export default function EditProfileScreen() {
 
       // Get token from user_data in AsyncStorage
       const userDataStr = await AsyncStorage.getItem('user_data');
+      console.log('📱 Checking AsyncStorage for user_data...');
+      
       if (!userDataStr) {
         console.log('❌ No user_data found in AsyncStorage');
-        Alert.alert('Error', 'User not logged in');
+        Alert.alert('Error', 'User not logged in. Please login again.');
         return;
       }
 
       const userData = JSON.parse(userDataStr);
-      const token = userData.token;
-      console.log('🔑 Token retrieved:', token ? `${token.substring(0, 20)}...` : 'null');
+      console.log('✅ user_data found:', {
+        id: userData.id,
+        username: userData.username,
+        hasToken: !!userData.token
+      });
 
+      const token = userData.token;
+      
       if (!token) {
         console.log('❌ No token found in user_data');
-        Alert.alert('Error', 'User not logged in');
+        Alert.alert('Error', 'Authentication token missing. Please login again.');
         return;
       }
 
+      console.log('🔑 Token retrieved:', `${token.substring(0, 20)}...`);
+
       // Create form data
       const formData = new FormData();
-      formData.append('userId', user.id);
+      formData.append('userId', userData.id.toString());
       
       // Get file extension
       const uriParts = uri.split('.');
@@ -112,12 +135,14 @@ export default function EditProfileScreen() {
       
       formData.append('avatar', {
         uri,
-        name: `avatar.${fileType}`,
+        name: `avatar-${Date.now()}.${fileType}`,
         type: `image/${fileType}`,
       } as any);
 
-      console.log('📤 Uploading avatar to:', API_ENDPOINTS.PROFILE.AVATAR_UPLOAD);
-      console.log('📦 FormData userId:', user.id);
+      console.log('📤 Uploading avatar...');
+      console.log('📦 Endpoint:', API_ENDPOINTS.PROFILE.AVATAR_UPLOAD);
+      console.log('📦 User ID:', userData.id);
+      console.log('📦 File URI:', uri);
 
       // Upload with Authorization header
       const response = await fetch(API_ENDPOINTS.PROFILE.AVATAR_UPLOAD, {
@@ -125,32 +150,46 @@ export default function EditProfileScreen() {
         body: formData,
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
+          // Note: Don't set Content-Type manually for FormData, let the browser set it with boundary
         },
       });
 
+      console.log('📡 Response status:', response.status);
+      
       const data = await response.json();
-      console.log('📥 Upload response:', JSON.stringify(data));
+      console.log('📥 Upload response:', JSON.stringify(data, null, 2));
 
       if (response.ok && data.success) {
+        console.log('✅ Avatar uploaded successfully!');
         Alert.alert('Success', 'Avatar uploaded successfully');
         
-        // Update user data with full backend response including new avatar
-        const updatedUser = { ...user, ...data.user, avatar: data.user?.avatar || data.avatarUrl };
-        setUser(updatedUser);
-        console.log('✅ Avatar updated:', updatedUser.avatar);
+        // Get the new avatar URL
+        const newAvatarUrl = data.avatarUrl || data.user?.avatar || data.avatar;
+        console.log('🖼️ New avatar URL:', newAvatarUrl);
         
-        // Update stored user data
-        const storedData = { ...userData, ...updatedUser };
-        await AsyncStorage.setItem('user_data', JSON.stringify(storedData));
+        // Update user data with new avatar
+        const updatedUser = {
+          ...userData,
+          avatar: newAvatarUrl
+        };
+        
+        setUser(updatedUser);
+        
+        // Update stored user data in AsyncStorage
+        await AsyncStorage.setItem('user_data', JSON.stringify(updatedUser));
         await storeUser(updatedUser);
+        
+        console.log('✅ User data updated in storage');
+        
+        // Force reload user data
+        await loadUserData();
       } else {
-        console.log('❌ Upload failed:', data.error);
-        Alert.alert('Error', data.error || 'Failed to upload avatar');
+        console.log('❌ Upload failed:', data.error || data.message);
+        Alert.alert('Error', data.error || data.message || 'Failed to upload avatar');
       }
     } catch (error) {
       console.error('❌ Avatar upload error:', error);
-      Alert.alert('Error', 'Failed to upload avatar');
+      Alert.alert('Error', 'Failed to upload avatar. Please try again.');
     } finally {
       setUploading(false);
     }
