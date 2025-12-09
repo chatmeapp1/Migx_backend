@@ -15,16 +15,18 @@ interface SwipeableTabViewProps {
 const ROUTE_MAP: Record<number, string> = {
   0: '/(tabs)',
   1: '/(tabs)/chat',
-  2: '/(tabs)/room',
-  3: '/(tabs)/profile',
+  2: '/(tabs)/feed',
+  3: '/(tabs)/room',
+  4: '/(tabs)/profile',
 };
 
 const SEGMENT_TO_INDEX: Record<string, number> = {
   'index': 0,
   '(tabs)': 0,
   'chat': 1,
-  'room': 2,
-  'profile': 3,
+  'feed': 2,
+  'room': 3,
+  'profile': 4,
 };
 
 export function SwipeableTabView({ children }: SwipeableTabViewProps) {
@@ -85,7 +87,7 @@ export function SwipeableTabView({ children }: SwipeableTabViewProps) {
         onPageSelected={onPageSelected}
         onPageScrollStateChanged={(e) => onPageScrollStateChanged(e.nativeEvent.pageScrollState)}
         overdrag={true}
-        offscreenPageLimit={1}
+        offscreenPageLimit={2}
       >
         {React.Children.map(children, (child, index) => (
           <View key={index} style={styles.page}>

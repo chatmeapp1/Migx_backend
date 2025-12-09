@@ -20,20 +20,23 @@ const PATH_TO_INDEX: Record<string, number> = {
   '/': 0,
   '/index': 0,
   '/chat': 1,
-  '/room': 2,
-  '/profile': 3,
+  '/feed': 2,
+  '/room': 3,
+  '/profile': 4,
   '/(tabs)': 0,
   '/(tabs)/index': 0,
   '/(tabs)/chat': 1,
-  '/(tabs)/room': 2,
-  '/(tabs)/profile': 3,
+  '/(tabs)/feed': 2,
+  '/(tabs)/room': 3,
+  '/(tabs)/profile': 4,
 };
 
 const INDEX_TO_ROUTE: Record<number, string> = {
   0: '/(tabs)',
   1: '/(tabs)/chat',
-  2: '/(tabs)/room',
-  3: '/(tabs)/profile',
+  2: '/(tabs)/feed',
+  3: '/(tabs)/room',
+  4: '/(tabs)/profile',
 };
 
 interface SwipeableScreenProps {
@@ -47,7 +50,7 @@ export function SwipeableScreen({ children }: SwipeableScreenProps) {
   const isNavigating = useRef(false);
   
   const currentIndex = PATH_TO_INDEX[pathname] ?? 0;
-  const canSwipeLeft = currentIndex < 3;
+  const canSwipeLeft = currentIndex < 4;
   const canSwipeRight = currentIndex > 0;
 
   const doNavigation = useCallback((nextIndex: number) => {

@@ -20,9 +20,12 @@ interface TabItem {
   icon: (props: { color: string; size: number }) => React.ReactNode;
 }
 
+import { FeedIcon } from '@/components/ui/SvgIcons';
+
 const TABS: TabItem[] = [
   { key: 'index', title: 'Home', icon: HomeIcon },
   { key: 'chat', title: 'Chat', icon: ChatIcon },
+  { key: 'feed', title: 'Feed', icon: FeedIcon },
   { key: 'room', title: 'Room', icon: RoomIcon },
   { key: 'profile', title: 'Profile', icon: ProfileIcon },
 ];
