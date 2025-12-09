@@ -77,7 +77,10 @@ export function ChatRoomMenu({ visible, onClose, onMenuItemPress, onOpenParticip
 
             <TouchableOpacity
               style={styles.menuItem}
-              onPress={() => handleMenuPress('leave-room')}
+              onPress={() => {
+                onClose();
+                onMenuItemPress('leave-room');
+              }}
             >
               <LeaveRoomIcon size={32} color="#EF4444" bgColor={theme.background} />
               <Text style={[styles.menuLabel, styles.leaveLabel]}>
@@ -99,6 +102,7 @@ const styles = StyleSheet.create({
   },
   menuContainer: {
     padding: 0,
+    paddingBottom: 40,
   },
   menu: {
     overflow: 'hidden',

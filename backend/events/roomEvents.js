@@ -456,6 +456,7 @@ module.exports = (io, socket) => {
 
   socket.on('join_room', joinRoom);
   socket.on('leave_room', leaveRoom);
+  socket.on('room:leave', leaveRoom);
   socket.on('room:users:get', getRoomUsers);
   socket.on('room:admin:kick', adminKick);
   socket.on('room:admin:ban', adminBan);

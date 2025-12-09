@@ -413,6 +413,19 @@ export default function ChatRoomScreen() {
     console.log('Menu action:', action);
     if (action === 'kick') {
       setKickModalVisible(true);
+    } else if (action === 'leave-room') {
+      Alert.alert(
+        'Leave Room',
+        'Are you sure you want to leave this room?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Leave',
+            style: 'destructive',
+            onPress: handleLeaveRoom,
+          },
+        ]
+      );
     }
   };
 
