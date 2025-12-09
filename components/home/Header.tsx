@@ -88,22 +88,23 @@ export function Header() {
       >
 
       <View style={[styles.topBar, { borderBottomColor: theme.border }]}>
-        <View style={styles.leftSection}>
-          <UserIcon size={20} color="#FFFFFF" />
-          <Text style={[styles.title, { color: '#FFFFFF' }]}>My Friends</Text>
-        </View>
+          <View style={styles.leftSection}>
+            <UserIcon size={20} color="#FFFFFF" />
+            <Text style={[styles.title, { color: '#FFFFFF' }]}>My Friends</Text>
+          </View>
 
-        <TouchableOpacity style={styles.iconButton} onPress={() => setShowNotifications(true)}>
-          <BellIcon size={24} color="#FFFFFF" />
-          {notificationCount > 0 && (
-            <View style={styles.notifBadge}>
-              <Text style={styles.notifBadgeText}>
-                {notificationCount > 99 ? '99+' : notificationCount}
-              </Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity style={styles.iconButton} onPress={() => setShowNotifications(true)}>
+            <BellIcon size={24} color="#FFFFFF" />
+            {notificationCount > 0 && (
+              <View style={styles.notifBadge}>
+                <Text style={styles.notifBadgeText}>
+                  {notificationCount > 99 ? '99+' : notificationCount}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
 
       <NotificationModal
         visible={showNotifications}
@@ -111,7 +112,7 @@ export function Header() {
         username={username}
         socket={socket}
       />
-    </LinearGradient>
+    </>
   );
 }
 
