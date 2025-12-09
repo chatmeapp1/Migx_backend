@@ -21,7 +21,7 @@ export default function ProfileScreen() {
   const { theme } = useThemeCustom();
   const [userData, setUserData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   useEffect(() => {
     loadUserData();
   }, []);
@@ -40,7 +40,7 @@ export default function ProfileScreen() {
       setIsLoading(false);
     }
   };
-  
+
   const userRole = userData?.role || 'user';
   const isMerchant = userRole === 'merchant';
 
@@ -92,49 +92,49 @@ export default function ProfileScreen() {
             level={userData?.level || 1}
             onEditPress={handleEditProfile}
           />
-          
+
           <ScrollView style={styles.scrollView}>
             <View style={[styles.menuSection, { backgroundColor: theme.card }]}>
               <ModeToggle />
-              
+
               <ProfileMenuItem 
                 icon={<AccountIcon size={24} />}
                 title="My Account"
                 onPress={handleMyAccount}
               />
-              
+
               <ProfileMenuItem 
                 icon={<CommentIcon size={24} />}
                 title="Official Comment"
                 onPress={handleOfficialComment}
               />
-              
+
               <ProfileMenuItem 
                 icon={<GiftIcon size={24} />}
                 title="Gift Store"
                 onPress={handleGiftStore}
               />
-              
+
               <ProfileMenuItem 
                 icon={<PeopleIcon size={24} />}
                 title="People"
                 onPress={handlePeople}
               />
-              
+
               <ProfileMenuItem 
                 icon={<LeaderboardIcon size={24} />}
                 title="Leaderboard"
                 onPress={handleLeaderboard}
                 showDivider={true}
               />
-              
+
               <ProfileMenuItem 
                 icon={<SettingsIcon size={24} />}
                 title="Settings"
                 onPress={handleSettings}
                 showDivider={isMerchant}
               />
-              
+
               {isMerchant && (
                 <ProfileMenuItem 
                   icon={<DashboardIcon size={24} />}
