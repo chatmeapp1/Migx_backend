@@ -83,24 +83,47 @@ function CustomTabBar({ state, descriptors, navigation }: CustomTabBarProps) {
   }, [navigation]);
 
   const panGesture = Gesture.Pan()
-    .activeOffsetX([-10, 10])
-    .failOffsetY([-15, 15])
+    .activeOffsetX([-20, 20])
+    .failOffsetY([-20, 20])
+    .onUpdate((event) => {
+      'worklet';
+      // Update animasi indicator saat swipe
+      const currentVisualIdx = VISIBLE_TABS.indexOf(currentRouteName);
+      if (currentVisualIdx >= 0) {
+        const offset = -event.translationX / SCREEN_WIDTH;
+        const newIdx = Math.max(0, Math.min(TOTAL_TABS - 1, currentVisualIdx + offset));
+        animatedIndex.value = newIdx;
+      }
+    })
     .onEnd((event) => {
       'worklet';
       const vx = event.velocityX;
       const tx = event.translationX;
-      const index = state.index;
+      const currentVisualIdx = VISIBLE_TABS.indexOf(currentRouteName);
+      
+      if (currentVisualIdx < 0) return;
 
-      if ((tx < -50 || vx < -300) && index < TOTAL_TABS - 1) {
-        runOnJS(navigation.navigate)(VISIBLE_TABS[index + 1]);
-      } else if ((tx > 50 || vx > 300) && index > 0) {
-        runOnJS(navigation.navigate)(VISIBLE_TABS[index - 1]);
+      // Swipe ke kiri (next tab)
+      if ((tx < -SWIPE_THRESHOLD || vx < -VELOCITY_THRESHOLD) && currentVisualIdx < TOTAL_TABS - 1) {
+        runOnJS(navigateToTab)(currentVisualIdx + 1);
+      } 
+      // Swipe ke kanan (prev tab)
+      else if ((tx > SWIPE_THRESHOLD || vx > VELOCITY_THRESHOLD) && currentVisualIdx > 0) {
+        runOnJS(navigateToTab)(currentVisualIdx - 1);
+      }
+      // Reset jika tidak cukup untuk pindah tab
+      else {
+        animatedIndex.value = withSpring(currentVisualIdx, {
+          damping: 18,
+          stiffness: 180,
+          mass: 0.3,
+        });
       }
     });
 
   return (
-    <GestureDetector gesture={panGesture}>
-      <View pointerEvents="box-none" style={{ width: '100%' }}>
+    <View pointerEvents="box-none" style={{ width: '100%' }}>
+      <GestureDetector gesture={panGesture}>
         <LinearGradient 
           colors={['#0D5E32', '#0A4726']} 
           start={{ x: 0, y: 0 }} 
@@ -146,8 +169,8 @@ function CustomTabBar({ state, descriptors, navigation }: CustomTabBarProps) {
             })}
           </View>
         </LinearGradient>
-      </View>
-    </GestureDetector>
+      </GestureDetector>
+    </View>
   );
 }
 

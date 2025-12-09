@@ -14,6 +14,7 @@ import {
   Share as RNShare,
   Linking,
   Platform,
+  ScrollView, // Import ScrollView
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useThemeCustom } from '@/theme/provider';
@@ -390,22 +391,20 @@ export default function FeedScreen() {
           <Text style={[styles.headerTitle, { color: '#FFFFFF' }]}>Feed</Text>
         </LinearGradient>
 
-        <FlatList
-          data={posts}
-          renderItem={renderPost}
-          keyExtractor={item => item.id.toString()}
+        <ScrollView
+          style={styles.container}
+          showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
           }
-          onEndReached={loadMore}
-          onEndReachedThreshold={0.5}
-          ListFooterComponent={
-            loading && !refreshing ? (
-              <ActivityIndicator size="small" color={theme.primary} style={styles.loader} />
-            ) : null
-          }
-          contentContainerStyle={styles.listContent}
-        />
+          scrollEventThrottle={16}
+          nestedScrollEnabled={false}
+        >
+          {posts.map(post => renderPost({ item: post }))}
+          {loading && !refreshing && (
+            <ActivityIndicator size="small" color={theme.primary} style={styles.loader} />
+          )}
+        </ScrollView>
 
         <TouchableOpacity
           style={styles.fab}
