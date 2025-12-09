@@ -16,6 +16,10 @@ externalPort = 8081
 localPort = 37445
 externalPort = 3000
 
+[[ports]]
+localPort = 44335
+externalPort = 3001
+
 [workflows]
 runButton = "Project"
 
@@ -52,27 +56,6 @@ task = "shell.exec"
 args = "npx eas build --platform android --profile preview"
 
 [[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Development Server"
-
-[[workflows.workflow]]
-name = "Development Server"
-author = "agent"
-
-[workflows.workflow.metadata]
-outputType = "webview"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node backend/server.js"
-waitForPort = 5000
-
-[[workflows.workflow]]
 name = "Start App"
 author = 50803945
 mode = "sequential"
@@ -89,6 +72,23 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npx expo start --tunnel --port 8081"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Development Server"
+
+[[workflows.workflow]]
+name = "Development Server"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node backend/server.js"
 
 [agent]
 expertMode = true
