@@ -31,6 +31,7 @@ const TAB_CONFIG: Record<string, { title: string; icon: (props: { color: string;
 
 const VISIBLE_TABS = ['index', 'chat', 'feed', 'room'];
 const TOTAL_TABS = VISIBLE_TABS.length;
+const MAX_TAB_INDEX = TOTAL_TABS - 1;
 
 interface CustomTabBarProps {
   state: any;
@@ -119,7 +120,7 @@ function CustomTabBar({ state, descriptors, navigation }: CustomTabBarProps) {
       let targetIdx = currentVisualIdx;
 
       // Swipe ke kiri (next tab)
-      if ((tx < -SWIPE_THRESHOLD || vx < -VELOCITY_THRESHOLD) && currentVisualIdx < TOTAL_TABS - 1) {
+      if ((tx < -SWIPE_THRESHOLD || vx < -VELOCITY_THRESHOLD) && currentVisualIdx < MAX_TAB_INDEX) {
         targetIdx = currentVisualIdx + 1;
         runOnJS(navigateToTab)(targetIdx);
       } 

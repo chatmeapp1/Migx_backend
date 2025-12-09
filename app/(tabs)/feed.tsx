@@ -14,9 +14,8 @@ import {
   Share as RNShare,
   Linking,
   Platform,
-  ScrollView, // Import ScrollView
+  ScrollView,
 } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useThemeCustom } from '@/theme/provider';
 import { API_ENDPOINTS } from '@/utils/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -380,16 +379,15 @@ export default function FeedScreen() {
   );
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <View style={[styles.container, { backgroundColor: theme.background }]}>
-        <LinearGradient
-          colors={['#0D5E32', '#0A4726']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.header, { borderBottomColor: theme.border }]}
-        >
-          <Text style={[styles.headerTitle, { color: '#FFFFFF' }]}>Feed</Text>
-        </LinearGradient>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <LinearGradient
+        colors={['#0D5E32', '#0A4726']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.header, { borderBottomColor: theme.border }]}
+      >
+        <Text style={[styles.headerTitle, { color: '#FFFFFF' }]}>Feed</Text>
+      </LinearGradient>
 
         <ScrollView
           style={styles.container}
@@ -529,7 +527,7 @@ export default function FeedScreen() {
           </View>
         </Modal>
       </View>
-    </GestureHandlerRootView>
+    </View>
   );
 }
 

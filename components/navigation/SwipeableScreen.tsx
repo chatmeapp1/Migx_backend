@@ -15,7 +15,7 @@ import * as Haptics from 'expo-haptics';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SWIPE_THRESHOLD = 40;
 const VELOCITY_THRESHOLD = 250;
-const MAX_TAB_INDEX = 4;
+const MAX_TAB_INDEX = 3;
 
 const PATH_TO_INDEX: Record<string, number> = {
   '/': 0,
@@ -23,13 +23,11 @@ const PATH_TO_INDEX: Record<string, number> = {
   '/chat': 1,
   '/feed': 2,
   '/room': 3,
-  '/profile': 4,
   '/(tabs)': 0,
   '/(tabs)/index': 0,
   '/(tabs)/chat': 1,
   '/(tabs)/feed': 2,
   '/(tabs)/room': 3,
-  '/(tabs)/profile': 4,
 };
 
 const INDEX_TO_ROUTE: Record<number, string> = {
@@ -37,7 +35,6 @@ const INDEX_TO_ROUTE: Record<number, string> = {
   1: '/(tabs)/chat',
   2: '/(tabs)/feed',
   3: '/(tabs)/room',
-  4: '/(tabs)/profile',
 };
 
 interface SwipeableScreenProps {
