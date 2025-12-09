@@ -49,12 +49,12 @@ export function SwipeableScreen({ children }: SwipeableScreenProps) {
   const pathname = usePathname();
   const translateX = useSharedValue(0);
   const isNavigating = useRef(false);
-  const currentIndexRef = useRef(0);
   
   const currentIndex = PATH_TO_INDEX[pathname] ?? 0;
+  const currentIndexShared = useSharedValue(currentIndex);
   
   useEffect(() => {
-    currentIndexRef.current = currentIndex;
+    currentIndexShared.value = currentIndex;
   }, [currentIndex]);
 
   const doNavigation = useCallback((nextIndex: number) => {
@@ -81,26 +81,16 @@ export function SwipeableScreen({ children }: SwipeableScreenProps) {
     }, 150);
   }, [router]);
 
-  const handleSwipeEnd = useCallback((translationX: number, velocityX: number) => {
-    const idx = currentIndexRef.current;
-    const canLeft = idx < MAX_TAB_INDEX;
-    const canRight = idx > 0;
-    
-    const shouldGoNext = (translationX < -SWIPE_THRESHOLD || velocityX < -VELOCITY_THRESHOLD) && canLeft;
-    const shouldGoPrev = (translationX > SWIPE_THRESHOLD || velocityX > VELOCITY_THRESHOLD) && canRight;
-    
-    if (shouldGoNext) {
-      doNavigation(idx + 1);
-    } else if (shouldGoPrev) {
-      doNavigation(idx - 1);
-    }
+  const doNavigationJS = useCallback((nextIndex: number) => {
+    doNavigation(nextIndex);
   }, [doNavigation]);
 
   const panGesture = Gesture.Pan()
     .activeOffsetX([-15, 15])
     .failOffsetY([-10, 10])
     .onUpdate((event) => {
-      const idx = currentIndexRef.current;
+      'worklet';
+      const idx = currentIndexShared.value;
       const canRight = idx > 0;
       const canLeft = idx < MAX_TAB_INDEX;
       
@@ -117,7 +107,23 @@ export function SwipeableScreen({ children }: SwipeableScreenProps) {
       translateX.value = Math.max(-25, Math.min(25, tx));
     })
     .onEnd((event) => {
-      runOnJS(handleSwipeEnd)(event.translationX, event.velocityX);
+      'worklet';
+      const idx = currentIndexShared.value;
+      const canLeft = idx < MAX_TAB_INDEX;
+      const canRight = idx > 0;
+      
+      const tx = event.translationX;
+      const vx = event.velocityX;
+      
+      const shouldGoNext = (tx < -SWIPE_THRESHOLD || vx < -VELOCITY_THRESHOLD) && canLeft;
+      const shouldGoPrev = (tx > SWIPE_THRESHOLD || vx > VELOCITY_THRESHOLD) && canRight;
+      
+      if (shouldGoNext) {
+        runOnJS(doNavigationJS)(idx + 1);
+      } else if (shouldGoPrev) {
+        runOnJS(doNavigationJS)(idx - 1);
+      }
+      
       translateX.value = withTiming(0, { duration: 120 });
     });
 

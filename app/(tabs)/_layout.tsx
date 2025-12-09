@@ -30,7 +30,8 @@ const TAB_CONFIG: Record<string, { title: string; icon: (props: { color: string;
   'profile': { title: 'Profile', icon: ProfileIcon },
 };
 
-const VISIBLE_TAB_ORDER = ['index', 'chat', 'feed', 'room', 'profile'];
+const VISIBLE_TABS = ['index', 'chat', 'feed', 'room', 'profile'];
+const TOTAL_TABS = VISIBLE_TABS.length;
 
 interface CustomTabBarProps {
   state: any;
@@ -41,29 +42,32 @@ interface CustomTabBarProps {
 function CustomTabBar({ state, descriptors, navigation }: CustomTabBarProps) {
   const { theme, isDark } = useThemeCustom();
   const insets = useSafeAreaInsets();
-  const isNavigating = useRef(false);
   const swipeProgress = useSharedValue(0);
-  const currentVisualIndexRef = useRef(0);
+  const isNavigatingRef = useRef(false);
   
   const currentRouteName = state.routes[state.index]?.name || 'index';
-  const currentVisualIndex = VISIBLE_TAB_ORDER.indexOf(currentRouteName);
-  const safeVisualIndex = currentVisualIndex >= 0 ? currentVisualIndex : 0;
+  const visualIndex = VISIBLE_TABS.indexOf(currentRouteName);
+  const currentIdx = visualIndex >= 0 ? visualIndex : 0;
   
-  const animatedIndex = useSharedValue(safeVisualIndex);
-  const totalTabs = VISIBLE_TAB_ORDER.length;
+  const currentIndexShared = useSharedValue(currentIdx);
+  
+  useEffect(() => {
+    currentIndexShared.value = currentIdx;
+  }, [currentIdx]);
+  
+  const animatedIndex = useSharedValue(currentIdx);
 
-  const TAB_WIDTH = SCREEN_WIDTH / totalTabs;
+  const TAB_WIDTH = SCREEN_WIDTH / TOTAL_TABS;
   const INDICATOR_WIDTH = 40;
   const INDICATOR_OFFSET = (TAB_WIDTH - INDICATOR_WIDTH) / 2;
 
   useEffect(() => {
-    currentVisualIndexRef.current = safeVisualIndex;
-    animatedIndex.value = withSpring(safeVisualIndex, {
+    animatedIndex.value = withSpring(currentIdx, {
       damping: 18,
       stiffness: 180,
       mass: 0.3,
     });
-  }, [safeVisualIndex]);
+  }, [currentIdx]);
 
   const indicatorStyle = useAnimatedStyle(() => {
     const basePosition = animatedIndex.value * TAB_WIDTH + INDICATOR_OFFSET;
@@ -78,11 +82,11 @@ function CustomTabBar({ state, descriptors, navigation }: CustomTabBarProps) {
     };
   });
 
-  const doNavigation = useCallback((targetVisualIndex: number) => {
-    if (isNavigating.current) return;
-    if (targetVisualIndex < 0 || targetVisualIndex >= totalTabs) return;
+  const navigateToTab = useCallback((targetIdx: number) => {
+    if (isNavigatingRef.current) return;
+    if (targetIdx < 0 || targetIdx >= TOTAL_TABS) return;
     
-    isNavigating.current = true;
+    isNavigatingRef.current = true;
     
     if (Platform.OS === 'ios') {
       try {
@@ -90,57 +94,46 @@ function CustomTabBar({ state, descriptors, navigation }: CustomTabBarProps) {
       } catch (e) {}
     }
     
-    const targetRouteName = VISIBLE_TAB_ORDER[targetVisualIndex];
-    if (targetRouteName) {
-      navigation.navigate(targetRouteName);
+    const targetRoute = VISIBLE_TABS[targetIdx];
+    if (targetRoute) {
+      navigation.navigate(targetRoute);
     }
     
     setTimeout(() => {
-      isNavigating.current = false;
-    }, 150);
-  }, [navigation, totalTabs]);
+      isNavigatingRef.current = false;
+    }, 100);
+  }, [navigation]);
 
-  const handlePress = useCallback((visualIndex: number) => {
-    doNavigation(visualIndex);
-  }, [doNavigation]);
-
-  const handleSwipeEnd = useCallback((translationX: number, velocityX: number) => {
-    const idx = currentVisualIndexRef.current;
-    const canGoNext = idx < totalTabs - 1;
-    const canGoPrev = idx > 0;
-    
-    const shouldGoNext = (translationX < -SWIPE_THRESHOLD || velocityX < -VELOCITY_THRESHOLD) && canGoNext;
-    const shouldGoPrev = (translationX > SWIPE_THRESHOLD || velocityX > VELOCITY_THRESHOLD) && canGoPrev;
-    
-    if (shouldGoNext) {
-      doNavigation(idx + 1);
-    } else if (shouldGoPrev) {
-      doNavigation(idx - 1);
-    }
-  }, [doNavigation, totalTabs]);
+  const navigateToTabJS = useCallback((targetIdx: number) => {
+    navigateToTab(targetIdx);
+  }, [navigateToTab]);
 
   const panGesture = Gesture.Pan()
     .activeOffsetX([-15, 15])
     .failOffsetY([-12, 12])
     .onUpdate((event) => {
-      const normalizedTranslation = event.translationX / SCREEN_WIDTH;
-      let progress = normalizedTranslation * 2.5;
+      'worklet';
+      const normalized = event.translationX / SCREEN_WIDTH;
+      let progress = normalized * 2.5;
       
-      const idx = currentVisualIndexRef.current;
-      const canGoPrev = idx > 0;
-      const canGoNext = idx < totalTabs - 1;
-      
-      if (!canGoPrev && progress > 0) {
-        progress *= 0.15;
-      }
-      if (!canGoNext && progress < 0) {
-        progress *= 0.15;
-      }
+      const idx = currentIndexShared.value;
+      if (idx <= 0 && progress > 0) progress *= 0.15;
+      if (idx >= TOTAL_TABS - 1 && progress < 0) progress *= 0.15;
       
       swipeProgress.value = Math.max(-1, Math.min(1, progress));
     })
     .onEnd((event) => {
-      runOnJS(handleSwipeEnd)(event.translationX, event.velocityX);
+      'worklet';
+      const tx = event.translationX;
+      const vx = event.velocityX;
+      const idx = currentIndexShared.value;
+      
+      if ((tx < -SWIPE_THRESHOLD || vx < -VELOCITY_THRESHOLD) && idx < TOTAL_TABS - 1) {
+        runOnJS(navigateToTabJS)(idx + 1);
+      } else if ((tx > SWIPE_THRESHOLD || vx > VELOCITY_THRESHOLD) && idx > 0) {
+        runOnJS(navigateToTabJS)(idx - 1);
+      }
+      
       swipeProgress.value = withTiming(0, { duration: 120 });
     });
 
@@ -167,18 +160,18 @@ function CustomTabBar({ state, descriptors, navigation }: CustomTabBarProps) {
         />
 
         <View style={styles.tabsRow}>
-          {VISIBLE_TAB_ORDER.map((tabName, index) => {
+          {VISIBLE_TABS.map((tabName, index) => {
             const config = TAB_CONFIG[tabName];
             if (!config) return null;
             
-            const isActive = safeVisualIndex === index;
+            const isActive = currentIdx === index;
             const color = isActive ? '#FFFFFF' : 'rgba(255,255,255,0.6)';
 
             return (
               <TouchableOpacity
                 key={tabName}
                 style={styles.tab}
-                onPress={() => handlePress(index)}
+                onPress={() => navigateToTab(index)}
                 activeOpacity={0.7}
               >
                 <View style={styles.tabContent}>
@@ -205,30 +198,12 @@ export default function TabLayout() {
       }}
       tabBar={(props) => <CustomTabBar {...props} />}
     >
-      <Tabs.Screen
-        name="index"
-        options={{ title: 'Home' }}
-      />
-      <Tabs.Screen
-        name="chat"
-        options={{ title: 'Chat' }}
-      />
-      <Tabs.Screen
-        name="feed"
-        options={{ title: 'Feed' }}
-      />
-      <Tabs.Screen
-        name="room"
-        options={{ title: 'Room' }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{ title: 'Profile' }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{ href: null }}
-      />
+      <Tabs.Screen name="index" options={{ title: 'Home' }} />
+      <Tabs.Screen name="chat" options={{ title: 'Chat' }} />
+      <Tabs.Screen name="feed" options={{ title: 'Feed' }} />
+      <Tabs.Screen name="room" options={{ title: 'Room' }} />
+      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+      <Tabs.Screen name="explore" options={{ href: null }} />
     </Tabs>
   );
 }
