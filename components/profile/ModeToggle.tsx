@@ -22,18 +22,19 @@ export function ModeToggle() {
   return (
     <>
       <View style={[styles.container, { backgroundColor: theme.card }]}>
-        <View style={[styles.iconContainer, { backgroundColor: isDark ? '#2A2A2A' : theme.border }]}>
-          <MoonIcon size={24} color={theme.primary} />
+        <View style={[styles.iconContainer, { backgroundColor: isDark ? '#3E3E3E' : '#E8E8E8' }]}>
+          <MoonIcon size={24} color={isDark ? '#FFD700' : '#4A90E2'} />
         </View>
         <Text style={[styles.title, { color: theme.text }]}>Dark Mode</Text>
         <Switch
           value={isDark}
           onValueChange={toggleTheme}
-          trackColor={{ false: isDark ? '#3A3A3A' : theme.border, true: theme.primary }}
-          thumbColor={isDark ? '#fff' : '#f4f3f4'}
+          trackColor={{ false: '#767577', true: '#81b0ff' }}
+          thumbColor={isDark ? '#f5dd4b' : '#f4f3f4'}
+          ios_backgroundColor="#3e3e3e"
         />
       </View>
-      <View style={[styles.divider, { backgroundColor: isDark ? '#2A2A2A' : theme.border }]} />
+      <View style={[styles.divider, { backgroundColor: isDark ? '#3E3E3E' : '#E8E8E8' }]} />
     </>
   );
 }
