@@ -49,7 +49,7 @@ router.get('/', authMiddleware, async (req, res) => {
       SELECT 
         p.*,
         u.username,
-        u.avatar_url,
+        u.avatar as avatar_url,
         COUNT(DISTINCT l.id) as likes_count,
         COUNT(DISTINCT c.id) as comments_count,
         EXISTS(SELECT 1 FROM feed_likes WHERE post_id = p.id AND user_id = $1) as is_liked
@@ -57,7 +57,7 @@ router.get('/', authMiddleware, async (req, res) => {
       LEFT JOIN users u ON p.user_id = u.id
       LEFT JOIN feed_likes l ON p.id = l.post_id
       LEFT JOIN feed_comments c ON p.id = c.post_id
-      GROUP BY p.id, u.username, u.avatar_url
+      GROUP BY p.id, u.username, u.avatar
       ORDER BY p.created_at DESC
       LIMIT $2 OFFSET $3
     `;
@@ -145,7 +145,7 @@ router.get('/:postId/comments', authMiddleware, async (req, res) => {
       SELECT 
         c.*,
         u.username,
-        u.avatar_url
+        u.avatar as avatar_url
       FROM feed_comments c
       LEFT JOIN users u ON c.user_id = u.id
       WHERE c.post_id = $1
