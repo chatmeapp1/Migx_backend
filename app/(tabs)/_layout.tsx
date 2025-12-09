@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, Dimensions, Platform } from 'react-native';
-import { Tabs, usePathname, useRouter } from 'expo-router';
+import { Tabs } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { 
@@ -54,16 +54,16 @@ interface CustomTabBarProps {
 function CustomTabBar({ state, descriptors, navigation }: CustomTabBarProps) {
   const { theme, isDark } = useThemeCustom();
   const insets = useSafeAreaInsets();
-  const router = useRouter();
   const isNavigating = useRef(false);
   const swipeProgress = useSharedValue(0);
+  const currentIndexRef = useRef(0);
 
   const currentRouteName = state.routes[state.index]?.name || 'index';
   const currentIndex = NAME_TO_INDEX[currentRouteName] ?? 0;
   
+  currentIndexRef.current = currentIndex;
+  
   const animatedIndex = useSharedValue(currentIndex);
-  const canSwipeLeft = currentIndex < TABS.length - 1;
-  const canSwipeRight = currentIndex > 0;
 
   const TAB_WIDTH = SCREEN_WIDTH / TABS.length;
   const INDICATOR_WIDTH = 40;
@@ -109,43 +109,51 @@ function CustomTabBar({ state, descriptors, navigation }: CustomTabBarProps) {
     
     setTimeout(() => {
       isNavigating.current = false;
-    }, 200);
+    }, 150);
   }, [navigation]);
 
   const handlePress = useCallback((index: number) => {
     doNavigation(index);
   }, [doNavigation]);
 
+  const handleSwipeEnd = useCallback((translationX: number, velocityX: number) => {
+    const idx = currentIndexRef.current;
+    const canLeft = idx < TABS.length - 1;
+    const canRight = idx > 0;
+    
+    const shouldGoNext = (translationX < -SWIPE_THRESHOLD || velocityX < -VELOCITY_THRESHOLD) && canLeft;
+    const shouldGoPrev = (translationX > SWIPE_THRESHOLD || velocityX > VELOCITY_THRESHOLD) && canRight;
+    
+    if (shouldGoNext) {
+      doNavigation(idx + 1);
+    } else if (shouldGoPrev) {
+      doNavigation(idx - 1);
+    }
+  }, [doNavigation]);
+
   const panGesture = Gesture.Pan()
-    .activeOffsetX([-20, 20])
-    .failOffsetY([-10, 10])
+    .activeOffsetX([-15, 15])
+    .failOffsetY([-12, 12])
     .onUpdate((event) => {
       const normalizedTranslation = event.translationX / SCREEN_WIDTH;
-      let progress = normalizedTranslation * 2;
+      let progress = normalizedTranslation * 2.5;
       
-      if (!canSwipeRight && progress > 0) {
+      const idx = currentIndexRef.current;
+      const canRight = idx > 0;
+      const canLeft = idx < TABS.length - 1;
+      
+      if (!canRight && progress > 0) {
         progress *= 0.15;
       }
-      if (!canSwipeLeft && progress < 0) {
+      if (!canLeft && progress < 0) {
         progress *= 0.15;
       }
       
       swipeProgress.value = Math.max(-1, Math.min(1, progress));
     })
     .onEnd((event) => {
-      const velocity = event.velocityX;
-      const translation = event.translationX;
-      
-      const shouldGoNext = (translation < -SWIPE_THRESHOLD || velocity < -VELOCITY_THRESHOLD) && canSwipeLeft;
-      const shouldGoPrev = (translation > SWIPE_THRESHOLD || velocity > VELOCITY_THRESHOLD) && canSwipeRight;
-      
-      if (shouldGoNext) {
-        runOnJS(doNavigation)(currentIndex + 1);
-      } else if (shouldGoPrev) {
-        runOnJS(doNavigation)(currentIndex - 1);
-      }
-      
-      swipeProgress.value = withTiming(0, { duration: 150 });
+      runOnJS(handleSwipeEnd)(event.translationX, event.velocityX);
+      swipeProgress.value = withTiming(0, { duration: 120 });
     });
 
   return (
