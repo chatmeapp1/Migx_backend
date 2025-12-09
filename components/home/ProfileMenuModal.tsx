@@ -13,6 +13,7 @@ import {
   DashboardIcon,
   SettingsIcon 
 } from '@/components/profile/ProfileIcons';
+import { ModeToggle } from '@/components/profile/ModeToggle';
 import API_BASE_URL from '@/utils/api';
 
 const EditIcon = ({ size = 20, color = '#fff' }) => (
@@ -176,8 +177,9 @@ export function ProfileMenuModal({ visible, onClose, userData }: ProfileMenuModa
               title="Settings"
               onPress={handleSettings}
               theme={theme}
-              showDivider={isMerchant}
             />
+
+            <ModeToggle />
 
             {isMerchant && (
               <MenuItem 
