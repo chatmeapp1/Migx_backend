@@ -6,6 +6,7 @@ import {
   Platform,
   Keyboard,
   Alert,
+  AppState,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -76,11 +77,13 @@ export default function ChatRoomScreen() {
     console.log('🆔 User ID:', currentUserId);
     
     const newSocket = io(API_BASE_URL, {
-      transports: ['websocket', 'polling'],
+      transports: ['websocket'],
       reconnection: true,
       reconnectionDelay: 1000,
-      reconnectionAttempts: 5,
+      reconnectionAttempts: Infinity,
       timeout: 10000,
+      forceNew: false,
+      autoConnect: true,
     });
 
     newSocket.on('connect', () => {
@@ -184,11 +187,9 @@ export default function ChatRoomScreen() {
     setSocket(newSocket);
 
     return () => {
-      if (currentUsername && currentUserId) {
-        console.log('📤 Emitting leave_room');
-        newSocket.emit('leave_room', { roomId, username: currentUsername });
-      }
-      newSocket.close();
+      // Don't disconnect or leave room - keep connection alive
+      // User only leaves when explicitly clicking leave button
+      console.log('⚠️ Component unmounting but socket stays connected');
     };
   }, [roomId, currentUsername, currentUserId]);
 
@@ -204,6 +205,25 @@ export default function ChatRoomScreen() {
       hideSub.remove();
     };
   }, []);
+
+  // Handle app state changes (background/foreground)
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        console.log('📱 App came to foreground - ensuring socket connection');
+        if (socket && !socket.connected) {
+          socket.connect();
+        }
+      } else if (nextAppState === 'background') {
+        console.log('📱 App went to background - keeping socket alive');
+        // Socket stays connected in background
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [socket]);
 
   const [tabs, setTabs] = useState<ChatTab[]>([
     {
@@ -353,6 +373,13 @@ export default function ChatRoomScreen() {
     }
   };
 
+  const handleLeaveRoom = () => {
+    if (socket && currentUsername && currentUserId) {
+      console.log('🚪 User explicitly leaving room');
+      socket.emit('leave_room', { roomId, username: currentUsername, userId: currentUserId });
+    }
+    router.back();
+  };
 
   const currentTab = tabs.find(t => t.id === activeTab);
 
@@ -365,7 +392,7 @@ export default function ChatRoomScreen() {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onCloseTab={(id) => {
-          if (tabs.length === 1) return router.back();
+          if (tabs.length === 1) return handleLeaveRoom();
           const filtered = tabs.filter(t => t.id !== id);
           setTabs(filtered);
           if (activeTab === id) setActiveTab(filtered[0].id);

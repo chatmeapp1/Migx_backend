@@ -3,9 +3,9 @@ const userService = require('../services/userService');
 const banService = require('../services/banService');
 const { addXp, XP_REWARDS } = require('../utils/xpLeveling');
 const { getPresence } = require('../utils/presence');
-const { 
-  addUserRoom, 
-  removeUserRoom, 
+const {
+  addUserRoom,
+  removeUserRoom,
   addRecentRoom,
   incrementRoomActive,
   decrementRoomActive
@@ -26,10 +26,22 @@ const createSystemMessage = (roomId, message) => ({
   type: 'system'
 });
 
+const disconnectTimers = new Map();
+
 module.exports = (io, socket) => {
   const joinRoom = async (data) => {
     try {
       const { roomId, userId, username } = data;
+
+      console.log(`👤 User joining room:`, { roomId, userId, username });
+
+      // Clear any pending disconnect timer for this user
+      const timerKey = `${userId}-${roomId}`;
+      if (disconnectTimers.has(timerKey)) {
+        clearTimeout(disconnectTimers.get(timerKey));
+        disconnectTimers.delete(timerKey);
+        console.log(`✅ Reconnected within 15s - keeping user in room:`, username);
+      }
 
       if (!roomId || !userId || !username) {
         socket.emit('error', { message: 'Missing required fields' });
@@ -78,10 +90,10 @@ module.exports = (io, socket) => {
 
       // Get current users before adding new user
       const currentUsersList = await getRoomPresenceUsers(roomId);
-      
+
       // Add user to Redis presence
       await addUserToRoom(roomId, username);
-      
+
       // Get updated count after adding user
       const newUserCount = await getRoomUserCount(roomId);
 
@@ -101,8 +113,8 @@ module.exports = (io, socket) => {
       );
 
       // Create user list string for welcome message
-      const userListString = currentUsersList.length > 0 
-        ? currentUsersList.join(', ') 
+      const userListString = currentUsersList.length > 0
+        ? currentUsersList.join(', ')
         : username;
 
       // MIG33-style welcome messages - send to the joining user only
@@ -160,9 +172,9 @@ module.exports = (io, socket) => {
         type: 'system',
         messageType: 'system'
       };
-      
+
       io.to(`room:${roomId}`).emit('chat:message', enterMessage);
-      
+
       // Save enter message to Redis
       await addSystemMessage(roomId, `${room.name} : ${enterMsg}`);
 
@@ -179,7 +191,7 @@ module.exports = (io, socket) => {
         userCount: newUserCount,
         username
       });
-      
+
       socket.emit('room:joined', {
         roomId,
         room,
@@ -194,10 +206,10 @@ module.exports = (io, socket) => {
       });
 
       await addXp(userId, XP_REWARDS.JOIN_ROOM, 'join_room', io);
-      
+
       await addRecentRoom(username, roomId, room.name);
       await incrementRoomActive(roomId);
-      
+
       io.emit('rooms:updateCount', {
         roomId,
         userCount: newUserCount,
@@ -224,7 +236,7 @@ module.exports = (io, socket) => {
 
       // Remove user from Redis presence
       await removeUserFromRoom(roomId, username);
-      
+
       // Get updated count after removing user
       const userCount = await getRoomUserCount(roomId);
 
@@ -247,9 +259,9 @@ module.exports = (io, socket) => {
         type: 'system',
         messageType: 'system'
       };
-      
+
       io.to(`room:${roomId}`).emit('chat:message', leftMessage);
-      
+
       // Save left message to Redis
       await addSystemMessage(roomId, `${room.name} : ${leftMsg}`);
 
@@ -261,9 +273,9 @@ module.exports = (io, socket) => {
 
       socket.emit('room:left', { roomId });
       socket.emit('chatlist:roomLeft', { roomId });
-      
+
       await decrementRoomActive(roomId);
-      
+
       io.emit('rooms:updateCount', {
         roomId,
         userCount,
@@ -414,28 +426,28 @@ module.exports = (io, socket) => {
   const createRoom = async (data) => {
     try {
       const { name, ownerId, description, maxUsers, isPrivate, password } = data;
-      
+
       if (!name || !ownerId) {
         socket.emit('error', { message: 'Name and owner ID are required' });
         return;
       }
-      
+
       const existingRoom = await roomService.getRoomByName(name);
       if (existingRoom) {
         socket.emit('room:create:error', { message: 'Room name already exists' });
         return;
       }
-      
+
       const room = await roomService.createRoom(name, ownerId, description, maxUsers, isPrivate, password);
-      
+
       if (!room) {
         socket.emit('room:create:error', { message: 'Failed to create room' });
         return;
       }
-      
+
       socket.emit('room:created', { room });
       io.emit('rooms:update', { room, action: 'created' });
-      
+
     } catch (error) {
       console.error('Error creating room:', error);
       socket.emit('error', { message: 'Failed to create room' });
@@ -450,4 +462,51 @@ module.exports = (io, socket) => {
   socket.on('room:admin:unban', adminUnban);
   socket.on('room:info:get', getRoomInfo);
   socket.on('room:create', createRoom);
+
+  socket.on('disconnect', async () => {
+    try {
+      console.log(`⚠️ Socket disconnected: ${socket.id}`);
+
+      const rooms = Array.from(socket.rooms).filter(room => room !== socket.id);
+
+      for (const roomId of rooms) {
+        const roomUsers = await getRoomPresenceUsers(roomId); // Assuming getRoomPresenceUsers is available
+        const user = roomUsers.find(u => u.socketId === socket.id);
+
+        if (user) {
+          const timerKey = `${user.id}-${roomId}`;
+
+          // Set a 15-second delay before actually removing user
+          const timer = setTimeout(async () => {
+            console.log(`⏰ 15s timeout - removing user from room: ${user.username}`);
+
+            await removeUserFromRoom(roomId, user.id, user.username);
+            await getPresence(user.username); // Assuming this also removes presence if needed
+            await removeUserRoom(user.username, roomId); // Remove from redisUtils as well
+
+            const updatedUsers = await getRoomPresenceUsers(roomId); // Assuming getRoomPresenceUsers is available
+
+            io.to(`room:${roomId}`).emit('room:users', {
+              roomId,
+              users: updatedUsers
+            });
+
+            io.to(`room:${roomId}`).emit('system:message', {
+              roomId,
+              message: `${user.username} has left`,
+              timestamp: new Date().toISOString(),
+              type: 'system'
+            });
+
+            disconnectTimers.delete(timerKey);
+          }, 15000);
+
+          disconnectTimers.set(timerKey, timer);
+          console.log(`⏳ Started 15s disconnect timer for: ${user.username}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error handling disconnect:', error);
+    }
+  });
 };
