@@ -450,19 +450,26 @@ export default function ChatRoomScreen() {
       socket.emit('leave_room', { roomId: activeTab, username: currentUsername, userId: currentUserId });
     }
     
-    // Remove tab from storage
+    // Remove tab from storage and state
     const remainingTabs = tabs.filter(t => t.id !== activeTab);
+    
+    // Update state first
+    setTabs(remainingTabs);
+    
     try {
       if (remainingTabs.length > 0) {
         await AsyncStorage.setItem('chatroom_tabs', JSON.stringify(remainingTabs));
+        // Switch to another tab instead of going back
+        setActiveTab(remainingTabs[0].id);
       } else {
         await AsyncStorage.removeItem('chatroom_tabs');
+        // No more tabs, go back to previous screen
+        router.back();
       }
     } catch (error) {
       console.error('❌ Error saving tabs:', error);
+      router.back();
     }
-    
-    router.back();
   };
 
   const currentTab = tabs.find(t => t.id === activeTab);
