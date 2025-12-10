@@ -39,7 +39,7 @@ export function ChatMessage({
   };
 
   const getMessageColor = () => {
-    if (isSystem) return '#000000';
+    if (isSystem) return theme.text;
     return theme.text;
   };
 
