@@ -58,14 +58,12 @@ async function startVoteKick(io, roomId, starterUsername, targetUsername, roomUs
     const currentVotes = await redis.sCard(votesKey);
     const neededMore = votesNeeded - currentVotes;
 
-    if (remainingTime > 0) {
-      io.to(`room:${roomId}`).emit('system:message', {
-        roomId,
-        message: `Vote to kick ${targetUsername}: ${currentVotes} vote${currentVotes > 1 ? 's' : ''}, ${neededMore > 0 ? neededMore + ' more needed' : 'enough votes'}. ${remainingTime}s remaining.`,
-        timestamp: new Date().toISOString(),
-        type: 'voteKick'
-      });
-    }
+    io.to(`room:${roomId}`).emit('system:message', {
+      roomId,
+      message: `Vote to kick ${targetUsername}: ${currentVotes} vote${currentVotes > 1 ? 's' : ''}, ${neededMore > 0 ? neededMore + ' more needed' : 'enough votes'}. ${remainingTime}s remaining.`,
+      timestamp: new Date().toISOString(),
+      type: 'voteKick'
+    });
 
     intervalIndex++;
     if (intervalIndex < intervals.length) {

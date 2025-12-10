@@ -259,10 +259,40 @@ app.use('/api/feed', feedRoute);
 // Admin unban endpoint
 const { clearGlobalBan, getAdminKickCount } = require('./utils/adminKick');
 const { clearAdminCooldown, clearVoteCooldown, getCooldownStatus } = require('./utils/roomCooldown');
+const jwt = require('jsonwebtoken');
 
-app.post('/api/admin/unban', async (req, res) => {
+const verifyAdminAuth = async (req, res, next) => {
   try {
-    const { username, adminId } = req.body;
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ success: false, error: 'No token provided' });
+    }
+    
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'migx_secret_key');
+    
+    const userService = require('./services/userService');
+    const user = await userService.getUserById(decoded.id || decoded.userId);
+    
+    if (!user) {
+      return res.status(401).json({ success: false, error: 'User not found' });
+    }
+    
+    if (user.role !== 'admin' && user.role !== 'superadmin' && user.role !== 'creator') {
+      return res.status(403).json({ success: false, error: 'Admin access required' });
+    }
+    
+    req.user = user;
+    next();
+  } catch (error) {
+    console.error('Admin auth error:', error);
+    return res.status(401).json({ success: false, error: 'Invalid token' });
+  }
+};
+
+app.post('/api/admin/unban', verifyAdminAuth, async (req, res) => {
+  try {
+    const { username } = req.body;
     
     if (!username) {
       return res.status(400).json({ success: false, error: 'Username is required' });
@@ -280,7 +310,7 @@ app.post('/api/admin/unban', async (req, res) => {
   }
 });
 
-app.post('/api/admin/clear-cooldown', async (req, res) => {
+app.post('/api/admin/clear-cooldown', verifyAdminAuth, async (req, res) => {
   try {
     const { username, roomId, type } = req.body;
     
@@ -307,7 +337,7 @@ app.post('/api/admin/clear-cooldown', async (req, res) => {
   }
 });
 
-app.get('/api/admin/ban-status/:username', async (req, res) => {
+app.get('/api/admin/ban-status/:username', verifyAdminAuth, async (req, res) => {
   try {
     const { username } = req.params;
     const { roomId } = req.query;
