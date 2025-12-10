@@ -7,17 +7,17 @@ module.exports = (io, socket) => {
   const sendMessage = async (data) => {
     try {
       const { roomId, userId, username, message } = data;
-      
+
       if (!roomId || !userId || !username || !message) {
         socket.emit('error', { message: 'Missing required fields' });
         return;
       }
-      
+
       if (message.length > 1000) {
         socket.emit('error', { message: 'Message too long (max 1000 characters)' });
         return;
       }
-      
+
       const floodCheck = await checkFlood(username);
       if (!floodCheck.allowed) {
         const roomService = require('../services/roomService');
@@ -31,7 +31,7 @@ module.exports = (io, socket) => {
         });
         return;
       }
-      
+
       const rateCheck = await checkGlobalRateLimit(userId);
       if (!rateCheck.allowed) {
         socket.emit('system:message', {
@@ -42,11 +42,9 @@ module.exports = (io, socket) => {
         });
         return;
       }
-      
+
       const savedMessage = await messageService.saveMessage(roomId, userId, username, message, 'chat');
-      
-      await addXp(userId, XP_REWARDS.SEND_MESSAGE, 'send_message', io);
-      
+
       const messageData = {
         id: savedMessage?.id || generateMessageId(),
         roomId,
@@ -56,25 +54,25 @@ module.exports = (io, socket) => {
         messageType: 'chat',
         timestamp: savedMessage?.created_at || new Date().toISOString()
       };
-      
-      const { setRoomLastMessage } = require('../utils/redisUtils');
-      await setRoomLastMessage(roomId, messageData);
-      
+
       io.to(`room:${roomId}`).emit('chat:message', messageData);
-      
-      const roomUsers = await require('../services/roomService').getRoomUsers(roomId);
-      roomUsers.forEach(user => {
-        io.to(`user:${user.username}`).emit('chatlist:update', {
-          type: 'room',
-          roomId,
-          lastMessage: {
-            message: messageData.message,
-            username: messageData.username,
-            timestamp: messageData.timestamp
-          }
-        });
+
+      // Save as last message in Redis for chat list
+      const redis = require('../redis').getRedisClient();
+      await redis.hSet(`room:lastmsg:${roomId}`, {
+        message,
+        username,
+        timestamp: Date.now().toString()
       });
-      
+
+      // Notify all room members of chatlist update
+      const roomUsers = await require('../utils/redisPresence').getRoomUsers(roomId);
+      roomUsers.forEach(user => {
+        io.to(`user:${user}`).emit('chatlist:update', { roomId });
+      });
+
+      await addXp(userId, XP_REWARDS.SEND_MESSAGE, 'send_message', io);
+
     } catch (error) {
       console.error('Error sending message:', error);
       socket.emit('error', { message: 'Failed to send message' });
@@ -84,24 +82,24 @@ module.exports = (io, socket) => {
   const getMessages = async (data) => {
     try {
       const { roomId, limit = 50, offset = 0 } = data;
-      
+
       console.log('📥 Get messages request:', { roomId, limit, offset });
-      
+
       if (!roomId) {
         socket.emit('error', { message: 'Room ID required' });
         return;
       }
-      
+
       const messages = await messageService.getMessages(roomId, limit, offset);
-      
+
       console.log('📤 Sending messages:', messages.length);
-      
+
       socket.emit('chat:messages', {
         roomId,
         messages,
         hasMore: messages.length === limit
       });
-      
+
     } catch (error) {
       console.error('Error getting messages:', error);
       socket.emit('error', { message: 'Failed to get messages' });
@@ -111,14 +109,14 @@ module.exports = (io, socket) => {
   const deleteMessage = async (data) => {
     try {
       const { messageId, roomId, adminId } = data;
-      
+
       await messageService.deleteMessage(messageId);
-      
+
       io.to(`room:${roomId}`).emit('chat:message:deleted', {
         messageId,
         roomId
       });
-      
+
     } catch (error) {
       console.error('Error deleting message:', error);
       socket.emit('error', { message: 'Failed to delete message' });

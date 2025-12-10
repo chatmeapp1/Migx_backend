@@ -200,10 +200,24 @@ module.exports = (io, socket) => {
         userCount: newUserCount
       });
 
+      // Save user room to Redis for chat list
+      const redis = require('../redis').getRedisClient();
+      await redis.sAdd(`user:rooms:${username}`, roomId);
+      
+      // Set initial last message
+      await redis.hSet(`room:lastmsg:${roomId}`, {
+        message: `${username} joined`,
+        username: room.name,
+        timestamp: Date.now().toString()
+      });
+
       socket.emit('chatlist:roomJoined', {
         roomId,
         roomName: room.name
       });
+      
+      // Emit chatlist update to user
+      io.to(`user:${username}`).emit('chatlist:update', { roomId });
 
       await addXp(userId, XP_REWARDS.JOIN_ROOM, 'join_room', io);
 
@@ -271,8 +285,15 @@ module.exports = (io, socket) => {
         users: usersWithPresence
       });
 
+      // Remove user room from Redis
+      const redis = require('../redis').getRedisClient();
+      await redis.sRem(`user:rooms:${username}`, roomId);
+      
       socket.emit('room:left', { roomId });
       socket.emit('chatlist:roomLeft', { roomId });
+      
+      // Emit chatlist update to user
+      io.to(`user:${username}`).emit('chatlist:update', { roomId });
 
       await decrementRoomActive(roomId);
 

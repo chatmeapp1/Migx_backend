@@ -31,18 +31,21 @@ export function ChatList() {
 
   useEffect(() => {
     if (username) {
-      fetchChatList();
+      loadRooms();
       
-      // Listen for real-time updates
+      // Listen for real-time chatlist updates
       if (socket) {
         socket.on('chatlist:update', handleChatListUpdate);
-        socket.emit('chatlist:get', { username });
+        socket.on('chatlist:roomJoined', handleRoomJoined);
+        socket.on('chatlist:roomLeft', handleRoomLeft);
       }
     }
 
     return () => {
       if (socket) {
         socket.off('chatlist:update', handleChatListUpdate);
+        socket.off('chatlist:roomJoined', handleRoomJoined);
+        socket.off('chatlist:roomLeft', handleRoomLeft);
       }
     };
   }, [username, socket]);
@@ -58,38 +61,37 @@ export function ChatList() {
     }
   };
 
-  const fetchChatList = async () => {
+  const loadRooms = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/chat/list?username=${username}`);
+      setLoading(true);
+      const response = await fetch(`${API_BASE_URL}/api/chat/list/${username}`);
       const data = await response.json();
       
       if (data.success) {
         const formattedData: ChatData[] = [];
         
-        // Add rooms
+        // Add rooms from Redis
         data.rooms?.forEach((room: any) => {
           formattedData.push({
             type: 'room',
             name: room.name,
             roomId: room.id,
-            message: room.lastMessage?.message 
-              ? `${room.lastMessage.username}: ${room.lastMessage.message}` 
-              : undefined,
-            time: room.lastMessage?.timestamp 
-              ? formatTime(room.lastMessage.timestamp) 
+            message: room.lastMessage 
+              ? `${room.lastUsername}: ${room.lastMessage}` 
+              : 'No messages yet',
+            time: room.timestamp 
+              ? formatTime(room.timestamp) 
               : undefined,
           });
         });
         
-        // Add DMs
+        // Add DMs (if any)
         data.dms?.forEach((dm: any) => {
           formattedData.push({
             type: 'user',
             name: dm.username,
             username: dm.username,
-            message: dm.lastMessage?.message 
-              ? `${dm.lastMessage.fromUsername}: ${dm.lastMessage.message}` 
-              : undefined,
+            message: dm.lastMessage?.message,
             time: dm.lastMessage?.timestamp 
               ? formatTime(dm.lastMessage.timestamp) 
               : undefined,
@@ -100,7 +102,7 @@ export function ChatList() {
         setChatData(formattedData);
       }
     } catch (error) {
-      console.error('Error fetching chat list:', error);
+      console.error('Error loading rooms:', error);
     } finally {
       setLoading(false);
     }
@@ -108,14 +110,24 @@ export function ChatList() {
 
   const handleChatListUpdate = (data: any) => {
     console.log('Chat list update received:', data);
-    fetchChatList(); // Refresh the list
+    loadRooms(); // Reload the list
   };
 
-  const formatTime = (timestamp: string) => {
-    const date = new Date(timestamp);
+  const handleRoomJoined = (data: any) => {
+    console.log('Room joined:', data);
+    loadRooms();
+  };
+
+  const handleRoomLeft = (data: any) => {
+    console.log('Room left:', data);
+    loadRooms();
+  };
+
+  const formatTime = (timestamp: string | number) => {
+    const date = new Date(Number(timestamp));
     const hours = date.getHours();
     const minutes = date.getMinutes();
-    return `${hours}:${minutes < 10 ? '0' : ''}${minutes}`;
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
   };
 
   if (loading) {
@@ -134,7 +146,7 @@ export function ChatList() {
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={styles.emptyContainer}>
           <Text style={[styles.emptyText, { color: theme.secondary }]}>
-            No chats yet. Join a room or start a conversation!
+            No chats yet. Join a room to start chatting!
           </Text>
         </View>
       </View>
