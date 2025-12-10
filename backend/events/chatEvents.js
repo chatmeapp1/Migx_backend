@@ -2,6 +2,7 @@ const messageService = require('../services/messageService');
 const { checkFlood, checkGlobalRateLimit } = require('../utils/floodControl');
 const { generateMessageId } = require('../utils/idGenerator');
 const { addXp, XP_REWARDS } = require('../utils/xpLeveling');
+const { MIG33_CMD } = require('../utils/cmdMapping');
 
 module.exports = (io, socket) => {
   const sendMessage = async (data) => {
@@ -41,6 +42,33 @@ module.exports = (io, socket) => {
           type: 'warning'
         });
         return;
+      }
+
+      // Check if message is a CMD command
+      if (message.startsWith('/')) {
+        const parts = message.slice(1).split(' ');
+        const cmdKey = parts[0].toLowerCase();
+        const target = parts[1] || null;
+
+        const cmd = MIG33_CMD[cmdKey];
+        if (cmd) {
+          const text = cmd.requiresTarget 
+            ? cmd.message(username, target)
+            : cmd.message(username);
+
+          const systemMsg = {
+            id: generateMessageId(),
+            roomId,
+            username: 'system',
+            message: text,
+            messageType: 'system',
+            type: 'system',
+            timestamp: new Date().toISOString()
+          };
+
+          io.to(`room:${roomId}`).emit('chat:message', systemMsg);
+          return;
+        }
       }
 
       const savedMessage = await messageService.saveMessage(roomId, userId, username, message, 'chat');
