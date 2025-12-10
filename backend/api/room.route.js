@@ -67,6 +67,74 @@ router.get('/favorites/:username', async (req, res) => {
   }
 });
 
+router.post('/favorites/add', async (req, res) => {
+  try {
+    const { username, roomId } = req.body;
+    
+    if (!username || !roomId) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Username and roomId are required' 
+      });
+    }
+    
+    const success = await addFavoriteRoom(username, roomId);
+    
+    if (success) {
+      res.json({
+        success: true,
+        message: 'Room added to favorites'
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to add room to favorites'
+      });
+    }
+    
+  } catch (error) {
+    console.error('Add favorite room error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to add room to favorites' 
+    });
+  }
+});
+
+router.post('/favorites/remove', async (req, res) => {
+  try {
+    const { username, roomId } = req.body;
+    
+    if (!username || !roomId) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'Username and roomId are required' 
+      });
+    }
+    
+    const success = await removeFavoriteRoom(username, roomId);
+    
+    if (success) {
+      res.json({
+        success: true,
+        message: 'Room removed from favorites'
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to remove room from favorites'
+      });
+    }
+    
+  } catch (error) {
+    console.error('Remove favorite room error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to remove room from favorites' 
+    });
+  }
+});
+
 router.get('/recent/:username', async (req, res) => {
   try {
     const { username } = req.params;

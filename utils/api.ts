@@ -80,13 +80,11 @@ export const API_ENDPOINTS = {
   ROOM: {
     LIST: `${API_BASE_URL}/api/rooms`,
     CREATE: `${API_BASE_URL}/api/rooms/create`,
+    JOIN: (roomId: string) => `${API_BASE_URL}/api/rooms/${roomId}/join`,
     RECENT: (username: string) => `${API_BASE_URL}/api/rooms/recent/${username}`,
     FAVORITES: (username: string) => `${API_BASE_URL}/api/rooms/favorites/${username}`,
-    HOT: `${API_BASE_URL}/api/rooms/hot`,
-    MORE: `${API_BASE_URL}/api/rooms/more`,
-    GET: (id: string) => `${API_BASE_URL}/api/rooms/${id}`,
-    JOIN: `${API_BASE_URL}/api/room/join`,
-    LEAVE: `${API_BASE_URL}/api/room/leave`,
+    ADD_FAVORITE: `${API_BASE_URL}/api/rooms/favorites/add`,
+    REMOVE_FAVORITE: `${API_BASE_URL}/api/rooms/favorites/remove`,
   },
   CREDIT: {
     BALANCE: `${API_BASE_URL}/api/credit/balance`,

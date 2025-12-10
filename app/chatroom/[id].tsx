@@ -532,6 +532,30 @@ export default function ChatRoomScreen() {
       } catch (err) {
         console.log('Error loading room info:', err);
       }
+    } else if (action === 'add-favorite') {
+      try {
+        console.log('Adding room to favorites:', roomId);
+        const response = await fetch(`${API_BASE_URL}/api/rooms/favorites/add`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: currentUsername,
+            roomId: roomId,
+          }),
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+          Alert.alert('Success', 'Room added to favorites!');
+        } else {
+          Alert.alert('Error', data.message || 'Failed to add favorite');
+        }
+      } catch (err) {
+        console.log('Error adding favorite:', err);
+        Alert.alert('Error', 'Failed to add room to favorites');
+      }
     } else if (action === 'kick') {
       setKickModalVisible(true);
     } else if (action === 'participants') {

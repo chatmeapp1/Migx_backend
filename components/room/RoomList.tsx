@@ -42,6 +42,7 @@ export function RoomList() {
   const [refreshing, setRefreshing] = useState(false);
   const [allRooms, setAllRooms] = useState<Room[]>([]);
   const [recentRooms, setRecentRooms] = useState<Room[]>([]);
+  const [favoriteRooms, setFavoriteRooms] = useState<Room[]>([]);
   const [username, setUsername] = useState<string | null>(null);
 
   const formatRoomForDisplay = (room: Room) => ({
@@ -81,13 +82,35 @@ export function RoomList() {
     }
   };
 
+  const fetchFavoriteRooms = async (user: string) => {
+    try {
+      const response = await fetch(API_ENDPOINTS.ROOM.FAVORITES(user));
+      const data = await response.json();
+      
+      if (data.success && data.rooms) {
+        setFavoriteRooms(data.rooms.map((r: any) => ({
+          id: r.id,
+          name: r.name,
+          userCount: r.userCount || 0,
+          maxUsers: r.maxUsers || 50,
+        })));
+      }
+    } catch (error) {
+      console.error('Failed to fetch favorite rooms:', error);
+    }
+  };
+
   const loadData = async () => {
     try {
       const userDataStr = await AsyncStorage.getItem('user_data');
       if (userDataStr) {
         const userData = JSON.parse(userDataStr);
         setUsername(userData.username);
-        await Promise.all([fetchRooms(), fetchRecentRooms(userData.username)]);
+        await Promise.all([
+          fetchRooms(), 
+          fetchRecentRooms(userData.username),
+          fetchFavoriteRooms(userData.username)
+        ]);
       } else {
         await fetchRooms();
       }
@@ -168,11 +191,13 @@ export function RoomList() {
           </View>
         </TouchableOpacity>
         
-        <RoomCategory
-          title="★ Your Favorites"
-          rooms={[]}
-          backgroundColor="#FF6B35"
-        />
+        {favoriteRooms.length > 0 && (
+          <RoomCategory
+            title="★ Your Favorites"
+            rooms={favoriteRooms.map(formatRoomForDisplay)}
+            backgroundColor="#FF6B35"
+          />
+        )}
         
         {recentRooms.length > 0 && (
           <RoomCategory
