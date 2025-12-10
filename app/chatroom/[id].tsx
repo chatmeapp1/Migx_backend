@@ -684,16 +684,34 @@ export default function ChatRoomScreen() {
         username: currentUsername, 
         userId: currentUserId 
       });
-      
-      // Disconnect socket to ensure clean exit
-      socket.disconnect();
     }
     
-    // Clear all tabs
-    await clearRoomTabs();
+    // Remove this tab from tabs array
+    const filteredTabs = tabs.filter(t => t.id !== roomIdToLeave);
     
-    // Navigate back to room list
-    router.replace('/(tabs)/room');
+    if (filteredTabs.length === 0) {
+      // No more tabs left - clear all and go back to room menu
+      console.log('🚪 Last tab closed - navigating to room menu');
+      await clearRoomTabs();
+      
+      // Disconnect socket
+      if (socket) {
+        socket.disconnect();
+      }
+      
+      // Navigate to room menu tab
+      router.replace('/(tabs)/room');
+    } else {
+      // Still have other tabs - just close current tab and switch to another
+      console.log('🚪 Closing current tab, switching to another tab');
+      setTabs(filteredTabs);
+      
+      // Switch to first remaining tab
+      setActiveTab(filteredTabs[0].id);
+      
+      // Save updated tabs to AsyncStorage
+      await AsyncStorage.setItem('chatroom_tabs', JSON.stringify(filteredTabs));
+    }
   };
 
   const currentTab = tabs.find(t => t.id === activeTab);
