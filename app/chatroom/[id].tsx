@@ -9,6 +9,7 @@ import {
   AppState,
   Dimensions,
   BackHandler,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -689,7 +690,11 @@ export default function ChatRoomScreen() {
   }));
 
   return (
-    <View style={[styles.container, { backgroundColor: HEADER_COLOR }]}>
+    <KeyboardAvoidingView
+      style={[styles.container, { backgroundColor: HEADER_COLOR }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={0}
+    >
       <StatusBar barStyle="light-content" backgroundColor={HEADER_COLOR} />
 
       <ChatRoomHeader
@@ -749,7 +754,7 @@ export default function ChatRoomScreen() {
           styles.inputWrapper, 
           { 
             backgroundColor: HEADER_COLOR,
-            paddingBottom: keyboardVisible ? 0 : insets.bottom,
+            paddingBottom: insets.bottom,
           }
         ]}
       >
@@ -793,7 +798,7 @@ export default function ChatRoomScreen() {
         onMenuItemPress={handleMenuAction}
         onOpenParticipants={handleOpenParticipants} // Pass the handler here
       />
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
