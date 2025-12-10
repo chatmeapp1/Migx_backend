@@ -754,6 +754,7 @@ export default function ChatRoomScreen() {
           styles.inputWrapper, 
           { 
             backgroundColor: HEADER_COLOR,
+            paddingBottom: Platform.OS === 'android' ? 8 : 0,
           }
         ]}
       >
@@ -813,6 +814,5 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingBottom: Platform.OS === 'android' ? 16 : 0,
   },
 });
