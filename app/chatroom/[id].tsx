@@ -265,56 +265,21 @@ export default function ChatRoomScreen() {
   const loadActiveRooms = async (username: string) => {
     try {
       console.log('📥 Loading active rooms from server for:', username);
-      const response = await fetch(`${API_BASE_URL}/api/chat/joined/${username}`);
-      const data = await response.json();
       
-      if (data.success && data.rooms && data.rooms.length > 0) {
-        // Remove duplicates using Map with roomId as key
-        const uniqueRoomsMap = new Map();
-        
-        data.rooms.forEach((room: any) => {
-          if (!uniqueRoomsMap.has(room.id)) {
-            uniqueRoomsMap.set(room.id, {
-              id: room.id,
-              name: room.name,
-              type: 'room' as const,
-              messages: [],
-            });
-          }
-        });
-        
-        // Check if current room is in the list, if not add it
-        if (!uniqueRoomsMap.has(roomId)) {
-          uniqueRoomsMap.set(roomId, {
-            id: roomId,
-            name: roomName,
-            type: 'room' as const,
-            messages: [],
-          });
-        }
-        
-        const serverTabs = Array.from(uniqueRoomsMap.values());
-        
-        console.log('📑 Loaded unique tabs from server:', serverTabs);
-        setTabs(serverTabs);
-        
-        // Set current room as active
-        setActiveTab(roomId);
-        
-        // Don't save to AsyncStorage - always load from server
-        return serverTabs;
-      } else {
-        // No rooms from server, create tab for current room only
-        const newTabs = [{
-          id: roomId,
-          name: roomName,
-          type: 'room' as const,
-          messages: [],
-        }];
-        setTabs(newTabs);
-        setActiveTab(roomId);
-        return newTabs;
-      }
+      // ALWAYS start fresh with only current room
+      // Don't load old rooms from server to match MIG33 behavior
+      const newTabs = [{
+        id: roomId,
+        name: roomName,
+        type: 'room' as const,
+        messages: [],
+      }];
+      
+      console.log('📑 Starting fresh with current room only:', newTabs);
+      setTabs(newTabs);
+      setActiveTab(roomId);
+      
+      return newTabs;
     } catch (error) {
       console.error('❌ Error loading active rooms:', error);
       // Fallback to current room

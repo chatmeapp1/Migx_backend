@@ -468,42 +468,55 @@ module.exports = (io, socket) => {
     try {
       console.log(`⚠️ Socket disconnected: ${socket.id}`);
 
+      // Remove user from ALL rooms immediately on disconnect
+      // This matches MIG33 behavior - no lingering in rooms
       const rooms = Array.from(socket.rooms).filter(room => room !== socket.id);
 
       for (const roomId of rooms) {
-        const roomUsers = await getRoomPresenceUsers(roomId); // Assuming getRoomPresenceUsers is available
-        const user = roomUsers.find(u => u.socketId === socket.id);
+        if (!roomId.startsWith('room:')) continue;
+        
+        const actualRoomId = roomId.replace('room:', '');
+        const roomUsers = await getRoomPresenceUsers(actualRoomId);
+        
+        // Find user by socket ID
+        for (const username of roomUsers) {
+          // Remove user immediately - no timer delay
+          console.log(`🚪 Disconnect - removing user from room: ${username}`);
+          
+          await removeUserFromRoom(actualRoomId, username);
+          await removeUserRoom(username, actualRoomId);
 
-        if (user) {
-          const timerKey = `${user.id}-${roomId}`;
+          const room = await roomService.getRoomById(actualRoomId);
+          const userCount = await getRoomUserCount(actualRoomId);
+          
+          // Send leave message
+          const leftMsg = `${username} [${userCount}] has left`;
+          const leftMessage = {
+            roomId: actualRoomId,
+            username: room?.name || 'Room',
+            message: leftMsg,
+            timestamp: new Date().toISOString(),
+            type: 'system',
+            messageType: 'system'
+          };
 
-          // Set a 15-second delay before actually removing user
-          const timer = setTimeout(async () => {
-            console.log(`⏰ 15s timeout - removing user from room: ${user.username}`);
+          io.to(`room:${actualRoomId}`).emit('chat:message', leftMessage);
+          await addSystemMessage(actualRoomId, `${room?.name || 'Room'} : ${leftMsg}`);
 
-            await removeUserFromRoom(roomId, user.id, user.username);
-            await getPresence(user.username); // Assuming this also removes presence if needed
-            await removeUserRoom(user.username, roomId); // Remove from redisUtils as well
+          const updatedUsers = await getRoomPresenceUsers(actualRoomId);
+          io.to(`room:${actualRoomId}`).emit('room:user:left', {
+            roomId: actualRoomId,
+            username,
+            users: updatedUsers
+          });
 
-            const updatedUsers = await getRoomPresenceUsers(roomId); // Assuming getRoomPresenceUsers is available
+          await decrementRoomActive(actualRoomId);
 
-            io.to(`room:${roomId}`).emit('room:users', {
-              roomId,
-              users: updatedUsers
-            });
-
-            io.to(`room:${roomId}`).emit('system:message', {
-              roomId,
-              message: `${user.username} has left`,
-              timestamp: new Date().toISOString(),
-              type: 'system'
-            });
-
-            disconnectTimers.delete(timerKey);
-          }, 15000);
-
-          disconnectTimers.set(timerKey, timer);
-          console.log(`⏳ Started 15s disconnect timer for: ${user.username}`);
+          io.emit('rooms:updateCount', {
+            roomId: actualRoomId,
+            userCount,
+            maxUsers: room?.max_users || 25
+          });
         }
       }
     } catch (error) {

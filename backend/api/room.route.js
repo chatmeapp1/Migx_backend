@@ -439,4 +439,103 @@ router.delete('/:id/admins/:userId', async (req, res) => {
   }
 });
 
+router.post('/join', async (req, res) => {
+  try {
+    const { roomId, userId, username } = req.body;
+    
+    if (!roomId || !userId || !username) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'roomId, userId, and username are required' 
+      });
+    }
+    
+    const result = await roomService.joinRoom(roomId, userId, username);
+    
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+    
+    res.json({
+      success: true,
+      room: result.room
+    });
+    
+  } catch (error) {
+    console.error('Join room error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to join room' 
+    });
+  }
+});
+
+router.post('/leave', async (req, res) => {
+  try {
+    const { roomId, userId, username } = req.body;
+    
+    if (!roomId || !userId || !username) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'roomId, userId, and username are required' 
+      });
+    }
+    
+    const result = await roomService.leaveRoom(roomId, userId, username);
+    
+    res.json({
+      success: true
+    });
+    
+  } catch (error) {
+    console.error('Leave room error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to leave room' 
+    });
+  }
+});
+
+router.get('/joined/:username', async (req, res) => {
+  try {
+    const { username } = req.params;
+    
+    if (!username) {
+      return res.status(400).json({ error: 'Username is required' });
+    }
+    
+    const presence = require('../utils/presence');
+    const userRooms = await presence.getUserRooms(username);
+    
+    const roomsWithDetails = await Promise.all(
+      userRooms.map(async (roomId) => {
+        const room = await roomService.getRoomById(roomId);
+        if (!room) return null;
+        const userCount = await presence.getRoomUserCount(roomId);
+        return {
+          id: room.id,
+          name: room.name,
+          description: room.description,
+          maxUsers: room.max_users,
+          userCount,
+          ownerId: room.owner_id,
+          ownerName: room.owner_name
+        };
+      })
+    );
+    
+    const validRooms = roomsWithDetails.filter(r => r !== null);
+    
+    res.json({
+      success: true,
+      rooms: validRooms,
+      count: validRooms.length
+    });
+    
+  } catch (error) {
+    console.error('Get joined rooms error:', error);
+    res.status(500).json({ error: 'Failed to get joined rooms' });
+  }
+});
+
 module.exports = router;

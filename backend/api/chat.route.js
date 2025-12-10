@@ -100,4 +100,48 @@ router.get('/list/:username', async (req, res) => {
   }
 });
 
+router.get('/list/:username', async (req, res) => {
+  try {
+    const { username } = req.params;
+    
+    if (!username) {
+      return res.status(400).json({ error: 'Username is required' });
+    }
+    
+    const presence = require('../utils/presence');
+    const userRooms = await presence.getUserRooms(username);
+    
+    const roomService = require('../services/roomService');
+    const roomsWithDetails = await Promise.all(
+      userRooms.map(async (roomId) => {
+        const room = await roomService.getRoomById(roomId);
+        if (!room) return null;
+        const userCount = await presence.getRoomUserCount(roomId);
+        return {
+          id: room.id,
+          name: room.name,
+          description: room.description,
+          maxUsers: room.max_users,
+          userCount,
+          ownerId: room.owner_id,
+          ownerName: room.owner_name,
+          type: 'room'
+        };
+      })
+    );
+    
+    const validRooms = roomsWithDetails.filter(r => r !== null);
+    
+    res.json({
+      success: true,
+      rooms: validRooms,
+      count: validRooms.length
+    });
+    
+  } catch (error) {
+    console.error('Get chat list error:', error);
+    res.status(500).json({ error: 'Failed to get chat list' });
+  }
+});
+
 module.exports = router;
