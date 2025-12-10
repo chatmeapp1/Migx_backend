@@ -22,7 +22,7 @@ interface ChatRoomMenuProps {
 
 export function ChatRoomMenu({ visible, onClose, onMenuItemPress, onOpenParticipants }: ChatRoomMenuProps) {
   const { theme } = useThemeCustom();
-  
+
   const menuItems = [
     { icon: CmdIcon, label: 'Cmd', action: 'cmd' },
     { icon: SendGiftIcon, label: 'Send Gift', action: 'send-gift' },

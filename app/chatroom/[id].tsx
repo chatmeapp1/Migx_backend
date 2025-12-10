@@ -27,6 +27,7 @@ import { ChatRoomContent } from '@/components/chatroom/ChatRoomContent';
 import { ChatRoomInput } from '@/components/chatroom/ChatRoomInput';
 import { MenuKickModal } from '@/components/chatroom/MenuKickModal';
 import { MenuParticipantsModal } from '@/components/chatroom/MenuParticipantsModal';
+import { RoomInfoModal } from '@/components/chatroom/RoomInfoModal';
 import { VoteKickButton } from '@/components/chatroom/VoteKickButton';
 import { ChatRoomMenu } from '@/components/chatroom/ChatRoomMenu';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -68,7 +69,8 @@ export default function ChatRoomScreen() {
   });
   const [kickModalVisible, setKickModalVisible] = useState(false);
   const [selectedUserToKick, setSelectedUserToKick] = useState<string | null>(null);
-  const [participantsModalVisible, setParticipantsModalVisible] = useState(false); // State for participants modal
+  const [participantsModalVisible, setParticipantsModalVisible] = useState(false);
+  const [roomInfoModalVisible, setRoomInfoModalVisible] = useState(false); // State for participants modal
   const [activeVote, setActiveVote] = useState<{
     target: string;
     remainingVotes: number;
@@ -504,7 +506,9 @@ export default function ChatRoomScreen() {
 
   const handleMenuAction = (action: string) => {
     console.log('Menu action:', action);
-    if (action === 'kick') {
+    if (action === 'room-info') {
+      setRoomInfoModalVisible(true);
+    } else if (action === 'kick') {
       setKickModalVisible(true);
     } else if (action === 'leave-room') {
       Alert.alert(
@@ -705,6 +709,12 @@ export default function ChatRoomScreen() {
         onClose={() => setParticipantsModalVisible(false)}
         users={roomUsers}
         onUserMenuPress={handleUserMenuPress}
+      />
+
+      <RoomInfoModal
+        visible={roomInfoModalVisible}
+        onClose={() => setRoomInfoModalVisible(false)}
+        roomId={roomId}
       />
 
       <ChatRoomMenu
