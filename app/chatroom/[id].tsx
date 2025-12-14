@@ -9,7 +9,6 @@ import {
   Dimensions,
   BackHandler,
   Platform,
-  KeyboardAvoidingView,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,7 +16,7 @@ import { useThemeCustom } from '@/theme/provider';
 import { io, Socket } from 'socket.io-client';
 import API_BASE_URL from '@/utils/api';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, runOnJS, interpolate } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, runOnJS, interpolate } from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -63,8 +62,6 @@ export default function ChatRoomScreen() {
     hasTab,
   } = useTabRoom();
 
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
-  const keyboardHeightValue = useSharedValue(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const [roomUsers, setRoomUsers] = useState<string[]>([]);
   const [roomInfo, setRoomInfo] = useState<{
@@ -303,26 +300,6 @@ export default function ChatRoomScreen() {
       }, 500);
     }
   }, [roomId, roomName, socket, isConnected, currentUsername, currentUserId, hasTab, openTab, switchTab, activeRoomId]);
-
-  useEffect(() => {
-    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
-
-    const showSub = Keyboard.addListener(showEvent, (e) => {
-      setKeyboardVisible(true);
-      keyboardHeightValue.value = withTiming(e.endCoordinates.height, { duration: 250 });
-    });
-    const hideSub = Keyboard.addListener(hideEvent, () => {
-      setKeyboardVisible(false);
-      keyboardHeightValue.value = withTiming(0, { duration: 200 });
-    });
-
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, []);
-
 
   useEffect(() => {
     const backAction = () => {
@@ -593,50 +570,33 @@ export default function ChatRoomScreen() {
         onBack={handleHeaderBack}
       />
 
-      <KeyboardAvoidingView 
-        style={styles.keyboardAvoidingContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-      >
-        <GestureDetector gesture={contentGesture}>
-          <Animated.View style={[styles.contentContainer, { backgroundColor: theme.background }, contentAnimatedStyle]}>
-            {activeVote && (
-              <VoteKickButton
-                target={activeVote.target}
-                remainingVotes={activeVote.remainingVotes}
-                remainingSeconds={activeVote.remainingSeconds}
-                hasVoted={hasVoted}
-                onVote={handleVoteKick}
-              />
-            )}
-            {currentTab && (
-              <ChatRoomContent 
-                messages={currentTab.messages} 
-                roomInfo={roomInfo}
-                bottomPadding={70 + (keyboardVisible ? 0 : insets.bottom)}
-              />
-            )}
-          </Animated.View>
-        </GestureDetector>
+      <GestureDetector gesture={contentGesture}>
+        <Animated.View style={[styles.contentContainer, { backgroundColor: theme.background }, contentAnimatedStyle]}>
+          {activeVote && (
+            <VoteKickButton
+              target={activeVote.target}
+              remainingVotes={activeVote.remainingVotes}
+              remainingSeconds={activeVote.remainingSeconds}
+              hasVoted={hasVoted}
+              onVote={handleVoteKick}
+            />
+          )}
+          {currentTab && (
+            <ChatRoomContent 
+              messages={currentTab.messages} 
+              roomInfo={roomInfo}
+              bottomPadding={70 + insets.bottom}
+            />
+          )}
+        </Animated.View>
+      </GestureDetector>
 
-        <View 
-          style={[
-            styles.inputWrapper, 
-            { 
-              backgroundColor: HEADER_COLOR,
-              paddingBottom: keyboardVisible ? 0 : insets.bottom,
-            },
-          ]}
-        >
-          <ChatRoomInput 
-            onSend={handleSendMessage} 
-            onMenuItemPress={handleMenuItemPress}
-            onMenuPress={() => setMenuVisible(true)}
-            onOpenParticipants={handleOpenParticipants}
-            bottomInset={0}
-          />
-        </View>
-      </KeyboardAvoidingView>
+      <ChatRoomInput 
+        onSend={handleSendMessage} 
+        onMenuItemPress={handleMenuItemPress}
+        onMenuPress={() => setMenuVisible(true)}
+        onOpenParticipants={handleOpenParticipants}
+      />
 
       <MenuKickModal
         visible={kickModalVisible}
@@ -674,13 +634,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  keyboardAvoidingContainer: {
-    flex: 1,
-  },
   contentContainer: {
     flex: 1,
-  },
-  inputWrapper: {
-    paddingTop: 4,
   },
 });

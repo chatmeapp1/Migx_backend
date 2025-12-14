@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   TextInput,
@@ -7,8 +7,12 @@ import {
   TextInput as TextInputType,
   NativeSyntheticEvent,
   TextInputContentSizeChangeEventData,
+  Keyboard,
+  Animated,
+  Platform,
 } from 'react-native';
 import { useThemeCustom } from '@/theme/provider';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Svg, { Path, Circle } from 'react-native-svg';
 import { ChatRoomMenu } from './ChatRoomMenu';
@@ -21,7 +25,6 @@ interface ChatRoomInputProps {
   onMenuItemPress?: (action: string) => void;
   onMenuPress?: () => void;
   onOpenParticipants?: () => void;
-  bottomInset?: number;
 }
 
 const MenuIcon = ({ size = 20, color = '#666' }) => (
@@ -56,7 +59,7 @@ const SendIcon = ({ size = 22, color = '#8B5CF6' }) => (
   </Svg>
 );
 
-export function ChatRoomInput({ onSend, onMenuItemPress: externalMenuItemPress, onOpenParticipants, bottomInset = 0 }: ChatRoomInputProps) {
+export function ChatRoomInput({ onSend, onMenuItemPress: externalMenuItemPress, onOpenParticipants }: ChatRoomInputProps) {
   const [message, setMessage] = useState('');
   const [menuVisible, setMenuVisible] = useState(false);
   const [emojiVisible, setEmojiVisible] = useState(false);
@@ -65,6 +68,50 @@ export function ChatRoomInput({ onSend, onMenuItemPress: externalMenuItemPress, 
   const [inputHeight, setInputHeight] = useState(42);
   const { theme } = useThemeCustom();
   const inputRef = useRef<TextInputType>(null);
+  const insets = useSafeAreaInsets();
+
+  const keyboardOffset = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSub = Keyboard.addListener(showEvent, (e) => {
+      const h = e.endCoordinates?.height ?? 0;
+      Animated.timing(keyboardOffset, {
+        toValue: -h,
+        duration: Platform.OS === 'ios' ? 250 : 220,
+        useNativeDriver: true,
+      }).start();
+    });
+
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      Animated.timing(keyboardOffset, {
+        toValue: 0,
+        duration: Platform.OS === 'ios' ? 200 : 180,
+        useNativeDriver: true,
+      }).start(() => {
+        keyboardOffset.setValue(0);
+      });
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, [keyboardOffset]);
+
+  const animatedStyle = {
+    transform: [
+      {
+        translateY: keyboardOffset.interpolate({
+          inputRange: [-1000, 0],
+          outputRange: [-1000, 0],
+          extrapolate: 'clamp',
+        }),
+      },
+    ],
+  };
 
   const handleContentSizeChange = (e: NativeSyntheticEvent<TextInputContentSizeChangeEventData>) => {
     const newHeight = Math.min(Math.max(42, e.nativeEvent.contentSize.height), 120);
@@ -102,44 +149,51 @@ export function ChatRoomInput({ onSend, onMenuItemPress: externalMenuItemPress, 
 
   const handleSendGift = (gift: { name: string; price: number; image: any }) => {
     console.log('Sending gift:', gift);
-    // Add your gift sending logic here
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background, paddingBottom: bottomInset }]}>
-      <TouchableOpacity style={styles.iconButton} onPress={() => setMenuVisible(true)}>
-        <MenuIcon color={theme.secondary} />
-      </TouchableOpacity>
+    <Animated.View 
+      style={[
+        styles.wrapper, 
+        { paddingBottom: insets.bottom },
+        animatedStyle,
+      ]}
+    >
+      <View style={[styles.container, { backgroundColor: '#0a5229' }]}>
+        <TouchableOpacity style={styles.iconButton} onPress={() => setMenuVisible(true)}>
+          <MenuIcon color={theme.secondary} />
+        </TouchableOpacity>
 
-      <View style={[styles.inputContainer, { backgroundColor: theme.card }]}>
-        <TextInput
-          ref={inputRef}
-          style={[styles.input, { color: theme.text, height: inputHeight }]}
-          placeholder="Type a message..."
-          placeholderTextColor={theme.secondary}
-          value={message}
-          onChangeText={setMessage}
-          multiline
-          textAlignVertical="top"
-          onContentSizeChange={handleContentSizeChange}
-        />
+        <View style={[styles.inputContainer, { backgroundColor: theme.card }]}>
+          <TextInput
+            ref={inputRef}
+            style={[styles.input, { color: theme.text, height: inputHeight }]}
+            placeholder="Type a message..."
+            placeholderTextColor={theme.secondary}
+            value={message}
+            onChangeText={setMessage}
+            multiline
+            textAlignVertical="top"
+            onContentSizeChange={handleContentSizeChange}
+          />
+        </View>
+
+        <TouchableOpacity style={styles.iconButton}>
+          <CoinIcon />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.iconButton} onPress={() => setEmojiVisible(true)}>
+          <EmojiIcon color={theme.secondary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.sendButton}
+          onPress={handleSend}
+          disabled={!message.trim()}
+        >
+          <SendIcon color={message.trim() ? theme.primary : theme.secondary} />
+        </TouchableOpacity>
       </View>
-
-      <TouchableOpacity style={styles.iconButton}>
-        <CoinIcon />
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.iconButton} onPress={() => setEmojiVisible(true)}>
-        <EmojiIcon color={theme.secondary} />
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.sendButton}
-        onPress={handleSend}
-        disabled={!message.trim()}
-      >
-        <SendIcon color={message.trim() ? theme.primary : theme.secondary} />
-      </TouchableOpacity>
 
       <ChatRoomMenu
         visible={menuVisible}
@@ -165,11 +219,17 @@ export function ChatRoomInput({ onSend, onMenuItemPress: externalMenuItemPress, 
         onClose={() => setGiftModalVisible(false)}
         onSendGift={handleSendGift}
       />
-    </View>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
   container: {
     flexDirection: 'row',
     alignItems: 'flex-end',
