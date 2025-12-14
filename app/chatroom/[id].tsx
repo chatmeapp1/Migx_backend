@@ -16,7 +16,7 @@ import { useThemeCustom } from '@/theme/provider';
 import { io, Socket } from 'socket.io-client';
 import API_BASE_URL from '@/utils/api';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, runOnJS, interpolate } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, runOnJS, interpolate } from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -63,7 +63,7 @@ export default function ChatRoomScreen() {
   } = useTabRoom();
 
   const [keyboardVisible, setKeyboardVisible] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const keyboardHeightValue = useSharedValue(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const [roomUsers, setRoomUsers] = useState<string[]>([]);
   const [roomInfo, setRoomInfo] = useState<{
@@ -309,11 +309,11 @@ export default function ChatRoomScreen() {
 
     const showSub = Keyboard.addListener(showEvent, (e) => {
       setKeyboardVisible(true);
-      setKeyboardHeight(e.endCoordinates.height);
+      keyboardHeightValue.value = withTiming(e.endCoordinates.height, { duration: 250 });
     });
     const hideSub = Keyboard.addListener(hideEvent, () => {
       setKeyboardVisible(false);
-      setKeyboardHeight(0);
+      keyboardHeightValue.value = withTiming(0, { duration: 200 });
     });
 
     return () => {
@@ -321,6 +321,12 @@ export default function ChatRoomScreen() {
       hideSub.remove();
     };
   }, []);
+
+  const inputWrapperAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      bottom: keyboardHeightValue.value,
+    };
+  });
 
   useEffect(() => {
     const backAction = () => {
@@ -603,18 +609,20 @@ export default function ChatRoomScreen() {
             />
           )}
           {currentTab && (
-            <ChatRoomContent messages={currentTab.messages} roomInfo={roomInfo} />
+            <ChatRoomContent 
+              messages={currentTab.messages} 
+              roomInfo={roomInfo}
+              bottomPadding={70 + (keyboardVisible ? 0 : insets.bottom)}
+            />
           )}
         </Animated.View>
       </GestureDetector>
 
-      <View 
+      <Animated.View 
         style={[
           styles.inputWrapper, 
-          { 
-            backgroundColor: HEADER_COLOR,
-            marginBottom: keyboardHeight > 0 ? keyboardHeight : 0,
-          }
+          { backgroundColor: HEADER_COLOR },
+          inputWrapperAnimatedStyle,
         ]}
       >
         <ChatRoomInput 
@@ -622,9 +630,9 @@ export default function ChatRoomScreen() {
           onMenuItemPress={handleMenuItemPress}
           onMenuPress={() => setMenuVisible(true)}
           onOpenParticipants={handleOpenParticipants}
-          bottomInset={keyboardHeight > 0 ? 0 : insets.bottom}
+          bottomInset={keyboardVisible ? 0 : insets.bottom}
         />
-      </View>
+      </Animated.View>
 
       <MenuKickModal
         visible={kickModalVisible}
@@ -666,6 +674,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   inputWrapper: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
     paddingTop: 4,
   },
 });

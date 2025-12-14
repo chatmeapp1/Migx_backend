@@ -23,6 +23,7 @@ interface RoomInfo {
 interface ChatRoomContentProps {
   messages: Message[];
   roomInfo?: RoomInfo | null;
+  bottomPadding?: number;
 }
 
 function RoomInfoHeader({ roomInfo }: { roomInfo: RoomInfo }) {
@@ -40,7 +41,7 @@ function RoomInfoHeader({ roomInfo }: { roomInfo: RoomInfo }) {
   );
 }
 
-export function ChatRoomContent({ messages, roomInfo }: ChatRoomContentProps) {
+export function ChatRoomContent({ messages, roomInfo, bottomPadding = 70 }: ChatRoomContentProps) {
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
@@ -80,7 +81,7 @@ export function ChatRoomContent({ messages, roomInfo }: ChatRoomContentProps) {
           isOwnMessage={item.isOwnMessage}
         />
       )}
-      contentContainerStyle={styles.container}
+      contentContainerStyle={[styles.container, { paddingBottom: bottomPadding }]}
       onContentSizeChange={() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }}
@@ -91,7 +92,6 @@ export function ChatRoomContent({ messages, roomInfo }: ChatRoomContentProps) {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    paddingBottom: 8,
   },
   roomInfoContainer: {
     paddingHorizontal: 12,
