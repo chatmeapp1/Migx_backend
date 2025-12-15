@@ -238,7 +238,7 @@ export const useRoomMessages = (roomId: string) => useRoomTabsStore(state => {
 });
 
 export const useActiveIndex = () => useRoomTabsStore(state => {
-  if (!state.activeRoomId) return 0;
+  if (!state.activeRoomId || state.openRoomIds.length === 0) return 0;
   const index = state.openRoomIds.indexOf(state.activeRoomId);
-  return index >= 0 ? index : 0;
+  return Math.max(0, index);
 });

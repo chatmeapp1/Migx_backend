@@ -74,7 +74,6 @@ export function ChatRoomTabs({
   const renderRoomItem = useCallback(({ item }: ListRenderItemInfo<OpenRoom>) => {
     return (
       <ChatRoomInstance
-        key={item.roomId}
         roomId={item.roomId}
         roomName={item.name}
         bottomPadding={bottomPadding}
@@ -113,7 +112,7 @@ export function ChatRoomTabs({
         onMomentumScrollEnd={handleMomentumScrollEnd}
         onScrollBeginDrag={handleScrollBeginDrag}
         getItemLayout={getItemLayout}
-        initialScrollIndex={activeIndex}
+        initialScrollIndex={openRooms.length > 0 ? Math.min(Math.max(0, activeIndex), openRooms.length - 1) : 0}
         removeClippedSubviews={false}
         windowSize={3}
         maxToRenderPerBatch={2}

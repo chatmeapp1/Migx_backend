@@ -4,8 +4,8 @@ import { Text } from 'react-native';
 
 interface OpenRoom {
   roomId: string;
-  roomName: string;
-  unreadCount: number;
+  name: string;
+  unread: number;
 }
 
 interface RoomIndicatorDotsProps {
@@ -197,8 +197,8 @@ export function RoomIndicatorDots({
     const leftHiddenRooms = openRooms.slice(0, startIndex);
     const rightHiddenRooms = openRooms.slice(endIndex, totalRooms);
     
-    const leftUnread = leftHiddenRooms.some(room => room.unreadCount > 0);
-    const rightUnread = rightHiddenRooms.some(room => room.unreadCount > 0);
+    const leftUnread = leftHiddenRooms.some(room => room.unread > 0);
+    const rightUnread = rightHiddenRooms.some(room => room.unread > 0);
     
     return {
       visibleRooms: visible,
@@ -224,7 +224,7 @@ export function RoomIndicatorDots({
         <Dot
           key={room.roomId}
           isActive={index === result.visibleActiveIndex}
-          hasUnread={room.unreadCount > 0}
+          hasUnread={room.unread > 0}
         />
       ))}
       

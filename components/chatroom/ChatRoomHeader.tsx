@@ -9,8 +9,8 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface OpenRoom {
   roomId: string;
-  roomName: string;
-  unreadCount: number;
+  name: string;
+  unread: number;
 }
 
 interface ChatRoomHeaderProps {

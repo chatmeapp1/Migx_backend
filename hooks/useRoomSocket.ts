@@ -17,7 +17,6 @@ export function useRoomSocket({ roomId, onRoomJoined, onUsersUpdated }: UseRoomS
   const markRoomLeft = useRoomTabsStore(state => state.markRoomLeft);
   const isRoomJoined = useRoomTabsStore(state => state.isRoomJoined);
   
-  const listenersRegistered = useRef(false);
   const roomIdRef = useRef(roomId);
   roomIdRef.current = roomId;
   
@@ -109,19 +108,21 @@ export function useRoomSocket({ roomId, onRoomJoined, onUsersUpdated }: UseRoomS
       return;
     }
 
-    if (listenersRegistered.current) {
-      return;
-    }
-
     console.log(`🔌 [Room ${roomId}] Registering socket listeners`);
-    listenersRegistered.current = true;
 
-    socket.on('system:message', handleSystemMessage);
-    socket.on('chat:message', handleChatMessage);
-    socket.on('room:joined', handleRoomJoined);
-    socket.on('room:users', handleRoomUsers);
-    socket.on('room:user:joined', handleUserJoined);
-    socket.on('room:user:left', handleUserLeft);
+    const boundHandleSystemMessage = handleSystemMessage;
+    const boundHandleChatMessage = handleChatMessage;
+    const boundHandleRoomJoined = handleRoomJoined;
+    const boundHandleRoomUsers = handleRoomUsers;
+    const boundHandleUserJoined = handleUserJoined;
+    const boundHandleUserLeft = handleUserLeft;
+
+    socket.on('system:message', boundHandleSystemMessage);
+    socket.on('chat:message', boundHandleChatMessage);
+    socket.on('room:joined', boundHandleRoomJoined);
+    socket.on('room:users', boundHandleRoomUsers);
+    socket.on('room:user:joined', boundHandleUserJoined);
+    socket.on('room:user:left', boundHandleUserLeft);
 
     if (!isRoomJoined(roomId)) {
       console.log(`📤 [Room ${roomId}] Joining room`);
@@ -139,14 +140,13 @@ export function useRoomSocket({ roomId, onRoomJoined, onUsersUpdated }: UseRoomS
 
     return () => {
       console.log(`🔌 [Room ${roomId}] Cleaning up socket listeners`);
-      listenersRegistered.current = false;
       
-      socket.off('system:message', handleSystemMessage);
-      socket.off('chat:message', handleChatMessage);
-      socket.off('room:joined', handleRoomJoined);
-      socket.off('room:users', handleRoomUsers);
-      socket.off('room:user:joined', handleUserJoined);
-      socket.off('room:user:left', handleUserLeft);
+      socket.off('system:message', boundHandleSystemMessage);
+      socket.off('chat:message', boundHandleChatMessage);
+      socket.off('room:joined', boundHandleRoomJoined);
+      socket.off('room:users', boundHandleRoomUsers);
+      socket.off('room:user:joined', boundHandleUserJoined);
+      socket.off('room:user:left', boundHandleUserLeft);
     };
   }, [socket, currentUsername, currentUserId, roomId, isRoomJoined, markRoomJoined, handleSystemMessage, handleChatMessage, handleRoomJoined, handleRoomUsers, handleUserJoined, handleUserLeft]);
 

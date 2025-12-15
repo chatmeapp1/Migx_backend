@@ -71,10 +71,6 @@ export const ChatRoomInstance = React.memo(function ChatRoomInstance({
       />
     </View>
   );
-}, (prevProps, nextProps) => {
-  return prevProps.roomId === nextProps.roomId &&
-         prevProps.isActive === nextProps.isActive &&
-         prevProps.bottomPadding === nextProps.bottomPadding;
 });
 
 const styles = StyleSheet.create({
