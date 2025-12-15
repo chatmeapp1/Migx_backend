@@ -14,6 +14,7 @@ import {
   Share as RNShare,
   Linking,
   Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { useThemeCustom } from '@/theme/provider';
 import { API_ENDPOINTS } from '@/utils/api';
@@ -425,107 +426,120 @@ export default function FeedScreen() {
 
         {/* Create Post Modal */}
         <Modal visible={showCreateModal} animationType="slide" transparent>
-          <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
-              <View style={styles.modalHeader}>
-                <Text style={[styles.modalTitle, { color: theme.text }]}>Create Post</Text>
-                <TouchableOpacity onPress={() => setShowCreateModal(false)}>
-                  <CloseIcon color={theme.text} size={24} />
-                </TouchableOpacity>
-              </View>
-
-              <TextInput
-                style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.background }]}
-                placeholder="What's on your mind?"
-                placeholderTextColor={theme.secondary}
-                multiline
-                value={postContent}
-                onChangeText={setPostContent}
-              />
-
-              {selectedImage && (
-                <View style={styles.imagePreview}>
-                  <Image source={{ uri: selectedImage }} style={styles.previewImage} />
-                  <TouchableOpacity
-                    style={styles.removeImageButton}
-                    onPress={() => setSelectedImage(null)}
-                  >
-                    <CloseIcon color="#FFF" size={16} />
+          <KeyboardAvoidingView
+            style={styles.keyboardAvoidingView}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
+                <View style={styles.modalHeader}>
+                  <Text style={[styles.modalTitle, { color: theme.text }]}>Create Post</Text>
+                  <TouchableOpacity onPress={() => setShowCreateModal(false)}>
+                    <CloseIcon color={theme.text} size={24} />
                   </TouchableOpacity>
                 </View>
-              )}
 
-              <View style={styles.modalActions}>
-                <TouchableOpacity style={styles.iconButton} onPress={pickImage}>
-                  <CameraIcon color={theme.primary} size={28} />
-                </TouchableOpacity>
+                <TextInput
+                  style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.background }]}
+                  placeholder="What's on your mind?"
+                  placeholderTextColor={theme.secondary}
+                  multiline
+                  value={postContent}
+                  onChangeText={setPostContent}
+                />
 
-                <TouchableOpacity onPress={handleCreatePost} disabled={posting}>
-                  <LinearGradient
-                    colors={['#00AA00', '#66CC66']}
-                    style={styles.sendButton}
-                  >
-                    {posting ? (
-                      <ActivityIndicator color="#FFF" />
-                    ) : (
-                      <SendIcon color="#FFF" size={20} />
-                    )}
-                  </LinearGradient>
-                </TouchableOpacity>
+                {selectedImage && (
+                  <View style={styles.imagePreview}>
+                    <Image source={{ uri: selectedImage }} style={styles.previewImage} />
+                    <TouchableOpacity
+                      style={styles.removeImageButton}
+                      onPress={() => setSelectedImage(null)}
+                    >
+                      <CloseIcon color="#FFF" size={16} />
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                <View style={styles.modalActions}>
+                  <TouchableOpacity style={styles.iconButton} onPress={pickImage}>
+                    <CameraIcon color={theme.primary} size={28} />
+                  </TouchableOpacity>
+
+                  <TouchableOpacity onPress={handleCreatePost} disabled={posting}>
+                    <LinearGradient
+                      colors={['#00AA00', '#66CC66']}
+                      style={styles.sendButton}
+                    >
+                      {posting ? (
+                        <ActivityIndicator color="#FFF" />
+                      ) : (
+                        <SendIcon color="#FFF" size={20} />
+                      )}
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </Modal>
 
         {/* Comment Modal */}
         <Modal visible={showCommentModal} animationType="slide" transparent>
-          <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { backgroundColor: theme.card, height: '80%' }]}>
-              <View style={styles.modalHeader}>
-                <Text style={[styles.modalTitle, { color: theme.text }]}>Comments</Text>
-                <TouchableOpacity onPress={() => setShowCommentModal(false)}>
-                  <CloseIcon color={theme.text} size={24} />
-                </TouchableOpacity>
-              </View>
+          <KeyboardAvoidingView
+            style={styles.keyboardAvoidingView}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+          >
+            <View style={styles.modalOverlay}>
+              <View style={[styles.modalContent, { backgroundColor: theme.card, height: '80%' }]}>
+                <View style={styles.modalHeader}>
+                  <Text style={[styles.modalTitle, { color: theme.text }]}>Comments</Text>
+                  <TouchableOpacity onPress={() => setShowCommentModal(false)}>
+                    <CloseIcon color={theme.text} size={24} />
+                  </TouchableOpacity>
+                </View>
 
-              <FlatList
-                data={comments}
-                renderItem={({ item }) => (
-                  <View style={styles.commentItem}>
-                    <Image
-                      source={{ uri: item.avatar_url || 'https://via.placeholder.com/30' }}
-                      style={styles.commentAvatar}
-                    />
-                    <View style={styles.commentContent}>
-                      <Text style={[styles.commentUsername, { color: theme.text }]}>{item.username}</Text>
-                      <Text style={[styles.commentText, { color: theme.text }]}>{item.content}</Text>
-                      <Text style={[styles.commentTime, { color: theme.secondary }]}>{formatTime(item.created_at)}</Text>
+                <FlatList
+                  data={comments}
+                  renderItem={({ item }) => (
+                    <View style={styles.commentItem}>
+                      <Image
+                        source={{ uri: item.avatar_url || 'https://via.placeholder.com/30' }}
+                        style={styles.commentAvatar}
+                      />
+                      <View style={styles.commentContent}>
+                        <Text style={[styles.commentUsername, { color: theme.text }]}>{item.username}</Text>
+                        <Text style={[styles.commentText, { color: theme.text }]}>{item.content}</Text>
+                        <Text style={[styles.commentTime, { color: theme.secondary }]}>{formatTime(item.created_at)}</Text>
+                      </View>
                     </View>
-                  </View>
-                )}
-                keyExtractor={item => item.id.toString()}
-                contentContainerStyle={styles.commentsList}
-              />
-
-              <View style={[styles.commentInputContainer, { borderTopColor: theme.border }]}>
-                <TextInput
-                  style={[styles.commentInput, { color: theme.text, backgroundColor: theme.background }]}
-                  placeholder="Write a comment..."
-                  placeholderTextColor={theme.secondary}
-                  value={commentText}
-                  onChangeText={setCommentText}
+                  )}
+                  keyExtractor={item => item.id.toString()}
+                  contentContainerStyle={styles.commentsList}
+                  keyboardShouldPersistTaps="handled"
                 />
-                <TouchableOpacity onPress={handleSendComment}>
-                  <LinearGradient
-                    colors={['#00AA00', '#66CC66']}
-                    style={styles.commentSendButton}
-                  >
-                    <SendIcon color="#FFF" size={18} />
-                  </LinearGradient>
-                </TouchableOpacity>
+
+                <View style={[styles.commentInputContainer, { borderTopColor: theme.border }]}>
+                  <TextInput
+                    style={[styles.commentInput, { color: theme.text, backgroundColor: theme.background }]}
+                    placeholder="Write a comment..."
+                    placeholderTextColor={theme.secondary}
+                    value={commentText}
+                    onChangeText={setCommentText}
+                  />
+                  <TouchableOpacity onPress={handleSendComment}>
+                    <LinearGradient
+                      colors={['#00AA00', '#66CC66']}
+                      style={styles.commentSendButton}
+                    >
+                      <SendIcon color="#FFF" size={18} />
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </Modal>
       </View>
     </SwipeableScreen>
@@ -534,6 +548,9 @@ export default function FeedScreen() {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  keyboardAvoidingView: {
     flex: 1,
   },
   header: {
