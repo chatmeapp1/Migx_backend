@@ -15,7 +15,7 @@ interface RoomCategoryProps {
   rooms: Room[];
   backgroundColor?: string;
   isSpecial?: boolean;
-  onRoomPress?: (roomId: string) => void;
+  onRoomPress?: (roomId: string, roomName: string) => void;
 }
 
 const MinusIcon = ({ size = 16, color = '#2C5F7F' }: { size?: number; color?: string }) => (

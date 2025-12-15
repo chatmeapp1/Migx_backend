@@ -161,8 +161,11 @@ export function RoomList() {
     router.push('/create-room');
   };
 
-  const handleRoomPress = (roomId: string) => {
-    router.push(`/chatroom/${roomId}`);
+  const handleRoomPress = (roomId: string, roomName?: string) => {
+    const name = roomName || allRooms.find(r => r.id === roomId)?.name || 
+                 recentRooms.find(r => r.id === roomId)?.name ||
+                 favoriteRooms.find(r => r.id === roomId)?.name || 'Room';
+    router.push(`/chatroom/${roomId}?name=${encodeURIComponent(name)}`);
   };
 
   if (loading) {

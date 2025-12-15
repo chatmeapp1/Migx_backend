@@ -14,10 +14,10 @@ interface RoomIndicatorDotsProps {
   maxDots?: number;
 }
 
-const DOT_SIZE = 7;
-const DOT_SPACING = 6;
+const DOT_SIZE = 10;
+const DOT_SPACING = 8;
 const ACTIVE_COLOR = '#FFFFFF';
-const INACTIVE_COLOR = 'rgba(255, 255, 255, 0.4)';
+const INACTIVE_COLOR = 'rgba(255, 255, 255, 0.5)';
 const UNREAD_COLOR = '#FF8C00';
 
 interface DotProps {

@@ -53,6 +53,7 @@ export function ChatRoomHeader({
           <Text style={styles.roomName} numberOfLines={1}>
             {activeRoomName || 'Room'}
           </Text>
+          <Text style={styles.subtitle}>Chatroom</Text>
           
           <RoomIndicatorDots 
             openRooms={openRooms}
@@ -103,5 +104,11 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     textAlign: 'center',
     maxWidth: SCREEN_WIDTH - 140,
+  },
+  subtitle: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
+    marginTop: 2,
   },
 });

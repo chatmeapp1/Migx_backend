@@ -8,7 +8,7 @@ interface RoomItemProps {
   roomId: string;
   name: string;
   userCount: string;
-  onPress?: (roomId: string) => void;
+  onPress?: (roomId: string, roomName: string) => void;
 }
 
 const RoomIcon = ({ size = 18, color = '#4A90E2' }: { size?: number; color?: string }) => (
@@ -23,7 +23,7 @@ export function RoomItem({ roomId, name, userCount, onPress }: RoomItemProps) {
 
   const handlePress = () => {
     if (onPress) {
-      onPress(roomId);
+      onPress(roomId, name);
     }
   };
 
