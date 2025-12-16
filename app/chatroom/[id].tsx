@@ -90,11 +90,17 @@ export default function ChatRoomScreen() {
   } | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
 
-  const [isConnected, setIsConnected] = useState(false);
+  const [isConnected, setIsConnected] = useState(() => socket?.connected || false);
   const socketInitialized = useRef(false);
 
   const activeRoomName = activeRoom?.name || roomName;
   const activeRoomId = activeRoom?.roomId || roomId;
+
+  useEffect(() => {
+    if (socket?.connected && !isConnected) {
+      setIsConnected(true);
+    }
+  }, [socket, isConnected]);
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -177,19 +183,31 @@ export default function ChatRoomScreen() {
   }, [currentUsername, currentUserId, socket, setSocket, router]);
 
   useEffect(() => {
+    console.log('🔍 Room tab check:', { 
+      roomId, 
+      hasSocket: !!socket, 
+      isConnected, 
+      currentUsername,
+      openRoomCount: openRooms.length,
+      openRoomIds: openRooms.map(r => r.roomId),
+    });
+    
     if (!socket || !isConnected || !currentUsername || !currentUserId) {
+      console.log('⏳ Waiting for connection...', { hasSocket: !!socket, isConnected, currentUsername, currentUserId });
       return;
     }
 
     const existingRoom = openRooms.find(r => r.roomId === roomId);
     if (!existingRoom) {
-      console.log('📑 Opening new room tab:', roomId);
+      console.log('📑 Opening new room tab:', roomId, roomName);
       openRoom(roomId, roomName);
-    } else if (activeRoomId !== roomId) {
+    } else if (storeActiveRoomId !== roomId) {
       console.log('📑 Switching to existing room tab:', roomId);
       setActiveRoom(roomId);
+    } else {
+      console.log('📑 Room already active:', roomId);
     }
-  }, [roomId, roomName, socket, isConnected, currentUsername, currentUserId, openRooms, openRoom, setActiveRoom, activeRoomId]);
+  }, [roomId, roomName, socket, isConnected, currentUsername, currentUserId, openRooms, openRoom, setActiveRoom, storeActiveRoomId]);
 
   useEffect(() => {
     const backAction = () => {
