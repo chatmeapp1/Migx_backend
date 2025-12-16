@@ -191,11 +191,6 @@ module.exports = (io, socket) => {
           });
         }, 200);
 
-        // Save to Redis
-        await addSystemMessage(roomId, `${room.name} : ${welcomeMsg1}`);
-        await addSystemMessage(roomId, `${room.name} : ${welcomeMsg2}`);
-        await addSystemMessage(roomId, `${room.name} : ${welcomeMsg3}`);
-
         // MIG33-style enter message to all users in room
         const enterMsg = `${username} [${newUserCount}] has entered`;
         const enterMessage = {

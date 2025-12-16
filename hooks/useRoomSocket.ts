@@ -16,8 +16,6 @@ export function useRoomSocket({ roomId, onRoomJoined, onUsersUpdated }: UseRoomS
   const markRoomJoined = useRoomTabsStore(state => state.markRoomJoined);
   const markRoomLeft = useRoomTabsStore(state => state.markRoomLeft);
   const isRoomJoined = useRoomTabsStore(state => state.isRoomJoined);
-  const injectSystemMessage = useRoomTabsStore(state => state.injectSystemMessage);
-  const hasSystemMessage = useRoomTabsStore(state => state.hasSystemMessage);
   
   const roomIdRef = useRef(roomId);
   roomIdRef.current = roomId;
@@ -74,10 +72,6 @@ export function useRoomSocket({ roomId, onRoomJoined, onUsersUpdated }: UseRoomS
       ? data.users.map((u: any) => u.username || u)
       : data.currentUsers || [];
     
-    if (!hasSystemMessage(joinedRoomId)) {
-      injectSystemMessage(joinedRoomId, roomName, admin, usernames);
-    }
-    
     if (onRoomJoined) {
       onRoomJoined(data);
     }
@@ -85,7 +79,7 @@ export function useRoomSocket({ roomId, onRoomJoined, onUsersUpdated }: UseRoomS
     if (onUsersUpdated) {
       onUsersUpdated(usernames);
     }
-  }, [updateRoomName, onRoomJoined, onUsersUpdated, hasSystemMessage, injectSystemMessage]);
+  }, [updateRoomName, onRoomJoined, onUsersUpdated]);
 
   const handleRoomUsers = useCallback((data: { roomId: string; users: any[]; count: number }) => {
     if (data.roomId !== roomIdRef.current) return;
