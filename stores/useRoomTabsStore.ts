@@ -27,6 +27,7 @@ interface RoomTabsState {
   currentUsername: string;
   currentUserId: string;
   joinedRoomIds: Set<string>;
+  systemMessageInjected: Set<string>;
 }
 
 interface RoomTabsActions {
@@ -46,6 +47,8 @@ interface RoomTabsActions {
   isRoomJoined: (roomId: string) => boolean;
   getActiveRoom: () => OpenRoom | null;
   getActiveRoomId: () => string | null;
+  injectSystemMessage: (roomId: string, roomName: string, admin: string, users: string[]) => void;
+  hasSystemMessage: (roomId: string) => boolean;
 }
 
 type RoomTabsStore = RoomTabsState & RoomTabsActions;
@@ -59,6 +62,7 @@ export const useRoomTabsStore = create<RoomTabsStore>((set, get) => ({
   currentUsername: '',
   currentUserId: '',
   joinedRoomIds: new Set(),
+  systemMessageInjected: new Set(),
 
   openRoom: (roomId: string, name: string) => {
     const state = get();
@@ -103,12 +107,16 @@ export const useRoomTabsStore = create<RoomTabsStore>((set, get) => ({
     const newJoinedRoomIds = new Set(state.joinedRoomIds);
     newJoinedRoomIds.delete(roomId);
     
+    const newSystemMessageInjected = new Set(state.systemMessageInjected);
+    newSystemMessageInjected.delete(roomId);
+    
     set({
       openRoomsById: newOpenRoomsById,
       openRoomIds: newOpenRoomIds,
       activeIndex: newActiveIndex,
       messagesByRoom: newMessagesByRoom,
       joinedRoomIds: newJoinedRoomIds,
+      systemMessageInjected: newSystemMessageInjected,
     });
   },
 
@@ -119,6 +127,8 @@ export const useRoomTabsStore = create<RoomTabsStore>((set, get) => ({
     
     const roomId = state.openRoomIds[index];
     const room = state.openRoomsById[roomId];
+    
+    console.log("ACTIVE ROOM CHANGED", roomId);
     
     if (room && room.unread > 0) {
       set({
@@ -202,6 +212,7 @@ export const useRoomTabsStore = create<RoomTabsStore>((set, get) => ({
       activeIndex: 0,
       messagesByRoom: {},
       joinedRoomIds: new Set(),
+      systemMessageInjected: new Set(),
     });
   },
 
@@ -256,23 +267,54 @@ export const useRoomTabsStore = create<RoomTabsStore>((set, get) => ({
     if (state.openRoomIds.length === 0) return null;
     return state.openRoomIds[state.activeIndex] || null;
   },
+
+  injectSystemMessage: (roomId: string, roomName: string, admin: string, users: string[]) => {
+    const state = get();
+    if (state.systemMessageInjected.has(roomId)) return;
+    
+    console.log("SYSTEM MESSAGE INJECTED", roomId);
+    
+    const userList = users.length > 0 ? users.join(', ') : 'No users online';
+    const systemMessage: Message = {
+      id: `welcome-${roomId}-${Date.now()}`,
+      username: 'System',
+      message: `Welcome to ${roomName}\nManaged by ${admin || 'admin'}\nCurrently in the room: ${userList}`,
+      isSystem: true,
+      timestamp: new Date().toISOString(),
+    };
+    
+    const existingMessages = state.messagesByRoom[roomId] || [];
+    const newSystemMessageInjected = new Set(state.systemMessageInjected);
+    newSystemMessageInjected.add(roomId);
+    
+    set({
+      messagesByRoom: { ...state.messagesByRoom, [roomId]: [systemMessage, ...existingMessages] },
+      systemMessageInjected: newSystemMessageInjected,
+    });
+  },
+
+  hasSystemMessage: (roomId: string) => {
+    return get().systemMessageInjected.has(roomId);
+  },
 }));
 
 export const useActiveIndex = () => useRoomTabsStore(state => state.activeIndex);
+
 export const useOpenRoomIds = () => useRoomTabsStore(state => state.openRoomIds);
+
 export const useOpenRoomsById = () => useRoomTabsStore(state => state.openRoomsById);
 
-export const useActiveRoom = () => {
+export const useActiveRoom = (): OpenRoom | null => {
   const activeIndex = useRoomTabsStore(state => state.activeIndex);
   const openRoomIds = useRoomTabsStore(state => state.openRoomIds);
   const openRoomsById = useRoomTabsStore(state => state.openRoomsById);
   
   if (openRoomIds.length === 0) return null;
-  const roomId = openRoomIds[activeIndex];
-  return openRoomsById[roomId] || null;
+  const activeRoomId = openRoomIds[activeIndex];
+  return openRoomsById[activeRoomId] || null;
 };
 
-export const useActiveRoomId = () => {
+export const useActiveRoomId = (): string | null => {
   const activeIndex = useRoomTabsStore(state => state.activeIndex);
   const openRoomIds = useRoomTabsStore(state => state.openRoomIds);
   
@@ -280,7 +322,7 @@ export const useActiveRoomId = () => {
   return openRoomIds[activeIndex] || null;
 };
 
-export const useOpenRooms = () => {
+export const useOpenRooms = (): OpenRoom[] => {
   const openRoomIds = useRoomTabsStore(state => state.openRoomIds);
   const openRoomsById = useRoomTabsStore(state => state.openRoomsById);
   
@@ -292,7 +334,7 @@ export const useOpenRooms = () => {
   return rooms;
 };
 
-export const useRoomMessagesData = (roomId: string) => {
+export const useRoomMessagesData = (roomId: string): Message[] => {
   return useRoomTabsStore(state => state.messagesByRoom[roomId] || []);
 };
 

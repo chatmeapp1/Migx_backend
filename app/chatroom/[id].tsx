@@ -196,6 +196,7 @@ export default function ChatRoomScreen() {
   const handleSendMessage = useCallback((message: string) => {
     if (!socket || !message.trim() || !currentUserId) return;
     
+    console.log("MESSAGE SEND", currentActiveRoomId, message.trim());
     socket.emit('chat:message', {
       roomId: currentActiveRoomId,
       userId: currentUserId,

@@ -16,12 +16,16 @@ export function useRoomSocket({ roomId, onRoomJoined, onUsersUpdated }: UseRoomS
   const markRoomJoined = useRoomTabsStore(state => state.markRoomJoined);
   const markRoomLeft = useRoomTabsStore(state => state.markRoomLeft);
   const isRoomJoined = useRoomTabsStore(state => state.isRoomJoined);
+  const injectSystemMessage = useRoomTabsStore(state => state.injectSystemMessage);
+  const hasSystemMessage = useRoomTabsStore(state => state.hasSystemMessage);
   
   const roomIdRef = useRef(roomId);
   roomIdRef.current = roomId;
   
   const handleSystemMessage = useCallback((data: { roomId: string; message: string; type: string }) => {
     if (data.roomId !== roomIdRef.current) return;
+    
+    console.log("MESSAGE RECEIVE", data.roomId, data.message);
     
     const newMessage: Message = {
       id: `sys-${Date.now()}-${Math.random()}`,
@@ -35,6 +39,8 @@ export function useRoomSocket({ roomId, onRoomJoined, onUsersUpdated }: UseRoomS
   const handleChatMessage = useCallback((data: any) => {
     const targetRoomId = data.roomId || roomIdRef.current;
     if (targetRoomId !== roomIdRef.current) return;
+    
+    console.log("MESSAGE RECEIVE", targetRoomId, data.message);
     
     const cmdTypes = ['cmd', 'cmdMe', 'cmdRoll', 'cmdGift'];
     const isCommandMessage = cmdTypes.includes(data.messageType) || cmdTypes.includes(data.type);
@@ -57,22 +63,29 @@ export function useRoomSocket({ roomId, onRoomJoined, onUsersUpdated }: UseRoomS
     const joinedRoomId = data.roomId || roomIdRef.current;
     if (joinedRoomId !== roomIdRef.current) return;
     
+    const roomName = data.room?.name || 'Chat Room';
+    const admin = data.room?.creator_name || data.room?.owner_name || 'admin';
+    
     if (data.room?.name) {
       updateRoomName(joinedRoomId, data.room.name);
-    }
-    
-    if (onRoomJoined) {
-      onRoomJoined(data);
     }
     
     const usernames = data.users 
       ? data.users.map((u: any) => u.username || u)
       : data.currentUsers || [];
     
+    if (!hasSystemMessage(joinedRoomId)) {
+      injectSystemMessage(joinedRoomId, roomName, admin, usernames);
+    }
+    
+    if (onRoomJoined) {
+      onRoomJoined(data);
+    }
+    
     if (onUsersUpdated) {
       onUsersUpdated(usernames);
     }
-  }, [updateRoomName, onRoomJoined, onUsersUpdated]);
+  }, [updateRoomName, onRoomJoined, onUsersUpdated, hasSystemMessage, injectSystemMessage]);
 
   const handleRoomUsers = useCallback((data: { roomId: string; users: any[]; count: number }) => {
     if (data.roomId !== roomIdRef.current) return;
@@ -153,7 +166,7 @@ export function useRoomSocket({ roomId, onRoomJoined, onUsersUpdated }: UseRoomS
   const sendMessage = useCallback((message: string) => {
     if (!socket || !message.trim() || !currentUserId) return;
     
-    console.log(`📤 [Room ${roomId}] Sending message`);
+    console.log("MESSAGE SEND", roomId, message.trim());
     socket.emit('chat:message', {
       roomId,
       userId: currentUserId,
