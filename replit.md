@@ -63,6 +63,11 @@ Key API endpoints include:
 ### Game and Economy Systems
 - **XP & Level System**: Users gain XP for various actions (sending messages, joining rooms, playing/winning games, transferring credits) to progress through levels.
 - **Merchant Commission System**: Mentors can create merchants who earn a 30% commission from game spend.
+- **Free Credit Claim System**: Users can claim free credits using the `/c <6-digit-code>` chat command. Features include:
+  - Admin-configurable code with min/max IDR range
+  - 30-minute cooldown per user
+  - Code stored in Redis with usage limits and expiration
+  - Private response (not saved to chat history, not broadcast to room)
 
 # External Dependencies
 
