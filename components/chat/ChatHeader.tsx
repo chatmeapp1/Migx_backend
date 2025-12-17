@@ -57,7 +57,7 @@ export function ChatHeader() {
     <>
       <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
       <LinearGradient
-        colors={['#0D5E32', '#0A4726']}
+        colors={['#7FB3C2', '#A8C9D4']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.header, { paddingTop: insets.top + 8 }]}
