@@ -3,6 +3,7 @@ const { checkFlood, checkGlobalRateLimit } = require('../utils/floodControl');
 const { generateMessageId } = require('../utils/idGenerator');
 const { addXp, XP_REWARDS } = require('../utils/xpLeveling');
 const { MIG33_CMD } = require('../utils/cmdMapping');
+const claimService = require('../services/claimService');
 
 module.exports = (io, socket) => {
   const sendMessage = async (data) => {
@@ -113,6 +114,60 @@ module.exports = (io, socket) => {
             timestamp: new Date().toISOString()
           };
           io.to(`room:${roomId}`).emit('chat:message', systemMsg);
+          return;
+        }
+
+        // Handle /c <code> command for Free Credit Claim
+        if (cmdKey === 'c') {
+          const code = parts[1] || null;
+          
+          if (!code || !/^\d{6}$/.test(code)) {
+            socket.emit('chat:message', {
+              id: generateMessageId(),
+              roomId,
+              message: '❌ Invalid code format. Use: /c <6-digit-code>',
+              messageType: 'cmdClaim',
+              type: 'notice',
+              timestamp: new Date().toISOString()
+            });
+            return;
+          }
+          
+          const result = await claimService.processClaim(userId, code);
+          
+          if (result.success) {
+            socket.emit('chat:message', {
+              id: generateMessageId(),
+              roomId,
+              message: `🎁 Claim Success! You received IDR ${result.amount.toLocaleString()}. Next claim in 30 minutes.`,
+              messageType: 'cmdClaim',
+              type: 'notice',
+              timestamp: new Date().toISOString()
+            });
+            
+            socket.emit('user:balance:update', {
+              credits: result.newBalance
+            });
+          } else if (result.type === 'cooldown') {
+            socket.emit('chat:message', {
+              id: generateMessageId(),
+              roomId,
+              message: `⏳ Please wait ${result.remainingMinutes} minutes before next claim.`,
+              messageType: 'cmdClaim',
+              type: 'notice',
+              timestamp: new Date().toISOString()
+            });
+          } else {
+            socket.emit('chat:message', {
+              id: generateMessageId(),
+              roomId,
+              message: '❌ Invalid or expired code.',
+              messageType: 'cmdClaim',
+              type: 'notice',
+              timestamp: new Date().toISOString()
+            });
+          }
+          
           return;
         }
 
