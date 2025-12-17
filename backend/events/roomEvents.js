@@ -191,21 +191,20 @@ module.exports = (io, socket) => {
           });
         }, 200);
 
-        // MIG33-style enter message to all users in room
+        // MIG33-style enter message to all users in room (presence event - not saved to Redis)
         const enterMsg = `${username} [${newUserCount}] has entered`;
         const enterMessage = {
+          id: `presence-enter-${Date.now()}-${Math.random()}`,
           roomId,
           username: room.name,
           message: enterMsg,
           timestamp: new Date().toISOString(),
-          type: 'system',
-          messageType: 'system'
+          type: 'presence',
+          messageType: 'presence'
         };
 
         io.to(`room:${roomId}`).emit('chat:message', enterMessage);
-
-        // Save enter message to Redis
-        await addSystemMessage(roomId, `${room.name} : ${enterMsg}`);
+        // Note: Presence events are NOT saved to Redis - they are realtime only
 
         io.to(`room:${roomId}`).emit('room:user:joined', {
           roomId,
@@ -338,22 +337,21 @@ module.exports = (io, socket) => {
         }))
       );
 
-      // MIG33-style left message: "Indonesia : migtes4 [1] has left"
+      // MIG33-style left message (presence event - not saved to Redis)
       const room = await roomService.getRoomById(roomId);
       const leftMsg = `${username} [${userCount}] has left`;
       const leftMessage = {
+        id: `presence-left-${Date.now()}-${Math.random()}`,
         roomId,
         username: room.name,
         message: leftMsg,
         timestamp: new Date().toISOString(),
-        type: 'system',
-        messageType: 'system'
+        type: 'presence',
+        messageType: 'presence'
       };
 
       io.to(`room:${roomId}`).emit('chat:message', leftMessage);
-
-      // Save left message to Redis
-      await addSystemMessage(roomId, `${room.name} : ${leftMsg}`);
+      // Note: Presence events are NOT saved to Redis - they are realtime only
 
       io.to(`room:${roomId}`).emit('room:user:left', {
         roomId,
@@ -814,16 +812,17 @@ module.exports = (io, socket) => {
               
               const leftMsg = `${username} [${userCount}] has left`;
               const leftMessage = {
+                id: `presence-left-${Date.now()}-${Math.random()}`,
                 roomId: currentRoomId,
                 username: room?.name || 'Room',
                 message: leftMsg,
                 timestamp: new Date().toISOString(),
-                type: 'system',
-                messageType: 'system'
+                type: 'presence',
+                messageType: 'presence'
               };
 
               io.to(`room:${currentRoomId}`).emit('chat:message', leftMessage);
-              await addSystemMessage(currentRoomId, `${room?.name || 'Room'} : ${leftMsg}`);
+              // Note: Presence events are NOT saved to Redis - they are realtime only
 
               const updatedUsers = await getRoomPresenceUsers(currentRoomId);
               io.to(`room:${currentRoomId}`).emit('room:user:left', {

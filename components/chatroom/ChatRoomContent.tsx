@@ -10,6 +10,7 @@ interface Message {
   isSystem?: boolean;
   isNotice?: boolean;
   isCmd?: boolean;
+  isPresence?: boolean;
   userType?: 'creator' | 'admin' | 'normal' | 'mentor' | 'merchant';
 }
 
@@ -46,6 +47,7 @@ export function ChatRoomContent({ messages, bottomPadding = 70 }: ChatRoomConten
           isSystem={item.isSystem}
           isNotice={item.isNotice}
           isCmd={item.isCmd}
+          isPresence={item.isPresence}
           userType={item.userType}
           isOwnMessage={item.isOwnMessage}
         />

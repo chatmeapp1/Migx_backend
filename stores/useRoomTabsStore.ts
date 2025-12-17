@@ -9,6 +9,7 @@ export interface Message {
   isSystem?: boolean;
   isNotice?: boolean;
   isCmd?: boolean;
+  isPresence?: boolean;
   timestamp?: string;
 }
 

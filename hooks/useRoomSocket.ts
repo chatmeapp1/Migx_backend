@@ -42,15 +42,17 @@ export function useRoomSocket({ roomId, onRoomJoined, onUsersUpdated }: UseRoomS
     
     const cmdTypes = ['cmd', 'cmdMe', 'cmdRoll', 'cmdGift'];
     const isCommandMessage = cmdTypes.includes(data.messageType) || cmdTypes.includes(data.type);
+    const isPresenceMessage = data.messageType === 'presence' || data.type === 'presence';
     
     const newMessage: Message = {
       id: data.id || `msg-${Date.now()}-${Math.random()}`,
       username: data.username,
       message: data.message,
       isOwnMessage: data.username === currentUsername,
-      isSystem: data.messageType === 'system' || data.type === 'system',
+      isSystem: (data.messageType === 'system' || data.type === 'system') && !isPresenceMessage,
       isNotice: data.messageType === 'notice',
       isCmd: isCommandMessage,
+      isPresence: isPresenceMessage,
       timestamp: data.timestamp,
     };
     

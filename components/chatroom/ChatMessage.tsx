@@ -11,6 +11,7 @@ interface ChatMessageProps {
   isSystem?: boolean;
   isNotice?: boolean;
   isCmd?: boolean;
+  isPresence?: boolean;
   userType?: 'creator' | 'admin' | 'normal' | 'mentor' | 'merchant';
   isOwnMessage?: boolean;
 }
@@ -22,6 +23,7 @@ export function ChatMessage({
   isSystem,
   isNotice,
   isCmd,
+  isPresence,
   userType,
   isOwnMessage
 }: ChatMessageProps) {
@@ -30,6 +32,7 @@ export function ChatMessage({
 
   const getUsernameColor = () => {
     if (isSystem) return '#FF8C00';
+    if (isPresence) return '#FF8C00';
     if (isOwnMessage) return roleColors.own;
     if (userType === 'creator') return roleColors.creator;
     if (userType === 'admin') return roleColors.admin;
