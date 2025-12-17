@@ -96,8 +96,7 @@ export function Header() {
         end={{ x: 1, y: 1 }}
         style={[styles.container, { paddingTop: insets.top }]}
       >
-
-      <View style={[styles.topBar, { borderBottomColor: theme.border }]}>
+        <View style={[styles.topBar, { borderBottomColor: theme.border }]}>
           <View style={styles.leftSection}>
             <UserIcon size={20} color="#FFFFFF" />
             <Text style={[styles.title, { color: '#FFFFFF' }]}>My Friends</Text>
