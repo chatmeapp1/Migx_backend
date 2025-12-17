@@ -86,22 +86,38 @@ export const useRoomTabsStore = create<RoomTabsStore>((set, get) => ({
 
   closeRoom: (roomId: string) => {
     const state = get();
+    
+    console.log('🚪 [closeRoom] START - Closing room:', roomId);
+    console.log('🚪 [closeRoom] Before - openRoomIds:', state.openRoomIds);
+    console.log('🚪 [closeRoom] Before - activeIndex:', state.activeIndex);
+    
+    if (!state.openRoomIds.includes(roomId)) {
+      console.warn('🚪 [closeRoom] Room not found in openRoomIds, skipping:', roomId);
+      return;
+    }
+    
     const newOpenRoomsById = { ...state.openRoomsById };
     delete newOpenRoomsById[roomId];
     
-    const currentIndex = state.openRoomIds.indexOf(roomId);
+    const closingIndex = state.openRoomIds.indexOf(roomId);
     const newOpenRoomIds = state.openRoomIds.filter(id => id !== roomId);
     const newMessagesByRoom = { ...state.messagesByRoom };
     delete newMessagesByRoom[roomId];
     
     let newActiveIndex = state.activeIndex;
-    if (currentIndex <= state.activeIndex) {
-      newActiveIndex = Math.max(0, state.activeIndex - 1);
+    
+    if (closingIndex < state.activeIndex) {
+      newActiveIndex = state.activeIndex - 1;
+    } else if (closingIndex === state.activeIndex) {
+      if (closingIndex === newOpenRoomIds.length) {
+        newActiveIndex = Math.max(0, closingIndex - 1);
+      }
     }
+    
     if (newOpenRoomIds.length === 0) {
       newActiveIndex = 0;
     } else {
-      newActiveIndex = Math.min(newActiveIndex, newOpenRoomIds.length - 1);
+      newActiveIndex = Math.min(Math.max(0, newActiveIndex), newOpenRoomIds.length - 1);
     }
     
     const newJoinedRoomIds = new Set(state.joinedRoomIds);
@@ -109,6 +125,11 @@ export const useRoomTabsStore = create<RoomTabsStore>((set, get) => ({
     
     const newSystemMessageInjected = new Set(state.systemMessageInjected);
     newSystemMessageInjected.delete(roomId);
+    
+    console.log('🚪 [closeRoom] Closing tab at index:', closingIndex);
+    console.log('🚪 [closeRoom] After - newOpenRoomIds:', newOpenRoomIds);
+    console.log('🚪 [closeRoom] After - newActiveIndex:', newActiveIndex);
+    console.log('🚪 [closeRoom] Remaining tabs:', newOpenRoomIds.length);
     
     set({
       openRoomsById: newOpenRoomsById,
@@ -118,6 +139,8 @@ export const useRoomTabsStore = create<RoomTabsStore>((set, get) => ({
       joinedRoomIds: newJoinedRoomIds,
       systemMessageInjected: newSystemMessageInjected,
     });
+    
+    console.log('🚪 [closeRoom] DONE - State updated');
   },
 
   setActiveIndex: (index: number) => {

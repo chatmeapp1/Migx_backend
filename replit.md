@@ -46,7 +46,19 @@ Redis is utilized for managing online user presence in rooms, banned user lists,
 The `/chat` namespace handles a wide array of real-time events, including joining/leaving rooms, sending/receiving chat messages, private messages, credit transfers, and game interactions.
 
 ### REST API Endpoints
-Key API endpoints include `/api/auth/login`, `/api/users/:id`, `/api/rooms`, `/api/messages/:roomId`, `/api/credits/transfer`, and `/api/merchants/create`.
+Key API endpoints include:
+- `/api/auth/login` - User authentication
+- `/api/users/:id` - User data
+- `/api/rooms` - Room listing, details, favorites, recent (READ operations)
+- `/api/chatroom/:roomId/join` - Join chatroom (lifecycle)
+- `/api/chatroom/:roomId/leave` - Leave chatroom (lifecycle)
+- `/api/chatroom/:roomId/participants` - Get room participants
+- `/api/chatroom/:roomId/status` - Get room status
+- `/api/messages/:roomId` - Room messages
+- `/api/credits/transfer` - Credit transfers
+- `/api/merchants/create` - Merchant creation
+
+**Note**: The legacy `/api/rooms/join` and `/api/rooms/leave` endpoints are deprecated. Use `/api/chatroom/:roomId/join` and `/api/chatroom/:roomId/leave` instead.
 
 ### Game and Economy Systems
 - **XP & Level System**: Users gain XP for various actions (sending messages, joining rooms, playing/winning games, transferring credits) to progress through levels.

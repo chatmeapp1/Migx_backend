@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const roomService = require('../services/roomService');
-const { addUserToRoom, removeUserFromRoom, getRoomUserCount } = require('../utils/redisPresence');
-const { addRecentRoom, addRoomParticipant, removeRoomParticipant, getRoomParticipants } = require('../utils/redisUtils');
+const { getRoomUserCount } = require('../utils/redisPresence');
+const { getRoomParticipants } = require('../utils/redisUtils');
 
 router.post('/:roomId/join', async (req, res) => {
   try {
@@ -18,25 +18,11 @@ router.post('/:roomId/join', async (req, res) => {
       });
     }
     
-    const room = await roomService.getRoomById(roomId);
-    if (!room) {
-      return res.status(404).json({
-        success: false,
-        error: 'Room not found'
-      });
-    }
+    const result = await roomService.joinRoom(roomId, userId, username);
     
-    const currentUserCount = await getRoomUserCount(roomId);
-    if (currentUserCount >= room.max_users) {
-      return res.status(400).json({
-        success: false,
-        error: 'Room is full'
-      });
+    if (!result.success) {
+      return res.status(400).json(result);
     }
-    
-    await addUserToRoom(roomId, username);
-    await addRoomParticipant(roomId, username);
-    await addRecentRoom(username, roomId, room.name);
     
     const userCount = await getRoomUserCount(roomId);
     
@@ -44,13 +30,8 @@ router.post('/:roomId/join', async (req, res) => {
     
     res.json({
       success: true,
-      room: {
-        id: room.id,
-        name: room.name,
-        description: room.description,
-        maxUsers: room.max_users,
-        userCount
-      }
+      room: result.room,
+      userCount
     });
     
   } catch (error) {
@@ -76,8 +57,7 @@ router.post('/:roomId/leave', async (req, res) => {
       });
     }
     
-    await removeUserFromRoom(roomId, username);
-    await removeRoomParticipant(roomId, username);
+    await roomService.leaveRoom(roomId, userId, username);
     
     const userCount = await getRoomUserCount(roomId);
     

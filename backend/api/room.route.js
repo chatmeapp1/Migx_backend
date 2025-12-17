@@ -508,6 +508,7 @@ router.delete('/:id/admins/:userId', async (req, res) => {
 });
 
 router.post('/join', async (req, res) => {
+  console.warn('[DEPRECATED] POST /api/rooms/join - Use POST /api/chatroom/:roomId/join instead');
   try {
     const { roomId, userId, username } = req.body;
     
@@ -539,6 +540,7 @@ router.post('/join', async (req, res) => {
 });
 
 router.post('/leave', async (req, res) => {
+  console.warn('[DEPRECATED] POST /api/rooms/leave - Use POST /api/chatroom/:roomId/leave instead');
   try {
     const { roomId, userId, username } = req.body;
     
