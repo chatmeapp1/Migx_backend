@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useThemeCustom } from '@/theme/provider';
 import { usePresence, PresenceStatus } from '@/hooks/usePresence';
 import { PresenceSelector } from './PresenceSelector';
-import { API_BASE_URL } from '@/utils/api';
+import API_BASE_URL from '@/utils/api';
 
 interface UserProfileSectionProps {
   username?: string;
@@ -117,7 +117,7 @@ export function UserProfileSection({
   const { status: presenceStatusFromHook, setStatus: setPresenceStatus } = usePresence(username || '');
 
   return (
-    <View style={[styles.container, { backgroundColor: '#0a5229' }]}>
+    <View style={[styles.container, { backgroundColor: '#7FB3C2' }]}>
       <View style={styles.profileRow}>
         {/* Avatar with status indicator */}
         <TouchableOpacity 
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
     bottom: -2,
     right: -2,
     borderWidth: 2,
-    borderColor: '#0a5229',
+    borderColor: '#7FB3C2',
   },
   userInfo: {
     flex: 1,

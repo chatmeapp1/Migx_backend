@@ -88,7 +88,7 @@ export function Header() {
   };
 
   return (
-    <>
+   <>
       <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
       <LinearGradient
         colors={['#7FB3C2', '#A8C9D4']}
@@ -140,7 +140,7 @@ export function Header() {
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    paddingBottom: 12,
+    paddingBottom: 0,
   },
   topBar: {
     flexDirection: 'row',
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 12,
-    borderBottomWidth: 1,
+    borderBottomWidth: 0,
     width: '100%'
   },
   leftSection: { flexDirection: 'row', alignItems: 'center', gap: 8 },
