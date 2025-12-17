@@ -244,41 +244,33 @@ export function RoomList() {
           </View>
         </TouchableOpacity>
         
-        {favoriteRooms.length > 0 && (
-          <RoomCategory
-            title="★ Your Favorites"
-            rooms={favoriteRooms.map(formatRoomForDisplay)}
-            backgroundColor="#FF6B35"
-            onRoomPress={handleRoomPress}
-          />
-        )}
+        <RoomCategory
+          title="★ Your Favorites"
+          rooms={favoriteRooms.map(formatRoomForDisplay)}
+          backgroundColor="#FF6B35"
+          onRoomPress={handleRoomPress}
+        />
         
-        {officialRooms.length > 0 && (
-          <RoomCategory
-            title="Official Rooms"
-            rooms={officialRooms.map(formatRoomForDisplay)}
-            backgroundColor="#4A90D9"
-            onRoomPress={handleRoomPress}
-          />
-        )}
+        <RoomCategory
+          title="Official Rooms"
+          rooms={officialRooms.map(formatRoomForDisplay)}
+          backgroundColor="#4A90D9"
+          onRoomPress={handleRoomPress}
+        />
         
-        {recentRooms.length > 0 && (
-          <RoomCategory
-            title="Recent Rooms"
-            rooms={recentRooms.map(formatRoomForDisplay)}
-            backgroundColor={theme.card}
-            onRoomPress={handleRoomPress}
-          />
-        )}
+        <RoomCategory
+          title="Recent Rooms"
+          rooms={recentRooms.map(formatRoomForDisplay)}
+          backgroundColor={theme.card}
+          onRoomPress={handleRoomPress}
+        />
         
-        {gameRooms.length > 0 && (
-          <RoomCategory
-            title="Game Rooms"
-            rooms={gameRooms.map(formatRoomForDisplay)}
-            backgroundColor="#9B59B6"
-            onRoomPress={handleRoomPress}
-          />
-        )}
+        <RoomCategory
+          title="Game Rooms"
+          rooms={gameRooms.map(formatRoomForDisplay)}
+          backgroundColor="#9B59B6"
+          onRoomPress={handleRoomPress}
+        />
         
         <TouchableOpacity style={[styles.actionButton, { backgroundColor: theme.card }]} onPress={onRefresh}>
           <View style={styles.actionContent}>
