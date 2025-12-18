@@ -112,24 +112,24 @@ export function MenuParticipantsModal({ visible, onClose, roomId, onUserMenuPres
             <TouchableOpacity
               activeOpacity={1}
               onPress={(e) => e.stopPropagation()}
-              style={[styles.modal, { backgroundColor: '#FFFFFF' }]}
+              style={[styles.modal, { backgroundColor: theme.card }]}
             >
-              {/* Blue Header */}
-              <View style={styles.header}>
-                <Text style={styles.title}>
+              {/* Dark Green Header */}
+              <View style={[styles.header, { backgroundColor: '#082919' }]}>
+                <Text style={[styles.title, { color: theme.text }]}>
                   Participants ({participants.length})
                 </Text>
               </View>
 
               {/* Participants List */}
-              <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+              <ScrollView style={[styles.scrollView, { backgroundColor: theme.card }]} showsVerticalScrollIndicator={false}>
                 {loading ? (
                   <View style={styles.emptyContainer}>
-                    <ActivityIndicator size="large" color="#4BA3FF" />
+                    <ActivityIndicator size="large" color="#082919" />
                   </View>
                 ) : participants.length === 0 ? (
                   <View style={styles.emptyContainer}>
-                    <Text style={styles.emptyText}>
+                    <Text style={[styles.emptyText, { color: theme.secondary }]}>
                       No users in the room
                     </Text>
                   </View>
@@ -139,7 +139,8 @@ export function MenuParticipantsModal({ visible, onClose, roomId, onUserMenuPres
                       key={index}
                       style={[
                         styles.userItem,
-                        index < participants.length - 1 && { borderBottomColor: '#E0E0E0', borderBottomWidth: 1 }
+                        { backgroundColor: theme.card },
+                        index < participants.length - 1 && { borderBottomColor: theme.border, borderBottomWidth: 1 }
                       ]}
                     >
                       <Text 
@@ -154,7 +155,7 @@ export function MenuParticipantsModal({ visible, onClose, roomId, onUserMenuPres
                         style={styles.menuButton}
                         onPress={() => handleMenuPress(participant.username)}
                       >
-                        <ThreeDotsIcon color="#999" size={20} />
+                        <ThreeDotsIcon color={theme.secondary} size={20} />
                       </TouchableOpacity>
                     </View>
                   ))
@@ -181,18 +182,18 @@ export function MenuParticipantsModal({ visible, onClose, roomId, onUserMenuPres
             <TouchableOpacity
               activeOpacity={1}
               onPress={(e) => e.stopPropagation()}
-              style={styles.menuContent}
+              style={[styles.menuContent, { backgroundColor: theme.card }]}
             >
               {menuOptions.map((option, index) => (
                 <TouchableOpacity
                   key={index}
                   style={[
                     styles.menuItem,
-                    index < menuOptions.length - 1 && { borderBottomColor: '#F0F0F0', borderBottomWidth: 1 }
+                    index < menuOptions.length - 1 && { borderBottomColor: theme.border, borderBottomWidth: 1 }
                   ]}
                   onPress={() => handleMenuOption(option.value)}
                 >
-                  <Text style={styles.menuItemText}>{option.label}</Text>
+                  <Text style={[styles.menuItemText, { color: theme.text }]}>{option.label}</Text>
                 </TouchableOpacity>
               ))}
             </TouchableOpacity>
@@ -221,7 +222,6 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingVertical: 14,
-    backgroundColor: '#4BA3FF',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -232,7 +232,6 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     maxHeight: 400,
-    backgroundColor: '#FFFFFF',
   },
   userItem: {
     flexDirection: 'row',
@@ -240,7 +239,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
   },
   username: {
     fontSize: 15,
@@ -261,7 +259,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
-    color: '#999',
   },
   // User Menu Styles
   menuOverlay: {
@@ -274,7 +271,6 @@ const styles = StyleSheet.create({
     width: '70%',
   },
   menuContent: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 8,
     overflow: 'hidden',
     elevation: 5,
@@ -289,7 +285,6 @@ const styles = StyleSheet.create({
   },
   menuItemText: {
     fontSize: 14,
-    color: '#333',
     fontWeight: '500',
   },
 });
