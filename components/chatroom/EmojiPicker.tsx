@@ -7,11 +7,13 @@ interface EmojiPickerProps {
   visible: boolean;
   onClose: () => void;
   onEmojiSelect: (emojiCode: string) => void;
+  bottomOffset?: number;
 }
 
 const PICKER_HEIGHT = 260;
+const INPUT_HEIGHT = 55;
 
-export function EmojiPicker({ visible, onClose, onEmojiSelect }: EmojiPickerProps) {
+export function EmojiPicker({ visible, onClose, onEmojiSelect, bottomOffset = 0 }: EmojiPickerProps) {
   const { theme } = useThemeCustom();
   const translateY = useRef(new Animated.Value(PICKER_HEIGHT)).current;
 
@@ -38,6 +40,7 @@ export function EmojiPicker({ visible, onClose, onEmojiSelect }: EmojiPickerProp
         { 
           backgroundColor: theme.card,
           transform: [{ translateY }],
+          bottom: INPUT_HEIGHT + bottomOffset,
         }
       ]}
     >
@@ -80,7 +83,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: 0,
     height: PICKER_HEIGHT,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
