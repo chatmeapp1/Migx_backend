@@ -1,13 +1,14 @@
 
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView, ActivityIndicator } from 'react-native';
 import { useThemeCustom } from '@/theme/provider';
 import Svg, { Circle } from 'react-native-svg';
+import API_BASE_URL from '@/utils/api';
 
 interface MenuParticipantsModalProps {
   visible: boolean;
   onClose: () => void;
-  users: string[];
+  roomId?: string;
   onUserMenuPress?: (username: string) => void;
 }
 
@@ -19,8 +20,37 @@ const ThreeDotsIcon = ({ color = '#000', size = 24 }: { color?: string; size?: n
   </Svg>
 );
 
-export function MenuParticipantsModal({ visible, onClose, users, onUserMenuPress }: MenuParticipantsModalProps) {
+export function MenuParticipantsModal({ visible, onClose, roomId, onUserMenuPress }: MenuParticipantsModalProps) {
   const { theme } = useThemeCustom();
+  const [participants, setParticipants] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (visible && roomId) {
+      fetchParticipants();
+    }
+  }, [visible, roomId]);
+
+  const fetchParticipants = async () => {
+    if (!roomId) return;
+    
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE_URL}/api/chatroom/${roomId}/participants`);
+      const data = await response.json();
+      
+      if (data.success && Array.isArray(data.participants)) {
+        setParticipants(data.participants);
+      } else {
+        setParticipants([]);
+      }
+    } catch (error) {
+      console.error('Error fetching participants:', error);
+      setParticipants([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Modal
@@ -42,24 +72,28 @@ export function MenuParticipantsModal({ visible, onClose, users, onUserMenuPress
           >
             <View style={[styles.header, { borderBottomColor: theme.border }]}>
               <Text style={[styles.title, { color: theme.text }]}>
-                Participants ({users.length})
+                Participants ({participants.length})
               </Text>
             </View>
 
             <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-              {users.length === 0 ? (
+              {loading ? (
+                <View style={styles.emptyContainer}>
+                  <ActivityIndicator size="large" color={theme.primary} />
+                </View>
+              ) : participants.length === 0 ? (
                 <View style={styles.emptyContainer}>
                   <Text style={[styles.emptyText, { color: theme.secondary }]}>
                     No users in the room
                   </Text>
                 </View>
               ) : (
-                users.map((username, index) => (
+                participants.map((username, index) => (
                   <View
                     key={index}
                     style={[
                       styles.userItem,
-                      index < users.length - 1 && { borderBottomColor: theme.border, borderBottomWidth: 1 }
+                      index < participants.length - 1 && { borderBottomColor: theme.border, borderBottomWidth: 1 }
                     ]}
                   >
                     <Text style={[styles.username, { color: theme.text }]}>{username}</Text>

@@ -392,7 +392,7 @@ export default function ChatRoomScreen() {
       <MenuParticipantsModal
         visible={participantsModalVisible}
         onClose={() => setParticipantsModalVisible(false)}
-        users={roomUsers}
+        roomId={currentActiveRoomId}
         onUserMenuPress={handleUserMenuPress}
       />
 

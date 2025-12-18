@@ -1,0 +1,149 @@
+Context
+
+Aplikasi chatroom menggunakan Socket.IO + Redis.
+Chat message realtime sudah berjalan dengan baik.
+Masalah saat ini: Participant menu selalu kosong, padahal user sudah join room dan Redis digunakan.
+
+Redis WAJIB menjadi single source of truth untuk participant list.
+
+
+
+
+---
+
+🎯 TUJUAN
+
+Perbaiki sistem Participants agar:
+
+1. User yang join room disimpan ke Redis
+
+
+2. User yang leave / disconnect dihapus dari Redis
+
+
+3. Participant menu mengambil data langsung dari Redis
+
+
+4. Tidak mengubah sistem chat message
+
+
+5. Tidak menambah logic baru yang tidak perlu
+
+
+
+
+---
+
+🔧 TUGAS YANG HARUS DILAKUKAN
+
+1️⃣ Pastikan Redis client benar-benar aktif
+
+Gunakan Redis Cloud (bukan local)
+
+Pastikan REDIS_URL / host / password terbaca
+
+Jika Redis tidak terkoneksi, log error jelas
+
+
+
+---
+
+2️⃣ Perbaiki Socket.IO join_room
+
+Saat user join room:
+
+SADD room:{roomId}:participants {userId}
+HSET user:{userId} username {username}
+
+⚠️ Jangan broadcast participant dari memory
+⚠️ Redis adalah sumber utama
+
+
+---
+
+3️⃣ Perbaiki Socket.IO leave_room & disconnect
+
+Saat user keluar atau socket disconnect:
+
+SREM room:{roomId}:participants {userId}
+
+Pastikan tidak ada user “hantu” tersisa di Redis.
+
+
+---
+
+4️⃣ Buat / perbaiki endpoint API participants
+
+Endpoint contoh:
+
+GET /api/chatroom/:roomId/participants
+
+Logic:
+
+1. SMEMBERS room:{roomId}:participants
+
+
+2. Ambil username dari user:{userId}
+
+
+3. Return array user
+
+
+
+Contoh response:
+
+{
+  "count": 2,
+  "users": [
+    { "userId": "u1", "username": "migxtes4" },
+    { "userId": "u2", "username": "migxtes5" }
+  ]
+}
+
+
+---
+
+5️⃣ Frontend Participant Menu
+
+Ambil data hanya dari endpoint Redis
+
+Jangan pakai Socket memory / local state
+
+Update list setiap kali modal dibuka
+
+Tampilkan:
+
+Jumlah participant
+
+Username list
+
+
+
+
+---
+
+🚫 LARANGAN (PENTING)
+
+❌ Jangan simpan participant di memory
+
+❌ Jangan campur dengan chat message logic
+
+❌ Jangan ubah arsitektur lain
+
+❌ Jangan bikin fallback ke Socket.IO room adapter
+
+
+
+---
+
+✅ HASIL YANG DIHARAPKAN
+
+Participant menu selalu sinkron
+
+Jumlah user sesuai kondisi real
+
+Tidak ada participant 0 saat room aktif
+
+Redis menjadi single source of truth
+
+
