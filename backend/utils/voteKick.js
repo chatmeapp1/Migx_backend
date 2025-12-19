@@ -2,6 +2,7 @@ const { getRedisClient } = require('../redis');
 
 const VOTE_KICK_DURATION = 60; // 60 seconds
 const VOTE_KICK_COOLDOWN = 120; // 2 minutes
+const VOTE_KICK_PAYMENT = 500; // 500 IDR to initiate vote kick
 const VOTE_UPDATE_INTERVALS = [60, 40, 20, 0];
 
 const activeVotes = new Map();
@@ -15,7 +16,7 @@ function getVotesNeeded(roomUserCount) {
   return Math.ceil(roomUserCount / 2);
 }
 
-async function startVoteKick(io, roomId, starterUsername, targetUsername, roomUserCount) {
+async function startVoteKick(io, roomId, starterUsername, targetUsername, roomUserCount, starterUserId) {
   const redis = getRedisClient();
   const voteKey = `kick:${roomId}:${targetUsername}`;
   const votesKey = `kickVotes:${roomId}:${targetUsername}`;
@@ -24,6 +25,28 @@ async function startVoteKick(io, roomId, starterUsername, targetUsername, roomUs
   if (existingVote) {
     return { success: false, error: 'A vote to kick this user is already in progress.' };
   }
+
+  // Check and deduct payment (500 IDR)
+  const userService = require('../services/userService');
+  const starterCredits = await userService.getUserCredits(starterUserId);
+  if (starterCredits < VOTE_KICK_PAYMENT) {
+    return { 
+      success: false, 
+      error: `Not enough credits. Need IDR 500 to start vote kick (you have IDR ${starterCredits}).`,
+      insufficientCredit: true
+    };
+  }
+
+  // Deduct payment
+  const updatedUser = await userService.updateUserCredits(starterUserId, -VOTE_KICK_PAYMENT);
+  if (!updatedUser) {
+    return { success: false, error: 'Failed to process payment.' };
+  }
+
+  // Emit credit update to the starter
+  io.to(`user:${starterUsername}`).emit('user:balance:update', {
+    credits: updatedUser.credits
+  });
 
   const votesNeeded = getVotesNeeded(roomUserCount);
   
@@ -244,5 +267,6 @@ module.exports = {
   executeVoteKick,
   hasActiveVote,
   VOTE_KICK_DURATION,
-  VOTE_KICK_COOLDOWN
+  VOTE_KICK_COOLDOWN,
+  VOTE_KICK_PAYMENT
 };

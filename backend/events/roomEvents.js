@@ -685,9 +685,19 @@ module.exports = (io, socket) => {
           // Add vote to existing
           await addVote(io, roomId, kickerUsername, targetUsername);
         } else {
-          // Start new vote
+          // Start new vote with payment
           const roomUserCount = await getRoomUserCount(roomId);
-          await startVoteKick(io, roomId, kickerUsername, targetUsername, roomUserCount);
+          const result = await startVoteKick(io, roomId, kickerUsername, targetUsername, roomUserCount, userId);
+          
+          if (!result.success) {
+            socket.emit('system:message', {
+              roomId,
+              message: result.error,
+              timestamp: new Date().toISOString(),
+              type: 'error'
+            });
+            return;
+          }
         }
       }
 
