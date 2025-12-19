@@ -165,7 +165,11 @@ export default function LoginScreen() {
         >
           {/* Logo/Brand */}
           <View style={styles.logoSection}>
-            <Text style={styles.brandText}>miggi</Text>
+            <Image
+              source={require('@/assets/logo/logo_migx.png')}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
           </View>
 
           <Animated.View
@@ -360,11 +364,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     marginTop: 20,
   },
-  brandText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#fff',
-    letterSpacing: 2,
+  logoImage: {
+    width: 120,
+    height: 120,
   },
   content: {
     alignItems: 'center',
