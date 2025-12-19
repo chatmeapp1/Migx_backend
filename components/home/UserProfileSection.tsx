@@ -5,6 +5,7 @@ import { useThemeCustom } from '@/theme/provider';
 import { usePresence, PresenceStatus } from '@/hooks/usePresence';
 import { PresenceSelector } from './PresenceSelector';
 import API_BASE_URL from '@/utils/api';
+import { getLevelConfig } from '@/utils/levelMapping';
 
 interface UserProfileSectionProps {
   username?: string;
@@ -145,7 +146,12 @@ export function UserProfileSection({
               {isLoading ? 'Loading...' : (username || 'Guest')}
             </Text>
             <View style={styles.levelBadge}>
-              <Text style={styles.levelText}>[lvl{level}]</Text>
+              <Image
+                source={getLevelConfig(level).icon}
+                style={styles.levelIcon}
+                resizeMode="contain"
+              />
+              <Text style={styles.levelNumber}>{level}</Text>
             </View>
           </View>
         </View>
@@ -226,13 +232,20 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   levelBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  levelText: {
-    fontSize: 12,
+  levelIcon: {
+    width: 20,
+    height: 20,
+  },
+  levelNumber: {
+    position: 'absolute',
+    fontSize: 9,
+    fontWeight: '700',
     color: '#FFFFFF',
-    fontWeight: '500',
+    textAlign: 'center',
   },
   statusInputContainer: {
     backgroundColor: '#000000',
