@@ -190,6 +190,104 @@ module.exports = (io, socket) => {
           return;
         }
 
+        // Handle /unban command - Admin only
+        if (cmdKey === 'unban') {
+          const userService = require('../services/userService');
+          const { getRedisClient } = require('../redis');
+          
+          // Check if sender is admin
+          const isAdmin = await userService.isAdmin(userId);
+          if (!isAdmin) {
+            socket.emit('system:message', {
+              roomId,
+              message: '❌ Only admins can use /unban command.',
+              timestamp: new Date().toISOString(),
+              type: 'error'
+            });
+            return;
+          }
+
+          const targetUsername = parts[1];
+          if (!targetUsername) {
+            socket.emit('system:message', {
+              roomId,
+              message: `Usage: /unban <username>`,
+              timestamp: new Date().toISOString(),
+              type: 'warning'
+            });
+            return;
+          }
+
+          const targetUser = await userService.getUserByUsername(targetUsername);
+          if (!targetUser) {
+            socket.emit('system:message', {
+              roomId,
+              message: `❌ User ${targetUsername} not found.`,
+              timestamp: new Date().toISOString(),
+              type: 'error'
+            });
+            return;
+          }
+
+          const redis = getRedisClient();
+          const banKey = `admin:global:banned:${targetUser.id}`;
+          await redis.del(banKey);
+
+          // Send notification to all users
+          io.to(`room:${roomId}`).emit('chat:message', {
+            id: generateMessageId(),
+            roomId,
+            username: 'System',
+            message: `✅ ${targetUsername} has been unbanned from all rooms by ${username}.`,
+            timestamp: new Date().toISOString(),
+            type: 'system',
+            messageType: 'unban',
+            isSystem: true
+          });
+
+          console.log(`🔓 Admin ${username} unbanned ${targetUsername}`);
+          return;
+        }
+
+        // Handle /clear command - Admin only
+        if (cmdKey === 'clear') {
+          const userService = require('../services/userService');
+          
+          // Check if sender is admin
+          const isAdmin = await userService.isAdmin(userId);
+          if (!isAdmin) {
+            socket.emit('system:message', {
+              roomId,
+              message: '❌ Only admins can use /clear command.',
+              timestamp: new Date().toISOString(),
+              type: 'error'
+            });
+            return;
+          }
+
+          // Broadcast clear message to all users in the room
+          io.to(`room:${roomId}`).emit('chat:clear', {
+            roomId,
+            clearedBy: username,
+            timestamp: new Date().toISOString()
+          });
+
+          // Send confirmation system message
+          io.to(`room:${roomId}`).emit('chat:message', {
+            id: generateMessageId(),
+            roomId,
+            username: 'System',
+            message: `🧹 Chat cleared by ${username}.`,
+            timestamp: new Date().toISOString(),
+            type: 'system',
+            messageType: 'clear',
+            isSystem: true
+          });
+
+          console.log(`🧹 Admin ${username} cleared chat in room ${roomId}`);
+          return;
+        }
+
         // Handle other MIG33 commands
         const target = parts[1] || null;
         const cmd = MIG33_CMD[cmdKey];
