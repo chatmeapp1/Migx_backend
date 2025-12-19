@@ -3,7 +3,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { useThemeCustom } from '@/theme/provider';
-import { API_BASE_URL } from '@/utils/api';
+import API_BASE_URL from '@/utils/api';
 
 const CameraIcon = ({ size = 24, color = '#fff' }: { size?: number; color?: string }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
