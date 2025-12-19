@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#06B6D4',
+    color: '#082919',
     textAlign: 'center',
     marginBottom: 24,
   },
@@ -581,15 +581,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 15,
   },
-  loginText: { color: '#06B6D4', fontSize: 14 },
+  loginText: { color: '#082919', fontSize: 14 },
   loginTextBold: {
-    color: '#06B6D4',
+    color: '#082919',
     fontSize: 14,
     fontWeight: 'bold',
     textDecorationLine: 'underline',
   },
   privacyLink: { alignItems: 'center' },
-  privacyText: { color: '#06B6D4', fontSize: 12, fontWeight: '600' },
+  privacyText: { color: '#082919', fontSize: 12, fontWeight: '600' },
 
   modalOverlay: {
     flex: 1,
