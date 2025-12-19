@@ -48,7 +48,7 @@ export function RoomCategory({ title, rooms, backgroundColor = '#B8E6F7', isSpec
       >
         <View style={styles.headerContent}>
           {isExpanded ? <MinusIcon color={theme.secondary} /> : <PlusIcon color={theme.secondary} />}
-          <Text style={[styles.title, { color: isSpecial ? theme.primary : theme.secondary }]}>{title}</Text>
+          <Text style={[styles.title, { color: '#fff' }]}>{title}</Text>
         </View>
         {isSpecial && <ActionIcon color={theme.primary} />}
       </TouchableOpacity>
