@@ -249,9 +249,10 @@ module.exports = (io, socket) => {
           return;
         }
 
-        // Handle /clear command - Admin only
+        // Handle /clear command - Admin only - Clear kick count for user to prevent global ban
         if (cmdKey === 'clear') {
           const userService = require('../services/userService');
+          const { clearUserKickCount } = require('../utils/adminKick');
           
           // Check if sender is admin
           const isAdmin = await userService.isAdmin(userId);
@@ -265,26 +266,44 @@ module.exports = (io, socket) => {
             return;
           }
 
-          // Broadcast clear message to all users in the room
-          io.to(`room:${roomId}`).emit('chat:clear', {
-            roomId,
-            clearedBy: username,
-            timestamp: new Date().toISOString()
-          });
+          const targetUsername = parts[1];
+          if (!targetUsername) {
+            socket.emit('system:message', {
+              roomId,
+              message: `Usage: /clear <username> - Clears kick count to prevent global ban`,
+              timestamp: new Date().toISOString(),
+              type: 'warning'
+            });
+            return;
+          }
+
+          const targetUser = await userService.getUserByUsername(targetUsername);
+          if (!targetUser) {
+            socket.emit('system:message', {
+              roomId,
+              message: `❌ User ${targetUsername} not found.`,
+              timestamp: new Date().toISOString(),
+              type: 'error'
+            });
+            return;
+          }
+
+          // Clear user's kick count
+          await clearUserKickCount(targetUser.id);
 
           // Send confirmation system message
           io.to(`room:${roomId}`).emit('chat:message', {
             id: generateMessageId(),
             roomId,
             username: 'System',
-            message: `🧹 Chat cleared by ${username}.`,
+            message: `✅ ${targetUsername}'s kick count cleared by ${username} (prevented global ban).`,
             timestamp: new Date().toISOString(),
             type: 'system',
             messageType: 'clear',
             isSystem: true
           });
 
-          console.log(`🧹 Admin ${username} cleared chat in room ${roomId}`);
+          console.log(`✅ Admin ${username} cleared kick count for ${targetUsername}`);
           return;
         }
 

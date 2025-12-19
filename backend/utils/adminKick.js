@@ -4,24 +4,28 @@ const ADMIN_KICK_COOLDOWN = 600; // 10 minutes (for kicked user)
 const ADMIN_REJOIN_COOLDOWN = 180; // 3 minutes (admin cannot rejoin after kick)
 const MAX_ADMIN_KICKS = 3;
 
-async function adminKick(io, roomId, adminUsername, targetUsername, adminId) {
+async function adminKick(io, roomId, adminUsername, targetUsername, adminId, targetUserId) {
   const redis = getRedisClient();
   
-  // Cooldown for kicked user
+  // Cooldown for kicked user in this room only
   const userCooldownKey = `cooldown:adminKick:${targetUsername}:${roomId}`;
   await redis.set(userCooldownKey, '1', { EX: ADMIN_KICK_COOLDOWN });
 
-  // Track admin kick count (TOTAL across all rooms for anti-abuse)
+  // Track USER's total admin kicks across ALL rooms
+  const userKickCountKey = `user:admin:kick:count:${targetUserId}`;
+  const userKickCount = await redis.incr(userKickCountKey);
+
+  // Check if user should be globally banned (exceeded max kicks)
+  let userGlobalBanned = false;
+  if (userKickCount >= MAX_ADMIN_KICKS) {
+    const userGlobalBanKey = `ban:global:${targetUsername}`;
+    await redis.set(userGlobalBanKey, 'true');
+    userGlobalBanned = true;
+  }
+
+  // Track admin kick count for statistic purposes (not for ban)
   const adminKickCountKey = `admin:kick:count:${adminId}`;
   const adminKickCount = await redis.incr(adminKickCountKey);
-
-  // Check if admin should be banned (exceeded max kicks)
-  let adminBanned = false;
-  if (adminKickCount >= MAX_ADMIN_KICKS) {
-    const adminGlobalBanKey = `admin:global:banned:${adminId}`;
-    await redis.set(adminGlobalBanKey, 'true');
-    adminBanned = true;
-  }
 
   // Set admin rejoin cooldown (3 minutes)
   const adminCooldownKey = `admin:rejoin:cooldown:${adminId}:${roomId}`;
@@ -29,8 +33,9 @@ async function adminKick(io, roomId, adminUsername, targetUsername, adminId) {
 
   return { 
     success: true, 
+    userKickCount,
+    userGlobalBanned,
     adminKickCount,
-    adminBanned,
     adminUsername,
     targetUsername,
     adminCooldownSet: true
@@ -51,26 +56,20 @@ async function isAdminGloballyBanned(adminId) {
   return banned === 'true';
 }
 
-async function clearGlobalBan(username) {
+async function clearUserKickCount(userId) {
   const redis = getRedisClient();
-  const globalBanKey = `ban:global:${username}`;
-  const userKickCountKey = `user:kick:count:${username}`;
+  const userKickCountKey = `user:admin:kick:count:${userId}`;
   
-  await redis.del(globalBanKey);
   await redis.del(userKickCountKey);
   
   return { success: true };
 }
 
-async function clearAdminBan(adminId) {
+async function getUserKickCount(userId) {
   const redis = getRedisClient();
-  const adminGlobalBanKey = `admin:global:banned:${adminId}`;
-  const adminKickCountKey = `admin:kick:count:${adminId}`;
-  
-  await redis.del(adminGlobalBanKey);
-  await redis.del(adminKickCountKey);
-  
-  return { success: true };
+  const userKickCountKey = `user:admin:kick:count:${userId}`;
+  const count = await redis.get(userKickCountKey);
+  return parseInt(count) || 0;
 }
 
 async function getAdminKickCount(adminId) {
@@ -84,8 +83,8 @@ module.exports = {
   adminKick,
   isGloballyBanned,
   isAdminGloballyBanned,
-  clearGlobalBan,
-  clearAdminBan,
+  clearUserKickCount,
+  getUserKickCount,
   getAdminKickCount,
   ADMIN_KICK_COOLDOWN,
   ADMIN_REJOIN_COOLDOWN,

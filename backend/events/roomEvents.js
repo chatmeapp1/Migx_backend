@@ -596,7 +596,8 @@ module.exports = (io, socket) => {
 
       if (kickerIsAdmin) {
         // Admin kick - immediate, no vote needed
-        const result = await executeAdminKick(io, roomId, kickerUsername, targetUsername, kickerUserId);
+        const targetUser = await userService.getUserByUsername(targetUsername);
+        const result = await executeAdminKick(io, roomId, kickerUsername, targetUsername, kickerUserId, targetUser?.id);
 
         // Send PRIVATE message to kicked user
         const roomSockets = await io.in(`room:${roomId}`).fetchSockets();
@@ -628,8 +629,8 @@ module.exports = (io, socket) => {
         }
 
         // Send SYSTEM message to other users in room
-        const systemMsg = result.adminBanned 
-          ? `${targetUsername} has been kicked by administrator ${kickerUsername} (Admin banned for excessive kicking)`
+        const systemMsg = result.userGlobalBanned 
+          ? `${targetUsername} has been kicked by administrator ${kickerUsername} (User banned from all rooms - exceeded 3 kicks)`
           : `${targetUsername} has been kicked by administrator ${kickerUsername}`;
 
         io.to(`room:${roomId}`).emit('chat:message', {
@@ -643,15 +644,15 @@ module.exports = (io, socket) => {
           isSystem: true
         });
 
-        // If admin was banned, send message to admin
-        if (result.adminBanned) {
-          const adminSockets = await io.in(`user:${kickerUsername}`).fetchSockets();
-          for (const adminSocket of adminSockets) {
-            adminSocket.emit('chat:message', {
-              id: `ban-admin-${Date.now()}`,
+        // If user was globally banned, send message to user
+        if (result.userGlobalBanned) {
+          const userSockets = await io.in(`user:${targetUsername}`).fetchSockets();
+          for (const userSocket of userSockets) {
+            userSocket.emit('chat:message', {
+              id: `ban-user-${Date.now()}`,
               roomId,
               username: 'System',
-              message: `You are banned from all rooms due to excessive kicking (${result.adminKickCount} kicks).`,
+              message: `You are banned from all rooms due to excessive kicks (${result.userKickCount} kicks).`,
               timestamp: new Date().toISOString(),
               type: 'system',
               messageType: 'ban',
