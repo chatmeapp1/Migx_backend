@@ -352,7 +352,7 @@ export default function SignupScreen() {
 
   return (
     <LinearGradient
-      colors={['#082919', '#082919', '#082919']}
+      colors={['#072909', '#0D3B1F', '#072909']}
       style={styles.gradient}
     >
       <KeyboardAvoidingView
@@ -377,7 +377,7 @@ export default function SignupScreen() {
             ]}
           >
             <Image
-              source={require('@/assets/logo/logo_migx.png')}
+              source={require('@/assets/logo/ic_migx.png')}
               style={styles.logo}
               resizeMode="contain"
             />
@@ -490,84 +490,97 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollView: { flex: 1, backgroundColor: 'transparent' },
   scrollContent: {
-    paddingVertical: 40,
+    justifyContent: 'center',
     paddingHorizontal: 20,
+    paddingVertical: 40,
     backgroundColor: 'transparent',
   },
-  content: { alignItems: 'center', width: '100%' },
-  logo: { width: 80, height: 80, marginBottom: 10 },
+  content: { alignItems: 'center', width: '100%', flex: 1, justifyContent: 'center' },
+  logo: { width: 120, height: 120, marginBottom: 20, marginTop: 20 },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    fontStyle: 'italic',
-    color: '#2C5F6E',
-    marginBottom: 20,
+    color: '#06B6D4',
+    textAlign: 'center',
+    marginBottom: 24,
   },
-  form: { width: '100%', maxWidth: 350 },
+  form: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#fff',
+    borderRadius: 30,
+    padding: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 10,
+  },
   input: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 25,
-    padding: 16,
-    marginBottom: 15,
+    backgroundColor: '#f5f5f5',
+    borderBottomWidth: 2,
+    borderBottomColor: '#ccc',
+    padding: 12,
+    marginBottom: 16,
+    fontSize: 14,
     color: '#333',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderRadius: 0,
   },
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 25,
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    backgroundColor: '#f5f5f5',
+    borderBottomWidth: 2,
+    borderBottomColor: '#ccc',
+    marginBottom: 16,
   },
   passwordInput: {
     flex: 1,
-    padding: 16,
-    fontSize: 16,
+    padding: 12,
+    fontSize: 14,
     color: '#333',
   },
   eyeButton: {
-    padding: 16,
-    paddingRight: 20,
+    padding: 10,
   },
   pickerContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 25,
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    backgroundColor: '#f5f5f5',
+    borderBottomWidth: 2,
+    borderBottomColor: '#ccc',
+    marginBottom: 16,
+    borderRadius: 0,
   },
-  picker: { color: '#333' },
+  picker: { color: '#333', borderRadius: 0 },
   signupButton: {
-    backgroundColor: '#4BA3C3',
+    backgroundColor: '#06B6D4',
     borderRadius: 25,
-    padding: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
     alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 20,
+    marginTop: 20,
+    marginBottom: 16,
   },
-  buttonDisabled: { opacity: 0.6 },
+  buttonDisabled: { opacity: 0.7 },
   signupButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+    letterSpacing: 1,
   },
   loginLink: {
     flexDirection: 'row',
     justifyContent: 'center',
     marginBottom: 15,
   },
-  loginText: { color: '#2C5F6E', fontSize: 14 },
+  loginText: { color: '#06B6D4', fontSize: 14 },
   loginTextBold: {
-    color: '#2C5F6E',
+    color: '#06B6D4',
     fontSize: 14,
     fontWeight: 'bold',
     textDecorationLine: 'underline',
   },
   privacyLink: { alignItems: 'center' },
-  privacyText: { color: '#2C5F6E', fontSize: 12, fontWeight: '600' },
+  privacyText: { color: '#06B6D4', fontSize: 12, fontWeight: '600' },
 
   modalOverlay: {
     flex: 1,
