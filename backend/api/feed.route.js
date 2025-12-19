@@ -4,38 +4,21 @@ const router = express.Router();
 const pool = require('../db/db');
 const authMiddleware = require('../middleware/auth');
 const multer = require('multer');
-const path = require('path');
+const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
+const path = require('path');
 
-// Setup multer untuk upload gambar
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadDir = path.join(__dirname, '../../uploads/posts');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'post-' + uniqueSuffix + path.extname(file.originalname));
-  }
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+// Setup multer with memory storage (temporary)
 const upload = multer({ 
-  storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|gif/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-    
-    if (mimetype && extname) {
-      return cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed!'));
-    }
-  }
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit for video
 });
 
 // Get feed posts with pagination
@@ -91,16 +74,39 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 });
 
-// Create new post
-router.post('/create', authMiddleware, upload.single('image'), async (req, res) => {
+// Create new post (supports image or video)
+router.post('/create', authMiddleware, upload.single('media'), async (req, res) => {
   try {
     const { content } = req.body;
     const userId = req.user.id;
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const imageUrl = req.file ? `${baseUrl}/uploads/posts/${req.file.filename}` : null;
+    let mediaUrl = null;
 
-    if (!content && !imageUrl) {
-      return res.status(400).json({ success: false, error: 'Content or image required' });
+    // Upload to Cloudinary if file exists
+    if (req.file) {
+      try {
+        const result = await new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            { 
+              folder: 'migx/posts',
+              resource_type: 'auto',
+              use_filename: true
+            },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
+          stream.end(req.file.buffer);
+        });
+        mediaUrl = result.secure_url;
+      } catch (uploadError) {
+        console.error('Cloudinary upload error:', uploadError);
+        return res.status(500).json({ success: false, error: 'Failed to upload media' });
+      }
+    }
+    
+    if (!content && !mediaUrl) {
+      return res.status(400).json({ success: false, error: 'Content or image/video required' });
     }
 
     const query = `
@@ -109,7 +115,7 @@ router.post('/create', authMiddleware, upload.single('image'), async (req, res) 
       RETURNING *
     `;
 
-    const result = await pool.query(query, [userId, content || '', imageUrl]);
+    const result = await pool.query(query, [userId, content || '', mediaUrl]);
 
     res.json({
       success: true,
