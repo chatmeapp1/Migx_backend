@@ -2,6 +2,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
+import { Ionicons } from '@expo/vector-icons';
 import { useThemeCustom } from '@/theme/provider';
 import { API_BASE_URL } from '@/utils/api';
 
@@ -64,6 +65,7 @@ interface ViewProfileHeaderProps {
   gender?: string;
   userId?: string;
   isFollowing?: boolean;
+  followersCount?: number;
   onBackPress?: () => void;
   onFollowPress?: () => void;
 }
@@ -76,6 +78,7 @@ export function ViewProfileHeader({
   gender,
   userId = '0',
   isFollowing = false,
+  followersCount = 0,
   onBackPress,
   onFollowPress,
 }: ViewProfileHeaderProps) {
@@ -94,7 +97,7 @@ export function ViewProfileHeader({
         {backgroundImage ? (
           <Image source={{ uri: backgroundImage }} style={styles.backgroundImage} />
         ) : (
-          <View style={[styles.backgroundPlaceholder, { backgroundColor: theme.primary }]} />
+          <View style={[styles.backgroundPlaceholder, { backgroundColor: '#4A90E2' }]} />
         )}
 
         {/* Back Button */}
@@ -105,63 +108,84 @@ export function ViewProfileHeader({
         >
           <BackIcon size={24} color="#fff" />
         </TouchableOpacity>
+      </View>
 
-        {/* migX Title */}
-        <View style={styles.titleContainer}>
-          <Text style={styles.titleText}>migX</Text>
+      {/* Avatar and Info Section */}
+      <View style={styles.profileSection}>
+        {/* Avatar Container */}
+        <View style={styles.avatarWrapper}>
+          <View style={styles.avatarContainer}>
+            {avatarUri ? (
+              <Image 
+                source={{ uri: avatarUri }} 
+                style={styles.avatar}
+                onError={(e) => console.log('❌ ViewProfile Avatar load error:', e.nativeEvent.error)}
+              />
+            ) : (
+              <View style={styles.avatarPlaceholder}>
+                <Text style={styles.avatarText}>👤</Text>
+              </View>
+            )}
+          </View>
+          {/* Edit Avatar Icon */}
+          <View style={styles.editAvatarButton}>
+            <Ionicons name="home" size={12} color="#fff" />
+          </View>
+        </View>
+
+        {/* User Info */}
+        <View style={styles.userInfoContainer}>
+          <Text style={styles.username}>{username}</Text>
+          <Text style={styles.subtitle}>@{username.toLowerCase()}</Text>
         </View>
       </View>
 
-      {/* Avatar Section */}
-      <View style={styles.avatarSection}>
-        <View style={styles.avatarContainer}>
-          {avatarUri ? (
-            <Image 
-              source={{ uri: avatarUri }} 
-              style={styles.avatar}
-              onError={(e) => console.log('❌ ViewProfile Avatar load error:', e.nativeEvent.error)}
-            />
-          ) : (
-            <View style={styles.avatarPlaceholder}>
-              <Text style={styles.avatarText}>👤</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Username and Info */}
-        <View style={styles.userInfoContainer}>
-          <View style={styles.usernameRow}>
-            <Text style={[styles.username, { color: theme.text }]}>{username}</Text>
-            <VerifiedIcon size={20} />
-            <View style={styles.levelBadge}>
-              <Text style={styles.levelText}>[{level}]</Text>
-            </View>
-            {gender && (
-              gender.toLowerCase() === 'male' ? <MaleIcon size={20} /> : <FemaleIcon size={20} />
-            )}
-          </View>
-          
-          <Text style={[styles.subtitle, { color: theme.text + 'CC' }]}>{username}</Text>
-          <View style={styles.infoRow}>
-            <Text style={[styles.infoText, { color: theme.text + 'CC' }]}>migx</Text>
-            <Text style={[styles.infoText, { color: theme.text + 'CC' }]}>    {userId}</Text>
-          </View>
-        </View>
-
-        {/* Follow Button */}
+      {/* Action Buttons */}
+      <View style={styles.actionButtonsContainer}>
         <TouchableOpacity
           style={[
             styles.followButton,
-            { 
-              backgroundColor: isFollowing ? '#757575' : '#4CAF50',
-            }
+            { backgroundColor: isFollowing ? '#999' : '#4A90E2' }
           ]}
           onPress={onFollowPress}
           activeOpacity={0.7}
         >
+          <Ionicons name="person-add" size={18} color="#fff" style={{ marginRight: 8 }} />
           <Text style={styles.followButtonText}>
             {isFollowing ? 'Unfollow' : 'Follow'}
           </Text>
+        </TouchableOpacity>
+
+        <View style={styles.statsContainer}>
+          <View style={styles.statItem}>
+            <Ionicons name="people" size={20} color="#999" />
+            <Text style={styles.statNumber}>{followersCount.toLocaleString()}</Text>
+            <Text style={styles.statLabel}>Follower</Text>
+            <VerifiedIcon size={16} />
+          </View>
+        </View>
+
+        <TouchableOpacity style={styles.chatButton}>
+          <Ionicons name="chatbubble" size={18} color="#999" />
+          <Text style={styles.chatButtonText}>Chat</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Menu Items */}
+      <View style={styles.menuContainer}>
+        <TouchableOpacity style={styles.menuItem}>
+          <Ionicons name="people" size={24} color="#4A90E2" />
+          <Text style={styles.menuLabel}>Follow</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.menuItem}>
+          <Ionicons name="footsteps" size={24} color="#4A90E2" />
+          <Text style={styles.menuLabel}>Footprint</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.menuItem}>
+          <Ionicons name="gift" size={24} color="#4A90E2" />
+          <Text style={styles.menuLabel}>Gift</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -173,7 +197,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   backgroundContainer: {
-    height: 200,
+    height: 120,
     position: 'relative',
   },
   backgroundImage: {
@@ -193,91 +217,141 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  titleContainer: {
-    position: 'absolute',
-    top: 12,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  titleText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  avatarSection: {
+  profileSection: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
     paddingHorizontal: 16,
-    marginTop: -50,
+    marginTop: -40,
+    marginBottom: 16,
+  },
+  avatarWrapper: {
+    position: 'relative',
+    marginRight: 16,
   },
   avatarContainer: {
     position: 'relative',
-    alignSelf: 'flex-start',
   },
   avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 4,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 3,
     borderColor: '#fff',
     backgroundColor: '#fff',
   },
   avatarPlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 4,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 3,
     borderColor: '#fff',
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#D0D0D0',
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
-    fontSize: 50,
+    fontSize: 40,
+  },
+  editAvatarButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#1A1A2E',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
   },
   userInfoContainer: {
-    marginTop: 12,
-  },
-  usernameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
+    flex: 1,
   },
   username: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: 'bold',
-  },
-  levelBadge: {
-    backgroundColor: '#FFD700',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
-  },
-  levelText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#333',
+    color: '#000',
   },
   subtitle: {
     fontSize: 14,
-    marginTop: 4,
-  },
-  infoRow: {
-    flexDirection: 'row',
+    color: '#666',
     marginTop: 2,
   },
-  infoText: {
-    fontSize: 14,
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    gap: 12,
+    alignItems: 'center',
   },
   followButton: {
-    marginTop: 16,
+    flexDirection: 'row',
     paddingVertical: 10,
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
     borderRadius: 20,
-    alignSelf: 'flex-start',
+    alignItems: 'center',
+    flex: 0.35,
   },
   followButtonText: {
     color: '#fff',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    flex: 0.35,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+  },
+  statItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  statNumber: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#000',
+    marginTop: 2,
+  },
+  statLabel: {
+    fontSize: 11,
+    color: '#999',
+    marginTop: 1,
+  },
+  chatButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 12,
+    flex: 0.2,
+  },
+  chatButtonText: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 4,
+  },
+  menuContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    justifyContent: 'space-around',
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+    paddingTop: 12,
+  },
+  menuItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  menuLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4,
   },
 });
