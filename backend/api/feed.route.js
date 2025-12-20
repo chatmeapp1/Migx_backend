@@ -20,6 +20,21 @@ const upload = multer({
   limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit for video
 });
 
+// Helper to handle both image and video fields
+const handleUpload = (req, res, next) => {
+  upload.any()(req, res, (err) => {
+    if (err) {
+      console.error('❌ Multer error:', err.message);
+      return res.status(400).json({ success: false, error: err.message });
+    }
+    // Make file available as req.file from either 'image' or 'video' field
+    if (req.files && req.files.length > 0) {
+      req.file = req.files[0];
+    }
+    next();
+  });
+};
+
 // Get feed posts from Redis (real-time, with TTL)
 router.get('/', authMiddleware, async (req, res) => {
   try {
@@ -79,7 +94,7 @@ router.get('/', authMiddleware, async (req, res) => {
 
 // Create new post (supports image or video)
 // Media saved to Cloudinary, metadata saved to Redis with 1 hour TTL
-router.post('/create', authMiddleware, upload.single('video'), async (req, res) => {
+router.post('/create', authMiddleware, handleUpload, async (req, res) => {
   try {
     const { content } = req.body;
     const userId = req.user.id;
@@ -154,16 +169,16 @@ router.post('/create', authMiddleware, upload.single('video'), async (req, res) 
     const feedId = crypto.randomBytes(8).toString('hex');
     const createdAt = new Date().toISOString();
 
-    // Create feed metadata object
+    // Create feed metadata object (with image_url for frontend compatibility)
     const feedData = {
       id: feedId,
       userId,
       username,
-      text: content || '',
-      mediaUrl: mediaUrl || null,
+      content: content || '',
+      image_url: mediaUrl || null,
       mediaType: mediaType || null,
       cloudinaryPublicId: publicId || null,
-      createdAt
+      created_at: createdAt
     };
 
     // Save to Redis with 1 hour TTL (3600 seconds)
