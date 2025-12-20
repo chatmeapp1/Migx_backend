@@ -448,6 +448,21 @@ const startServer = async () => {
     await initDatabase();
     console.log('Database initialized successfully');
 
+    // CRITICAL: Clear legacy Redis keys on startup for clean state
+    try {
+      const redis = require('./redis').getRedisClient();
+      const legacyPatterns = ['room:users:*', 'room:participants:*', 'room:userRoom:*'];
+      for (const pattern of legacyPatterns) {
+        const keys = await redis.keys(pattern);
+        if (keys.length > 0) {
+          await redis.del(...keys);
+          console.log(`🧹 Cleared ${keys.length} legacy keys: ${pattern}`);
+        }
+      }
+    } catch (err) {
+      console.warn('⚠️  Could not clear legacy Redis keys:', err.message);
+    }
+
     server.listen(PORT, '0.0.0.0', () => {
       console.log(`Server running on 0.0.0.0:${PORT}`);
       

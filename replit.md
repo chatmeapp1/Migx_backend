@@ -50,9 +50,10 @@ Implemented for clean and reliable participant/viewer count management. Key desi
 - **Value**: User presence JSON (socketId, username, timestamp)
 - **Client Heartbeat**: Frontend emits `room:heartbeat` every 28 seconds to refresh TTL
 - **Server Cleanup Job**: Runs every 60 seconds via `startPresenceCleanup()` to detect expired presences and emit `room:force-leave` events to clients
-- **Participant List**: Always fetched from Redis TTL keys using SCAN, never from DB/Set
+- **Participant List**: Always fetched from Redis TTL keys via `getRoomParticipants()`, never from DB/Set
+- **Server Startup**: Automatically clears legacy Redis keys (`room:users:*`, `room:participants:*`, `room:userRoom:*`) on startup for clean state
 - **Guarantees**: 
-  - No ghost users after server restart (Redis keys cleared, participants recalculated from TTL keys)
+  - No ghost users after server restart (legacy keys cleared, participants recalculated from TTL keys only)
   - No stale participant data (6-hour TTL + heartbeat refresh)
   - Graceful cleanup of timed-out connections (force-leave event to client)
   - Accurate viewer count always (count = number of active TTL keys in room)

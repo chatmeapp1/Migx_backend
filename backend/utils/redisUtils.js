@@ -193,32 +193,6 @@ const removeUserFromRoom = async (roomId, username) => {
   }
 };
 
-const getRoomUserCount = async (roomId) => {
-  try {
-    const redis = getRedisClient();
-    const key = `room:users:${roomId}`;
-
-module.exports = {
-  getRedisClient,
-  getRecentRooms,
-  addRecentRoom,
-  getFavoriteRooms,
-  addFavoriteRoom,
-  removeFavoriteRoom,
-  getHotRooms,
-  getRoomParticipants,
-  addRoomParticipant,
-  removeRoomParticipant,
-  clearRoomParticipants
-};
-
-    return await redis.sCard(key);
-  } catch (error) {
-    console.error('Error getting room user count:', error);
-    return 0;
-  }
-};
-
 const getRoomUsersList = async (roomId) => {
   try {
     const redis = getRedisClient();
@@ -232,8 +206,10 @@ const getRoomUsersList = async (roomId) => {
 
 const getRoomParticipants = async (roomId) => {
   try {
-    const redis = getRedisClient();
-    const participants = await redis.sMembers(`room:participants:${roomId}`);
+    // CRITICAL: Get participants from Redis TTL keys (single source of truth)
+    const { getRoomUsersFromTTL } = require('./roomPresenceTTL');
+    const ttlUsers = await getRoomUsersFromTTL(roomId);
+    const participants = ttlUsers.map(u => u.username);
     return participants || [];
   } catch (error) {
     console.error('Error getting room participants:', error);
@@ -699,7 +675,6 @@ module.exports = {
   decrementRoomActive,
   addUserToRoom,
   removeUserFromRoom,
-  getRoomUserCount,
   getRoomUsersList,
   getRoomParticipants,
   addRoomParticipant,
