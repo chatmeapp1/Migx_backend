@@ -178,7 +178,7 @@ const getUserCredits = async (userId) => {
 
 const updateUserRole = async (userId, role) => {
   try {
-    const validRoles = ['user', 'mentor', 'merchant', 'admin', 'super_admin'];
+    const validRoles = ['user', 'mentor', 'merchant', 'admin', 'customer_service', 'super_admin'];
     if (!validRoles.includes(role)) {
       return { error: 'Invalid role' };
     }

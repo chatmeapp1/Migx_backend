@@ -179,6 +179,7 @@ export default function AdminPanelScreen() {
       case 'admin': return '#3498DB';
       case 'mentor': return '#9B59B6';
       case 'merchant': return '#F39C12';
+      case 'customer_service': return '#27AE60';
       default: return '#95A5A6';
     }
   };
@@ -545,6 +546,7 @@ export default function AdminPanelScreen() {
                             { text: 'Mentor', onPress: () => handleChangeRole(user.id, 'mentor') },
                             { text: 'Merchant', onPress: () => handleChangeRole(user.id, 'merchant') },
                             { text: 'Admin', onPress: () => handleChangeRole(user.id, 'admin') },
+                            { text: 'Customer Service', onPress: () => handleChangeRole(user.id, 'customer_service') },
                           ]
                         );
                       }}

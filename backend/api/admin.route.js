@@ -42,7 +42,7 @@ router.put('/users/:userId/role', authMiddleware, superAdminMiddleware, async (r
     const { userId } = req.params;
     const { role } = req.body;
     
-    const validRoles = ['user', 'mentor', 'merchant', 'admin'];
+    const validRoles = ['user', 'mentor', 'merchant', 'admin', 'customer_service'];
     if (!validRoles.includes(role)) {
       return res.status(400).json({ error: 'Invalid role' });
     }
