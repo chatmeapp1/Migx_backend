@@ -21,6 +21,7 @@ const {
 const { adminKick: executeAdminKick, isGloballyBanned, isAdminGloballyBanned } = require('../utils/adminKick');
 const { startVoteKick, addVote, hasActiveVote } = require('../utils/voteKick');
 const { checkJoinAllowed } = require('../utils/roomCooldown');
+const { storeUserPresence, updatePresenceActivity, removeUserPresence } = require('../utils/roomPresenceTTL');
 
 // Helper function to create system messages
 const createSystemMessage = (roomId, message) => ({
@@ -110,6 +111,11 @@ module.exports = (io, socket) => {
 
       // Store username on socket for disconnect handler
       socket.username = username;
+      socket.userId = userId;
+      socket.currentRoomId = roomId;
+
+      // Store presence in Redis with 6-hour TTL
+      await storeUserPresence(roomId, userId, socket.id, username);
 
       // Check if user is already in room (prevents duplicate join messages)
       const alreadyInRoom = await isUserInRoom(roomId, username);
@@ -322,6 +328,12 @@ module.exports = (io, socket) => {
 
       // Remove user from Redis presence
       await removeUserFromRoom(roomId, username);
+      
+      // Step 4️⃣: Remove TTL-based presence (cleanup)
+      const userId = socket.userId;
+      if (userId) {
+        await removeUserPresence(roomId, userId);
+      }
       
       // Remove from participants (MIG33 style)
       const { removeRoomParticipant, getRoomParticipants } = require('../utils/redisUtils');
@@ -828,6 +840,27 @@ module.exports = (io, socket) => {
     }
   };
 
+  // Step 2️⃣: Heartbeat handler - refresh presence TTL every 25-30 seconds
+  const heartbeat = async (data) => {
+    try {
+      const { roomId, userId } = data;
+      if (!roomId || !userId) return;
+
+      // Refresh TTL - update presence activity
+      const success = await updatePresenceActivity(roomId, userId);
+      
+      if (success) {
+        // Confirm heartbeat to client (keep-alive confirmation)
+        socket.emit('room:heartbeat:ack', {
+          roomId,
+          timestamp: Date.now()
+        });
+      }
+    } catch (error) {
+      console.error('Heartbeat error:', error);
+    }
+  };
+
   socket.on('join_room', joinRoom);
   socket.on('rejoin_room', rejoinRoom);
   socket.on('leave_room', leaveRoom);
@@ -840,6 +873,7 @@ module.exports = (io, socket) => {
   socket.on('room:admin:unban', adminUnban);
   socket.on('room:info:get', getRoomInfo);
   socket.on('room:create', createRoom);
+  socket.on('room:heartbeat', heartbeat);
 
   socket.on('disconnect', async () => {
     try {
@@ -862,6 +896,11 @@ module.exports = (io, socket) => {
               console.log(`🚪 Disconnect timer expired - removing ${username} from room ${currentRoomId}`);
               
               disconnectTimers.delete(timerKey);
+              
+              // Step 4️⃣: Remove presence on timeout
+              if (userId && userId !== 'unknown') {
+                await removeUserPresence(currentRoomId, userId);
+              }
               
               await removeRoomParticipant(currentRoomId, username);
               await removeUserFromRoom(currentRoomId, username);

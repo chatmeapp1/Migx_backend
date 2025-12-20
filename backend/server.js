@@ -8,6 +8,7 @@ const path = require('path'); // Import path module
 
 const { connectRedis } = require('./redis');
 const { initDatabase } = require('./db/db');
+const { startPresenceCleanup } = require('./jobs/presenceCleanup');
 
 const authRoutes = require('./api/auth.route');
 const userRoutes = require('./api/user.route');
@@ -449,6 +450,9 @@ const startServer = async () => {
 
     server.listen(PORT, '0.0.0.0', () => {
       console.log(`Server running on 0.0.0.0:${PORT}`);
+      
+      // Start presence cleanup job (Step 3️⃣)
+      startPresenceCleanup(io);
       
       voucherService.startVoucherGenerator(io);
       console.log(`
