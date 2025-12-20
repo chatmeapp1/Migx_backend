@@ -51,6 +51,13 @@ export default function AdminPanelScreen() {
   const fetchUsers = async () => {
     try {
       const token = await AsyncStorage.getItem('auth_token');
+      
+      if (!token) {
+        Alert.alert('Error', 'Session expired. Please log in again.');
+        setLoading(false);
+        return;
+      }
+
       const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -71,6 +78,12 @@ export default function AdminPanelScreen() {
   const handleChangeRole = async (userId: number, newRole: string) => {
     try {
       const token = await AsyncStorage.getItem('auth_token');
+      
+      if (!token) {
+        Alert.alert('Error', 'Session expired. Please log in again.');
+        return;
+      }
+
       const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/role`, {
         method: 'PUT',
         headers: {
@@ -104,6 +117,12 @@ export default function AdminPanelScreen() {
           onPress: async () => {
             try {
               const token = await AsyncStorage.getItem('auth_token');
+              
+              if (!token) {
+                Alert.alert('Error', 'Session expired. Please log in again.');
+                return;
+              }
+
               const response = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/ban`, {
                 method: 'PUT',
                 headers: {
@@ -152,6 +171,13 @@ export default function AdminPanelScreen() {
     setCoinLoading(true);
     try {
       const token = await AsyncStorage.getItem('auth_token');
+      
+      if (!token) {
+        Alert.alert('Error', 'Session expired. Please log in again.');
+        setCoinLoading(false);
+        return;
+      }
+
       const response = await fetch(`${API_BASE_URL}/api/admin/add-coin`, {
         method: 'POST',
         headers: {
@@ -205,6 +231,13 @@ export default function AdminPanelScreen() {
     setCreateLoading(true);
     try {
       const token = await AsyncStorage.getItem('auth_token');
+      
+      if (!token) {
+        Alert.alert('Error', 'Session expired. Please log in again.');
+        setCreateLoading(false);
+        return;
+      }
+
       const response = await fetch(`${API_BASE_URL}/api/admin/create-account`, {
         method: 'POST',
         headers: {
