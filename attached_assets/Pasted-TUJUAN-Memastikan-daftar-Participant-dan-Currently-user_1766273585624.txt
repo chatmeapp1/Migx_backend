@@ -1,0 +1,86 @@
+TUJUAN:
+Memastikan daftar Participant dan "Currently users in the room" SELALU BERSIH
+dan TIDAK ADA user nyangkut ketika:
+- server restart
+- server crash
+- app force close
+- jaringan putus
+- user tidak klik leave room
+
+KONDISI SAAT INI:
+- App menggunakan Socket.IO
+- Participant masih muncul walaupun server sudah OFF berjam-jam
+- Viewer count tidak valid
+- Presence logic masih salah (ghost users)
+
+PERBAIKAN WAJIB (FOCUS PARTICIPANT & CURRENTLY):
+
+1. JADIKAN REDIS TTL SEBAGAI SINGLE SOURCE OF TRUTH
+   - HENTIKAN penggunaan DB / array / Set memory untuk participant aktif
+   - JANGAN simpan participant permanen tanpa TTL
+
+2. SAAT USER JOIN ROOM:
+   Simpan presence per-user dengan TTL
+   Redis key format:
+     room:presence:{roomId}:{userId}
+
+   Value:
+     socketId
+
+   TTL:
+     21600 detik (6 jam)
+
+   Contoh:
+     SET room:presence:123:45 socketId EX 21600
+
+3. HEARTBEAT (WAJIB):
+   - Client emit event "room:heartbeat" setiap 25–30 detik
+   - Server hanya melakukan:
+       EXPIRE room:presence:{roomId}:{userId} 21600
+
+4. PARTICIPANT LIST / CURRENTLY USERS:
+   - JANGAN ambil dari DB
+   - JANGAN ambil dari Set tanpa TTL
+   - Ambil HANYA dari Redis keys yang MASIH HIDUP:
+       SCAN room:presence:{roomId}:*
+
+   Jumlah key = viewer count
+   User list = participant list
+
+5. CLEANUP JOB (SERVER-SIDE):
+   - Interval: setiap 30 detik
+   - Scan semua room:presence:* keys
+   - Jika socketId tidak aktif ATAU key expired:
+       a. Emit ke client: "room:force-leave"
+       b. Hapus dari UI participant list
+       c. Update viewer count
+
+6. SERVER RESTART BEHAVIOR (KRITIS):
+   - JANGAN restore participant dari DB
+   - Setelah restart:
+       Participant list harus DIHITUNG ULANG dari Redis TTL keys
+   - Jika Redis kosong → room dianggap kosong
+
+7. DISCONNECT HANDLING:
+   Tetap tangani:
+     socket.on("disconnect")
+     socket.on("disconnecting")
+   Tapi ini hanya tambahan,
+   BUKAN mekanisme utama cleanup.
+
+8. POPUP KE USER:
+   Saat user di-force-leave karena TTL / restart:
+     tampilkan popup:
+       "You are not in the chatroom"
+
+HASIL YANG HARUS DIJAMIN:
+- Participant list kosong setelah server restart
+- Viewer count selalu akurat
+- Tidak ada ghost user
+- Tidak ada user nyangkut di room
+- Sistem tetap stabil walaupun server mati mendadak
+
+BATASAN:
+- Fokus HANYA participant & currently users
+- Jangan ubah logic chat, gift, atau message
+- Jangan buat sistem baru di luar Redis TTL
