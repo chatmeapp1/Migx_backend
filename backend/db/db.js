@@ -34,6 +34,10 @@ const getClient = async () => {
   return await pool.connect();
 };
 
+const getPool = () => {
+  return pool;
+};
+
 const initDatabase = async () => {
   const fs = require('fs');
   const path = require('path');
@@ -70,5 +74,6 @@ module.exports = {
   pool,
   query,
   getClient,
+  getPool,
   initDatabase
 };
