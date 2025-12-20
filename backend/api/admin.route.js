@@ -171,13 +171,13 @@ router.post('/create-account', authMiddleware, superAdminMiddleware, async (req,
     const hashedPassword = await bcrypt.hash(password, 10);
     
     const result = await pool.query(
-      `INSERT INTO users (username, email, password_hash, role, credits, created_at) 
-       VALUES ($1, $2, $3, 'user', 0, NOW()) RETURNING id, username, email`,
+      `INSERT INTO users (username, email, password_hash, role, credits, is_active, created_at) 
+       VALUES ($1, $2, $3, 'user', 0, true, NOW()) RETURNING id, username, email, is_active`,
       [username, email, hashedPassword]
     );
     
-    console.log(`✅ Admin created account: ${username}`);
-    res.json({ success: true, user: result.rows[0] });
+    console.log(`✅ Admin created account: ${username} (immediately active)`);
+    res.json({ success: true, user: result.rows[0], message: 'Account created and immediately active (no verification needed)' });
   } catch (error) {
     console.error('Error creating account:', error);
     res.status(500).json({ error: 'Failed to create account' });
