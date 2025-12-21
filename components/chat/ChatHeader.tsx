@@ -19,8 +19,7 @@ export function ChatHeader() {
   const insets = useSafeAreaInsets();
   const [stats, setStats] = useState({
     users: 0,
-    rooms: 0,
-    groups: 0
+    rooms: 0
   });
 
   useEffect(() => {
@@ -38,8 +37,7 @@ export function ChatHeader() {
         const totalUsers = data.rooms.reduce((sum: number, room: any) => sum + room.user_count, 0);
         setStats({
           users: totalUsers,
-          rooms: data.rooms.length,
-          groups: data.rooms.filter((r: any) => r.is_private).length
+          rooms: data.rooms.length
         });
       }
     } catch (error) {
@@ -65,7 +63,7 @@ export function ChatHeader() {
         <View style={styles.statsBar}>
           <StatsIcon size={18} color="#FFFFFF" />
           <Text style={[styles.statsText, { color: '#FFFFFF' }]}>
-            {formatNumber(stats.users)} users. {formatNumber(stats.rooms)} rooms. {formatNumber(stats.groups)} groups.
+            {formatNumber(stats.users)} User  {formatNumber(stats.rooms)} Rooms
           </Text>
         </View>
       </LinearGradient>
