@@ -159,7 +159,6 @@ module.exports = (io, socket) => {
 
         // MIG33-style welcome messages - send to the joining user only
         const welcomeMsg1 = `Welcome to ${room.name}...`;
-        const welcomeMsg2 = `This room is managed by ${room.owner_name || room.creator_name || 'admin'}`;
         const welcomeMsg3 = `Currently users in the room: ${userListString}`;
 
         // Send welcome messages in correct order
@@ -173,17 +172,21 @@ module.exports = (io, socket) => {
           messageType: 'system'
         });
 
-        setTimeout(() => {
-          socket.emit('chat:message', {
-            id: Date.now().toString() + '-2',
-            roomId,
-            username: room.name,
-            message: welcomeMsg2,
-            timestamp: new Date().toISOString(),
-            type: 'system',
-            messageType: 'system'
-          });
-        }, 100);
+        // Only send "managed by" message for non-global rooms (managed or game categories)
+        if (room.category !== 'global') {
+          const welcomeMsg2 = `This room is managed by ${room.owner_name || room.creator_name || 'admin'}`;
+          setTimeout(() => {
+            socket.emit('chat:message', {
+              id: Date.now().toString() + '-2',
+              roomId,
+              username: room.name,
+              message: welcomeMsg2,
+              timestamp: new Date().toISOString(),
+              type: 'system',
+              messageType: 'system'
+            });
+          }, 100);
+        }
 
         setTimeout(async () => {
           // Fetch fresh user list from Redis TTL keys at the last moment
