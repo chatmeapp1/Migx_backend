@@ -7,7 +7,6 @@ import {
   SafeAreaView, 
   TextInput, 
   TouchableOpacity,
-  Image,
   StatusBar,
   Alert
 } from 'react-native';
@@ -40,6 +39,10 @@ const HistoryIcon = ({ size = 24, color = '#fff' }: { size?: number; color?: str
     />
   </Svg>
 );
+
+const formatIDR = (num: number): string => {
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+};
 
 export default function TransferCreditScreen() {
   const { theme } = useThemeCustom();
@@ -183,13 +186,7 @@ export default function TransferCreditScreen() {
         {/* Coin Balance */}
         <View style={[styles.balanceContainer, { backgroundColor: theme.card }]}>
           <Text style={[styles.balanceLabel, { color: theme.secondary }]}>IDR Balance</Text>
-          <View style={styles.balanceRow}>
-            <Image 
-              source={require('@/assets/icons/ic_coin.png')} 
-              style={styles.coinIcon}
-            />
-            <Text style={[styles.balanceAmount, { color: theme.text }]}>Rp {coinBalance.toLocaleString('id-ID')}</Text>
-          </View>
+          <Text style={[styles.balanceAmount, { color: theme.text }]}>Rp {formatIDR(coinBalance)}</Text>
         </View>
 
         {/* Transfer Form */}
@@ -220,7 +217,7 @@ export default function TransferCreditScreen() {
                 style={[styles.amountInput, { color: theme.text }]}
                 placeholder="0"
                 placeholderTextColor={theme.secondary}
-                value={amount ? parseInt(amount, 10).toLocaleString('id-ID') : ''}
+                value={amount ? formatIDR(parseInt(amount, 10)) : ''}
                 onChangeText={(newValue) => {
                   const numOnly = newValue.replace(/\D/g, '');
                   setAmount(numOnly);
@@ -300,18 +297,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 8,
   },
-  balanceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  coinIcon: {
-    width: 32,
-    height: 32,
-  },
   balanceAmount: {
     fontSize: 32,
     fontWeight: 'bold',
+    textAlign: 'center',
   },
   formContainer: {
     padding: 20,
