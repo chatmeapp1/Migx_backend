@@ -148,17 +148,7 @@ export function ChatList() {
     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
   };
 
-  if (loading) {
-    return (
-      <View style={[styles.container, { backgroundColor: theme.background }]}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.primary} />
-          <Text style={[styles.loadingText, { color: theme.secondary }]}>Loading chats...</Text>
-        </View>
-      </View>
-    );
-  }
-
+  // Show empty state instead of loading spinner (better UX)
   if (chatData.length === 0) {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
