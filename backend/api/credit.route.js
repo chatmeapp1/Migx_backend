@@ -7,12 +7,13 @@ router.post('/transfer', async (req, res) => {
   try {
     const { fromUserId, toUserId, amount, message } = req.body;
     
-    if (!fromUserId || !toUserId || !amount) {
+    if (!fromUserId || !toUserId || amount === undefined || amount === null) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
     
-    if (amount <= 0) {
-      return res.status(400).json({ error: 'Amount must be positive' });
+    // Validate amount is a positive integer
+    if (!Number.isInteger(amount) || amount <= 0) {
+      return res.status(400).json({ error: 'Amount must be a positive integer' });
     }
     
     const validation = await creditService.validateTransfer(fromUserId, toUserId, amount);

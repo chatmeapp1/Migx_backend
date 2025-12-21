@@ -88,7 +88,8 @@ export default function TransferCreditScreen() {
       return;
     }
 
-    if (!amount.trim() || parseFloat(amount) <= 0) {
+    const amountNum = parseInt(amount, 10);
+    if (!amount.trim() || isNaN(amountNum) || amountNum <= 0) {
       Alert.alert('Error', 'Please enter valid amount');
       return;
     }
@@ -122,7 +123,7 @@ export default function TransferCreditScreen() {
         body: JSON.stringify({
           fromUserId: userData.id,
           toUserId: recipientData.id,
-          amount: parseFloat(amount),
+          amount: amountNum,
           message: 'Credit transfer'
         }),
       });
@@ -130,7 +131,8 @@ export default function TransferCreditScreen() {
       const transferData = await transferResponse.json();
 
       if (transferResponse.ok && transferData.success) {
-        Alert.alert('Success', `Successfully transferred ${amount} credits to ${username}`, [
+        const formattedAmount = `Rp${amountNum.toLocaleString('id-ID')}`;
+        Alert.alert('Success', `Successfully transferred ${formattedAmount} to ${username}`, [
           {
             text: 'OK',
             onPress: () => {
@@ -192,7 +194,7 @@ export default function TransferCreditScreen() {
 
         {/* Transfer Form */}
         <View style={[styles.formContainer, { backgroundColor: theme.background }]}>
-          <Text style={[styles.formTitle, { color: theme.text }]}>Transfer Coin to User</Text>
+          <Text style={[styles.formTitle, { color: theme.text }]}>Transfer Credite to User</Text>
           
           <View style={styles.inputGroup}>
             <Text style={[styles.inputLabel, { color: theme.text }]}>Username</Text>
@@ -212,18 +214,20 @@ export default function TransferCreditScreen() {
 
           <View style={styles.inputGroup}>
             <Text style={[styles.inputLabel, { color: theme.text }]}>Amount</Text>
-            <TextInput
-              style={[styles.input, { 
-                backgroundColor: theme.card, 
-                borderColor: theme.border, 
-                color: theme.text 
-              }]}
-              placeholder="Enter amount"
-              placeholderTextColor={theme.secondary}
-              value={amount}
-              onChangeText={setAmount}
-              keyboardType="numeric"
-            />
+            <View style={[styles.amountInputWrapper, { borderColor: theme.border, backgroundColor: theme.card }]}>
+              <Text style={[styles.currencyPrefix, { color: theme.text }]}>Rp</Text>
+              <TextInput
+                style={[styles.amountInput, { color: theme.text }]}
+                placeholder="0"
+                placeholderTextColor={theme.secondary}
+                value={amount ? parseInt(amount, 10).toLocaleString('id-ID') : ''}
+                onChangeText={(value) => {
+                  const numOnly = value.replace(/\D/g, '');
+                  setAmount(numOnly);
+                }}
+                keyboardType="numeric"
+              />
+            </View>
           </View>
 
           <View style={styles.inputGroup}>
@@ -328,6 +332,23 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+  },
+  amountInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+  },
+  currencyPrefix: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginRight: 4,
+  },
+  amountInput: {
+    flex: 1,
     padding: 12,
     fontSize: 16,
   },
