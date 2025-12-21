@@ -183,7 +183,7 @@ router.post('/create-account', authMiddleware, superAdminMiddleware, async (req,
 // Room Management Endpoints
 router.post('/rooms/create', authMiddleware, superAdminMiddleware, async (req, res) => {
   try {
-    const { name, description, max_users, category, owner_id, owner_name } = req.body;
+    const { name, description, max_users, category } = req.body;
     
     if (!name || !max_users || max_users <= 0) {
       return res.status(400).json({ error: 'Invalid room data' });
@@ -192,9 +192,9 @@ router.post('/rooms/create', authMiddleware, superAdminMiddleware, async (req, r
     const pool = getPool();
     
     const result = await pool.query(
-      `INSERT INTO rooms (name, description, max_users, category, owner_id, owner_name, created_at) 
-       VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING id, name, description, max_users, category, owner_name`,
-      [name, description || '', max_users, category || 'global', owner_id || null, owner_name || null]
+      `INSERT INTO rooms (name, description, max_users, category, created_at) 
+       VALUES ($1, $2, $3, $4, NOW()) RETURNING id, name, description, max_users, category, creator_name`,
+      [name, description || '', max_users, category || 'global']
     );
     
     console.log(`✅ Room created: ${name} (${category})`);
@@ -217,8 +217,8 @@ router.put('/rooms/:roomId', authMiddleware, superAdminMiddleware, async (req, r
     const pool = getPool();
     
     const result = await pool.query(
-      `UPDATE rooms SET name = $1, description = $2, max_users = $3 WHERE id = $4 
-       RETURNING id, name, description, max_users, category, owner_name`,
+      `UPDATE rooms SET name = $1, description = $2, max_users = $3, updated_at = NOW() WHERE id = $4 
+       RETURNING id, name, description, max_users, category, creator_name`,
       [name, description || '', max_users, roomId]
     );
     
