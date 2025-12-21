@@ -366,11 +366,17 @@ export default function AdminPanelScreen() {
   };
 
   const openEditModal = (room: any) => {
-    setSelectedRoom(room);
-    setRoomName(room.name || '');
-    setRoomDescription(room.description || '');
-    setRoomCapacity(String(room.max_users || room.maxUsers || ''));
-    setEditRoomModalVisible(true);
+    setTimeout(() => {
+      router.push({
+        pathname: '/edit-room',
+        params: {
+          roomId: room.id,
+          roomName: room.name,
+          roomDescription: room.description || '',
+          roomCapacity: String(room.max_users || room.maxUsers || ''),
+        }
+      });
+    }, 100);
   };
 
   const filteredUsers = users.filter(user =>
@@ -842,7 +848,8 @@ export default function AdminPanelScreen() {
         onRequestClose={() => setCreateRoomModalVisible(false)}
       >
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
+          <TouchableOpacity style={styles.modalOverlayBackground} onPress={() => setCreateRoomModalVisible(false)} activeOpacity={1} />
+          <View style={[styles.modalContent, styles.halfModalContent, { backgroundColor: theme.background }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: theme.text }]}>Create Room</Text>
               <TouchableOpacity onPress={() => setCreateRoomModalVisible(false)}>
@@ -871,18 +878,17 @@ export default function AdminPanelScreen() {
               />
 
               <Text style={[styles.inputLabel, { color: theme.text }]}>Category</Text>
-              <View style={styles.categoryButtons}>
+              <View style={styles.categoryButtonsGrid}>
                 {(['global', 'managed', 'games'] as const).map(cat => (
                   <TouchableOpacity
                     key={cat}
                     style={[
-                      styles.categoryButton,
-                      roomCategory === cat && styles.categoryButtonActive,
-                      { backgroundColor: roomCategory === cat ? HEADER_COLOR : theme.card }
+                      styles.categoryButtonLarge,
+                      roomCategory === cat && { backgroundColor: HEADER_COLOR }
                     ]}
                     onPress={() => setRoomCategory(cat)}
                   >
-                    <Text style={[styles.categoryButtonText, { color: roomCategory === cat ? '#fff' : theme.text }]}>
+                    <Text style={[styles.categoryButtonTextLarge, { color: roomCategory === cat ? '#fff' : theme.text }]}>
                       {cat.charAt(0).toUpperCase() + cat.slice(1)}
                     </Text>
                   </TouchableOpacity>
@@ -915,67 +921,6 @@ export default function AdminPanelScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* Edit Room Modal */}
-      <Modal
-        visible={editRoomModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setEditRoomModalVisible(false)}
-      >
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: theme.text }]}>Edit Room</Text>
-              <TouchableOpacity onPress={() => setEditRoomModalVisible(false)}>
-                <Text style={[styles.closeButton, { color: theme.text }]}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.modalBody}>
-              <Text style={[styles.inputLabel, { color: theme.text }]}>Room Name</Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: theme.card, color: theme.text }]}
-                placeholder="Enter room name"
-                placeholderTextColor={theme.secondary}
-                value={roomName}
-                onChangeText={setRoomName}
-              />
-
-              <Text style={[styles.inputLabel, { color: theme.text }]}>Description</Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: theme.card, color: theme.text, minHeight: 80 }]}
-                placeholder="Enter description"
-                placeholderTextColor={theme.secondary}
-                value={roomDescription}
-                onChangeText={setRoomDescription}
-                multiline
-              />
-
-              <Text style={[styles.inputLabel, { color: theme.text }]}>Capacity</Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: theme.card, color: theme.text }]}
-                placeholder="Enter capacity"
-                placeholderTextColor={theme.secondary}
-                value={roomCapacity}
-                onChangeText={setRoomCapacity}
-                keyboardType="number-pad"
-              />
-
-              <TouchableOpacity
-                style={[styles.submitButton, { backgroundColor: HEADER_COLOR }]}
-                onPress={handleEditRoom}
-                disabled={roomModalLoading}
-              >
-                {roomModalLoading ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <Text style={styles.submitButtonText}>Update Room</Text>
-                )}
-              </TouchableOpacity>
-            </ScrollView>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
 
       {selectedTab === 'announcements' && (
         <View style={styles.comingSoon}>
@@ -1277,27 +1222,81 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
+  modalOverlayBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+  },
+  halfModalContent: {
+    width: '100%',
+    maxWidth: '100%',
+    maxHeight: '80%',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+  },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '700',
   },
   closeButton: {
-    fontSize: 24,
+    fontSize: 28,
+    paddingHorizontal: 8,
   },
   modalBody: {
-    padding: 16,
+    padding: 20,
+    paddingBottom: 30,
   },
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: 10,
+    marginTop: 4,
+  },
+  input: {
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 14,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
+  },
+  categoryButtonsGrid: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 20,
+  },
+  categoryButtonLarge: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(0,0,0,0.1)',
+  },
+  categoryButtonTextLarge: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  submitButton: {
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
   },
   comingSoonText: {
     fontSize: 16,
