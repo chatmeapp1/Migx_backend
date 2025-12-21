@@ -17,22 +17,7 @@ import { router } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
 import { useThemeCustom } from '@/theme/provider';
 import { API_ENDPOINTS } from '@/utils/api';
-
-const getLevelColor = (level: number): string => {
-  if (level >= 1 && level <= 2) return '#2196F3'; // Blue
-  if (level >= 3 && level <= 4) return '#4CAF50'; // Green
-  if (level >= 5 && level <= 6) return '#F44336'; // Red
-  if (level >= 7 && level <= 8) return '#FFC107'; // Yellow
-  return '#FFFFFF'; // White for 9+
-};
-
-const getLevelEggIcon = (level: number): any => {
-  if (level >= 1 && level <= 2) return require('@/assets/ic_level/ic_eggblue.png');
-  if (level >= 3 && level <= 4) return require('@/assets/ic_level/ic_egggreen.png');
-  if (level >= 5 && level <= 6) return require('@/assets/ic_level/ic_eggred.png');
-  if (level >= 7 && level <= 8) return require('@/assets/ic_level/ic_eggyellow.png');
-  return require('@/assets/ic_level/ic_eggwhite.png');
-};
+import { getLevelConfig } from '@/utils/levelMapping';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -197,58 +182,6 @@ export default function PeoplePage() {
     setExpandedRole(expandedRole === role ? null : role);
   };
 
-  const renderUserItem = ({ item }: { item: User }) => {
-    const config = ROLE_CONFIGS[item.role];
-
-    return (
-      <TouchableOpacity 
-        style={styles.userItem}
-        activeOpacity={0.7}
-        onPress={() => router.push(`/view-profile?userId=${item.id}`)}
-      >
-        {item.avatar ? (
-          <Image 
-            source={{ uri: item.avatar }} 
-            style={styles.userAvatarImage}
-          />
-        ) : (
-          <View style={[styles.userAvatar, { backgroundColor: theme.primary }]}>
-            <Text style={[styles.userAvatarText, { color: theme.text }]}>
-              {item.username.charAt(0).toUpperCase()}
-            </Text>
-          </View>
-        )}
-        <View style={styles.userInfo}>
-          <View style={styles.userNameRow}>
-            <Text style={[styles.userName, { color: theme.text }]} numberOfLines={1}>
-              {item.username}
-            </Text>
-            {item.gender && (
-              <View style={styles.genderIcon}>
-                {item.gender === 'male' ? (
-                  <MaleIcon size={14} color="#2196F3" />
-                ) : (
-                  <FemaleIcon size={14} color="#E91E63" />
-                )}
-              </View>
-            )}
-          </View>
-          {item.level && (
-            <View style={styles.levelBadge}>
-              <Image 
-                source={getLevelEggIcon(item.level)}
-                style={styles.eggIcon}
-              />
-              <Text style={[styles.levelText, { color: getLevelColor(item.level) }]}>
-                {item.level}
-              </Text>
-            </View>
-          )}
-        </View>
-      </TouchableOpacity>
-    );
-  };
-
   const renderUserItemFixed = ({ item }: { item: User }) => {
     const config = ROLE_CONFIGS[item.role];
 
@@ -286,12 +219,12 @@ export default function PeoplePage() {
             )}
           </View>
           {item.level && (
-            <View style={styles.levelBadge}>
+            <View style={styles.levelBadgeContainer}>
               <Image 
-                source={getLevelEggIcon(item.level)}
+                source={getLevelConfig(item.level).icon}
                 style={styles.eggIcon}
               />
-              <Text style={[styles.levelText, { color: getLevelColor(item.level) }]}>
+              <Text style={styles.levelNumberOverlay}>
                 {item.level}
               </Text>
             </View>
@@ -606,24 +539,28 @@ const styles = StyleSheet.create({
   genderIcon: {
     marginLeft: 4,
   },
-  levelBadge: {
-    backgroundColor: 'transparent',
-    paddingHorizontal: 0,
-    paddingVertical: 4,
-    borderRadius: 0,
+  levelBadgeContainer: {
+    position: 'relative',
+    width: 20,
+    height: 20,
     marginTop: 4,
     alignSelf: 'flex-start',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
   },
   eggIcon: {
-    width: 16,
-    height: 16,
+    width: 20,
+    height: 20,
   },
-  levelText: {
-    fontSize: 12,
-    fontWeight: '600',
+  levelNumberOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#000',
+    textAlign: 'center',
+    textAlignVertical: 'center',
   },
   emptyContainer: {
     padding: 20,
