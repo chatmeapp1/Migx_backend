@@ -86,33 +86,20 @@ router.get('/:roomId/participants', async (req, res) => {
       return res.status(400).json({ error: 'Room ID is required' });
     }
     
-    const participantIds = await getRoomParticipants(roomId);
+    // Get participants from Redis Set (returns usernames directly)
+    const participantUsernames = await getRoomParticipants(roomId);
     const userCount = await getRoomUserCount(roomId);
     
-    // Fetch user details for each participant
-    const participantsWithDetails = await Promise.all(
-      participantIds.map(async (id) => {
-        try {
-          const user = await userService.getUserById(id);
-          if (user) {
-            return {
-              username: user.username,
-              role: user.role || 'user'
-            };
-          }
-        } catch (e) {
-          console.warn(`Could not fetch details for user ID ${id}`);
-        }
-        return null;
-      })
-    );
-    
-    const validParticipants = participantsWithDetails.filter(p => p !== null);
+    // Participants are already usernames stored in Redis Set
+    const participants = participantUsernames.map(username => ({
+      username,
+      role: 'user'
+    }));
     
     res.json({
       success: true,
       roomId,
-      participants: validParticipants,
+      participants,
       count: userCount
     });
     

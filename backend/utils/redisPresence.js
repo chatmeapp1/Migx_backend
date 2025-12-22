@@ -38,24 +38,15 @@ const removeUserFromRoom = async (roomId, username) => {
 
 /**
  * Get all users in room FROM REDIS SET (SINGLE SOURCE OF TRUTH)
+ * Returns array of usernames (already stored as usernames in the Set)
  */
 const getRoomUsers = async (roomId) => {
   try {
     const { getRedisClient } = require('../redis');
     const redis = getRedisClient();
-    const userIds = await redis.sMembers(`room:${roomId}:participants`);
-    
-    if (!userIds || userIds.length === 0) return [];
-    
-    const userService = require('../services/userService');
-    const users = await Promise.all(
-      userIds.map(async (id) => {
-        const user = await userService.getUserById(id);
-        return user ? user.username : null;
-      })
-    );
-    
-    return users.filter(u => u !== null);
+    // Participants are stored as usernames directly in the Set
+    const usernames = await redis.sMembers(`room:${roomId}:participants`);
+    return usernames || [];
   } catch (error) {
     console.error('Error getting room users:', error);
     return [];
@@ -71,15 +62,8 @@ const getRoomUserCount = async (roomId) => {
     const redis = getRedisClient();
     const key = `room:${roomId}:participants`;
     
-    // Check key type and clean if wrong
-    const keyType = await redis.type(key);
-    if (keyType === 'set' || keyType === 'string') {
-      await redis.del(key);
-      console.log(`🧹 Cleaned legacy key type (${keyType}): ${key}`);
-      return 0;
-    }
-    
-    const count = await redis.hLen(key);
+    // Count members in the Set
+    const count = await redis.sCard(key);
     return count || 0;
   } catch (error) {
     console.error('Error getting room user count:', error);
