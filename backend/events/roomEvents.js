@@ -266,7 +266,7 @@ module.exports = (io, socket) => {
       });
 
       // Save user room to Redis for chat list
-      const redis = require('../redis').getRedisClient();
+      const redis = getRedisClient();
 
       // Clear any existing key with wrong type first
       try {
