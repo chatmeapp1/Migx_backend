@@ -249,6 +249,146 @@ module.exports = (io, socket) => {
           return;
         }
 
+        // Handle /suspend command - Admin only
+        if (cmdKey === 'suspend') {
+          const userService = require('../services/userService');
+          
+          // Check if sender is admin
+          const isAdmin = await userService.isAdmin(userId);
+          if (!isAdmin) {
+            socket.emit('system:message', {
+              roomId,
+              message: '❌ Only admins can use /suspend command.',
+              timestamp: new Date().toISOString(),
+              type: 'error'
+            });
+            return;
+          }
+
+          const targetUsername = parts[1];
+          if (!targetUsername) {
+            socket.emit('system:message', {
+              roomId,
+              message: `Usage: /suspend <username>`,
+              timestamp: new Date().toISOString(),
+              type: 'warning'
+            });
+            return;
+          }
+
+          const targetUser = await userService.getUserByUsername(targetUsername);
+          if (!targetUser) {
+            socket.emit('system:message', {
+              roomId,
+              message: `❌ User ${targetUsername} not found.`,
+              timestamp: new Date().toISOString(),
+              type: 'error'
+            });
+            return;
+          }
+
+          // Don't allow suspending another admin
+          const targetIsAdmin = await userService.isAdmin(targetUser.id);
+          if (targetIsAdmin) {
+            socket.emit('system:message', {
+              roomId,
+              message: `❌ Cannot suspend an admin user.`,
+              timestamp: new Date().toISOString(),
+              type: 'error'
+            });
+            return;
+          }
+
+          // Suspend user in database
+          await userService.suspendUser(targetUser.id, username);
+
+          // If user is online, force disconnect
+          const { getUserSocket } = require('../utils/presence');
+          const targetSocketId = await getUserSocket(targetUser.id);
+          
+          if (targetSocketId) {
+            const targetSocket = io.sockets.sockets.get(targetSocketId);
+            if (targetSocket) {
+              targetSocket.emit('force:logout', {
+                reason: 'suspended',
+                message: 'Your account has been suspended by admin.',
+                suspendedBy: username,
+                timestamp: new Date().toISOString()
+              });
+              
+              // Disconnect after short delay
+              setTimeout(() => {
+                targetSocket.disconnect(true);
+              }, 500);
+            }
+          }
+
+          // Send private confirmation to admin
+          socket.emit('system:message', {
+            roomId,
+            message: `✅ ${targetUsername} has been suspended. They will be logged out immediately.`,
+            timestamp: new Date().toISOString(),
+            type: 'success',
+            isPrivate: true
+          });
+
+          console.log(`🚫 Admin ${username} suspended user ${targetUsername}`);
+          return;
+        }
+
+        // Handle /unsuspend command - Admin only
+        if (cmdKey === 'unsuspend') {
+          const userService = require('../services/userService');
+          
+          // Check if sender is admin
+          const isAdmin = await userService.isAdmin(userId);
+          if (!isAdmin) {
+            socket.emit('system:message', {
+              roomId,
+              message: '❌ Only admins can use /unsuspend command.',
+              timestamp: new Date().toISOString(),
+              type: 'error'
+            });
+            return;
+          }
+
+          const targetUsername = parts[1];
+          if (!targetUsername) {
+            socket.emit('system:message', {
+              roomId,
+              message: `Usage: /unsuspend <username>`,
+              timestamp: new Date().toISOString(),
+              type: 'warning'
+            });
+            return;
+          }
+
+          const targetUser = await userService.getUserByUsername(targetUsername);
+          if (!targetUser) {
+            socket.emit('system:message', {
+              roomId,
+              message: `❌ User ${targetUsername} not found.`,
+              timestamp: new Date().toISOString(),
+              type: 'error'
+            });
+            return;
+          }
+
+          // Unsuspend user
+          await userService.unsuspendUser(targetUser.id);
+
+          socket.emit('system:message', {
+            roomId,
+            message: `✅ ${targetUsername} has been unsuspended. They can now log in.`,
+            timestamp: new Date().toISOString(),
+            type: 'success',
+            isPrivate: true
+          });
+
+          console.log(`✅ Admin ${username} unsuspended user ${targetUsername}`);
+          return;
+        }
+
         // Handle /clear command - Admin only - Clear kick count for user to prevent global ban
         if (cmdKey === 'clear') {
           const userService = require('../services/userService');

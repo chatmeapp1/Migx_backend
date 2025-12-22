@@ -482,6 +482,49 @@ const updateStatusMessage = async (userId, statusMessage) => {
   }
 };
 
+const suspendUser = async (userId, suspendedBy) => {
+  try {
+    const result = await query(
+      `UPDATE users SET status = 'suspended', suspended_at = CURRENT_TIMESTAMP, suspended_by = $1, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2
+       RETURNING id, username, status, suspended_at, suspended_by`,
+      [suspendedBy, userId]
+    );
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error suspending user:', error);
+    return null;
+  }
+};
+
+const unsuspendUser = async (userId) => {
+  try {
+    const result = await query(
+      `UPDATE users SET status = 'offline', suspended_at = NULL, suspended_by = NULL, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1
+       RETURNING id, username, status`,
+      [userId]
+    );
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error unsuspending user:', error);
+    return null;
+  }
+};
+
+const isSuspended = async (userId) => {
+  try {
+    const result = await query(
+      'SELECT status, suspended_at, suspended_by FROM users WHERE id = $1',
+      [userId]
+    );
+    return result.rows[0]?.status === 'suspended';
+  } catch (error) {
+    console.error('Error checking suspension:', error);
+    return false;
+  }
+};
+
 module.exports = {
   createUser,
   createUserWithRegistration,
@@ -513,5 +556,8 @@ module.exports = {
   storeForgotPasswordOtp,
   verifyForgotPasswordOtp,
   deleteForgotPasswordOtp,
-  updateStatusMessage
+  updateStatusMessage,
+  suspendUser,
+  unsuspendUser,
+  isSuspended
 };

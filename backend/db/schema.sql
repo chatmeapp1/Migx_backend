@@ -15,7 +15,9 @@ CREATE TABLE IF NOT EXISTS users (
   gender VARCHAR(6) CHECK (gender IN ('male', 'female')),
   is_active BOOLEAN DEFAULT FALSE,
   activation_token VARCHAR(128),
-  is_invisible BOOLEAN DEFAULT FALSE,
+  is_invisible BOOLEAN DEFAULT false,
+  suspended_at TIMESTAMP,
+  suspended_by VARCHAR(100),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

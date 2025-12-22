@@ -52,6 +52,17 @@ router.post('/login', async (req, res, next) => {
       }
     }
 
+    // Check if user is suspended
+    if (user.status === 'suspended') {
+      return res.status(403).json({
+        success: false,
+        error: 'Your account has been suspended. For information, please contact admin.',
+        suspended: true,
+        suspendedAt: user.suspended_at,
+        suspendedBy: user.suspended_by
+      });
+    }
+
     // Update invisible status if requested
     if (invisible !== undefined) {
       await userService.updateUserInvisible(user.id, invisible);
