@@ -30,7 +30,7 @@ const UserAvatar = ({ avatar, isOnline, theme }: { avatar?: string; isOnline?: b
   return null;
 };
 
-const RoomIcon = ({ size = 50, theme }: { size?: number; theme: any }) => (
+const RoomIcon = ({ size = 60, theme }: { size?: number; theme: any }) => (
   <View style={[styles.roomIconContainer, { width: size, height: size }]}>
     <Image
       source={require('../../assets/icons/ic_chat.png')}
