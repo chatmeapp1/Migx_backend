@@ -98,23 +98,18 @@ export function ContactItem({
           <View style={[styles.avatar, { backgroundColor: theme.card }]}>
             <Text style={styles.avatarText}>{avatar || '👤'}</Text>
           </View>
-          <View style={[
-            styles.statusDot, 
-            { 
-              backgroundColor: getPresenceColor(effectivePresence), 
-              borderColor: getPresenceBorderColor(effectivePresence) 
-            }
-          ]} />
         </View>
 
         <View style={styles.content}>
           <View style={styles.nameRow}>
-            <Text style={[styles.name, { color: getUsernameColor(effectivePresence) }]} numberOfLines={1}>{name}</Text>
-            {effectivePresence !== 'offline' && effectivePresence !== 'online' && (
-              <View style={[styles.presenceBadge, { backgroundColor: getPresenceColor(effectivePresence) }]}>
-                <Text style={styles.presenceBadgeText}>{getPresenceLabel(effectivePresence)}</Text>
-              </View>
-            )}
+            <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>{name}</Text>
+            <View style={[
+              styles.statusDotInline, 
+              { 
+                backgroundColor: getPresenceColor(effectivePresence), 
+                borderColor: getPresenceBorderColor(effectivePresence) 
+              }
+            ]} />
           </View>
           {status && status.trim() !== '' ? (
             <View style={styles.statusContainer}>
@@ -138,6 +133,11 @@ export function ContactItem({
         <Text style={[styles.presenceText, { color: getPresenceColor(effectivePresence) }]}>
           {getPresenceLabel(effectivePresence)}
         </Text>
+        {lastSeen && (
+          <Text style={[styles.lastSeen, { color: theme.secondary }]} numberOfLines={1}>
+            {lastSeen}
+          </Text>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -158,7 +158,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   avatarContainer: {
-    position: 'relative',
     marginRight: 12,
   },
   avatar: {
@@ -171,14 +170,12 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 24,
   },
-  statusDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
+  statusDotInline: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     borderWidth: 2,
+    marginLeft: 6,
   },
   content: {
     flex: 1,
@@ -217,13 +214,14 @@ const styles = StyleSheet.create({
   rightSection: {
     alignItems: 'flex-end',
     marginLeft: 8,
+    justifyContent: 'center',
   },
   lastSeen: {
-    fontSize: 12,
+    fontSize: 11,
+    marginTop: 4,
   },
   presenceText: {
     fontSize: 11,
     fontWeight: '500',
-    marginTop: 2,
   },
 });
