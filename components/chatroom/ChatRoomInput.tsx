@@ -270,7 +270,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    zIndex: 1, // Reduced zIndex to prevent blocking emoji picker
+    zIndex: 10,
+    backgroundColor: '#0a5229', // Match container background to cover picker
   },
   container: {
     flexDirection: 'row',

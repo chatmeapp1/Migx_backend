@@ -367,7 +367,7 @@ export default function ChatRoomScreen() {
             inputRef.current.insertEmoji(code);
           }
         }}
-        bottomOffset={insets.bottom}
+        bottomOffset={0} // No offset needed as it sits at bottom
       />
 
       <ChatRoomInput 

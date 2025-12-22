@@ -40,7 +40,8 @@ export function EmojiPicker({ visible, onClose, onEmojiSelect, bottomOffset = 0 
         { 
           backgroundColor: theme.card,
           transform: [{ translateY }],
-          bottom: INPUT_HEIGHT + bottomOffset + 15, // Increased offset further
+          bottom: 0,
+          zIndex: 5, // Lower zIndex so it stays behind the input but in front of content
         }
       ]}
     >
