@@ -62,6 +62,26 @@ export function MenuParticipantsModal({ visible, onClose, roomId, onUserMenuPres
     }
   }, [visible, roomId]);
 
+  // Listen for participant updates
+  useEffect(() => {
+    if (!visible || !roomId) return;
+
+    const handleParticipantsUpdate = (data: { roomId: string; participants: Array<{ userId: number; username: string }> }) => {
+      if (data.roomId === roomId) {
+        setParticipants(data.participants.map(p => ({ username: p.username, role: 'user' })));
+      }
+    };
+
+    // Access global socket (assuming it's available via window or import)
+    const socket = (window as any).__GLOBAL_SOCKET__;
+    if (socket) {
+      socket.on('room:participants:update', handleParticipantsUpdate);
+      return () => {
+        socket.off('room:participants:update', handleParticipantsUpdate);
+      };
+    }
+  }, [visible, roomId]);
+
   const fetchParticipants = async () => {
     if (!roomId) return;
     

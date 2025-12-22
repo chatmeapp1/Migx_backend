@@ -149,16 +149,21 @@ export default function ChatRoomScreen() {
       });
 
       newSocket.on('room:participants:update', (data: { roomId: string; participants: Array<{ userId: number; username: string }> }) => {
+        console.log('🔄 Participants update received:', data);
         if (data.roomId === currentActiveRoomId) {
           setRoomUsers(data.participants.map(p => p.username));
         }
       });
 
       newSocket.on('room:participants:list', (data: { roomId: string; participants: Array<{ userId: number; username: string }> }) => {
+        console.log('📋 Participants list received:', data);
         if (data.roomId === currentActiveRoomId) {
           setRoomUsers(data.participants.map(p => p.username));
         }
       });
+
+      // Store socket globally for MenuParticipantsModal
+      (window as any).__GLOBAL_SOCKET__ = newSocket;
 
       setSocket(newSocket);
     }
@@ -313,21 +318,11 @@ export default function ChatRoomScreen() {
     }
     
     if (trimmedAction === 'kick') {
-      // Fetch participants list from API
-      fetch(`${API_BASE_URL}/api/chatroom/${currentActiveRoomId}/participants`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.success && Array.isArray(data.participants)) {
-            const usernames = data.participants.map((p: any) => p.username);
-            setRoomUsers(usernames);
-            setKickModalVisible(true);
-          } else {
-            Alert.alert('Error', 'Failed to load participants');
-          }
-        })
-        .catch(() => {
-          Alert.alert('Error', 'Failed to load participants');
-        });
+      // Request fresh participants from socket
+      if (socket) {
+        socket.emit('room:get-participants', { roomId: currentActiveRoomId });
+      }
+      setKickModalVisible(true);
       return;
     }
     

@@ -1127,6 +1127,14 @@ module.exports = (io, socket) => {
               const redis = getRedisClient();
               const roomUsersKey = `room:users:${currentRoomId}`;
               await redis.sRem(roomUsersKey, username);
+
+              // Clean up any legacy SET-type participants key
+              const legacyParticipantsKey = `room:${currentRoomId}:participants`;
+              const keyType = await redis.type(legacyParticipantsKey);
+              if (keyType === 'set') {
+                await redis.del(legacyParticipantsKey);
+                console.log(`🧹 Cleaned legacy SET key: ${legacyParticipantsKey}`);
+              }
               console.log(`✅ Removed ${username} from legacy Redis set: ${roomUsersKey}`);
 
               const room = await roomService.getRoomById(currentRoomId);
