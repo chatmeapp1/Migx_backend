@@ -7,6 +7,13 @@ import { PresenceSelector } from './PresenceSelector';
 import API_BASE_URL from '@/utils/api';
 import { getLevelConfig } from '@/utils/levelMapping';
 
+const getAvatarUri = (avatar?: string) => {
+  if (!avatar) return null;
+  if (avatar.startsWith('http')) return avatar;
+  if (avatar.startsWith('/uploads')) return `${API_BASE_URL}${avatar}`;
+  return avatar;
+};
+
 interface UserProfileSectionProps {
   username?: string;
   level?: number;
@@ -114,9 +121,17 @@ export function UserProfileSection({
   const username = userData?.username || propUsername || '';
   const level = userData?.level || propLevel || 1;
   const avatar = userData?.avatar || propAvatar;
+  const avatarUri = getAvatarUri(avatar);
 
   // Only initialize presence hook when we have a username
   const { status: presenceStatusFromHook, setStatus: setPresenceStatus } = usePresence(username || '');
+
+  console.log('👤 UserProfileSection Avatar Debug:', {
+    avatar,
+    avatarUri,
+    username,
+    hasUserData: !!userData
+  });
 
   return (
     <View style={[styles.container, { backgroundColor: '#082919' }]}>
@@ -126,8 +141,18 @@ export function UserProfileSection({
           style={styles.avatarContainer}
           onPress={() => setShowPresenceSelector(true)}
         >
-          <View style={[styles.avatar, { backgroundColor: '#4A90E2' }]}>
-            <Text style={styles.avatarText}>{avatar}</Text>
+          <View style={styles.avatar}>
+            {avatarUri ? (
+              <Image 
+                source={{ uri: avatarUri }} 
+                style={styles.avatarImage}
+                onError={(e) => console.log('❌ UserProfileSection Avatar load error:', e.nativeEvent.error)}
+              />
+            ) : (
+              <View style={[styles.avatarPlaceholder, { backgroundColor: '#4A90E2' }]}>
+                <Text style={styles.avatarText}>{typeof avatar === 'string' && !avatarUri ? avatar : '👤'}</Text>
+              </View>
+            )}
           </View>
           <View 
             style={[
@@ -202,6 +227,17 @@ const styles = StyleSheet.create({
   avatar: {
     width: 40,
     height: 40,
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 20,
+  },
+  avatarPlaceholder: {
+    width: '100%',
+    height: '100%',
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
