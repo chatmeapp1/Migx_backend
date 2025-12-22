@@ -451,7 +451,7 @@ const startServer = async () => {
     // CRITICAL: Clear legacy Redis keys on startup for clean state
     try {
       const redis = require('./redis').getRedisClient();
-      const legacyPatterns = ['room:users:*', 'room:participants:*', 'room:userRoom:*'];
+      const legacyPatterns = ['room:users:*', 'room:participants:*', 'room:userRoom:*', 'room:*:participants', 'room:*:user:*'];
       for (const pattern of legacyPatterns) {
         const keys = await redis.keys(pattern);
         if (keys.length > 0) {

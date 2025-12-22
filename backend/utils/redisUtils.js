@@ -206,10 +206,8 @@ const getRoomUsersList = async (roomId) => {
 
 const getRoomParticipants = async (roomId) => {
   try {
-    // CRITICAL: Get participants from Redis TTL keys (single source of truth)
-    const { getRoomUsersFromTTL } = require('./roomPresenceTTL');
-    const ttlUsers = await getRoomUsersFromTTL(roomId);
-    const participants = ttlUsers.map(u => u.username);
+    const redis = getRedisClient();
+    const participants = await redis.sMembers(`room:${roomId}:participants`);
     return participants || [];
   } catch (error) {
     console.error('Error getting room participants:', error);
@@ -217,11 +215,12 @@ const getRoomParticipants = async (roomId) => {
   }
 };
 
-const addRoomParticipant = async (roomId, username) => {
+const addRoomParticipant = async (roomId, userId) => {
   try {
     const redis = getRedisClient();
-    await redis.sAdd(`room:participants:${roomId}`, username);
-    await redis.set(`room:userRoom:${username}`, roomId.toString());
+    const key = `room:${roomId}:participants`;
+    await redis.sAdd(key, userId.toString());
+    await redis.expire(key, 21600); // 6 hours
     return true;
   } catch (error) {
     console.error('Error adding room participant:', error);
@@ -229,11 +228,10 @@ const addRoomParticipant = async (roomId, username) => {
   }
 };
 
-const removeRoomParticipant = async (roomId, username) => {
+const removeRoomParticipant = async (roomId, userId) => {
   try {
     const redis = getRedisClient();
-    await redis.sRem(`room:participants:${roomId}`, username);
-    await redis.del(`room:userRoom:${username}`);
+    await redis.sRem(`room:${roomId}:participants`, userId.toString());
     return true;
   } catch (error) {
     console.error('Error removing room participant:', error);

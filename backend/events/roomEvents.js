@@ -133,7 +133,7 @@ module.exports = (io, socket) => {
       
       // Add to participants (MIG33 style - Redis only)
       const { addRoomParticipant, getRoomParticipants } = require('../utils/redisUtils');
-      await addRoomParticipant(roomId, username);
+      await addRoomParticipant(roomId, userId);
 
       // Get updated count after adding user
       const newUserCount = await getRoomUserCount(roomId);
@@ -355,7 +355,9 @@ module.exports = (io, socket) => {
       
       // Remove from participants (MIG33 style)
       const { removeRoomParticipant, getRoomParticipants } = require('../utils/redisUtils');
-      await removeRoomParticipant(roomId, username);
+      if (presenceUserId) {
+        await removeRoomParticipant(roomId, presenceUserId);
+      }
 
       // Get updated count after removing user
       const userCount = await getRoomUserCount(roomId);

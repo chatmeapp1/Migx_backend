@@ -37,14 +37,25 @@ const removeUserFromRoom = async (roomId, username) => {
 };
 
 /**
- * Get all users in room FROM REDIS TTL KEYS (SINGLE SOURCE OF TRUTH)
+ * Get all users in room FROM REDIS SET (SINGLE SOURCE OF TRUTH)
  */
 const getRoomUsers = async (roomId) => {
   try {
-    // Use Redis TTL keys as single source of truth for active users
-    const ttlUsers = await getRoomUsersFromTTL(roomId);
-    const usernames = ttlUsers.map(u => u.username);
-    return usernames || [];
+    const { getRedisClient } = require('../redis');
+    const redis = getRedisClient();
+    const userIds = await redis.sMembers(`room:${roomId}:participants`);
+    
+    if (!userIds || userIds.length === 0) return [];
+    
+    const userService = require('../services/userService');
+    const users = await Promise.all(
+      userIds.map(async (id) => {
+        const user = await userService.getUserById(id);
+        return user ? user.username : null;
+      })
+    );
+    
+    return users.filter(u => u !== null);
   } catch (error) {
     console.error('Error getting room users:', error);
     return [];
@@ -52,12 +63,13 @@ const getRoomUsers = async (roomId) => {
 };
 
 /**
- * Get room user count FROM REDIS TTL KEYS (SINGLE SOURCE OF TRUTH)
+ * Get room user count FROM REDIS SET (SINGLE SOURCE OF TRUTH)
  */
 const getRoomUserCount = async (roomId) => {
   try {
-    // Use Redis TTL keys as single source of truth for active user count
-    const count = await getActiveUserCountInRoom(roomId);
+    const { getRedisClient } = require('../redis');
+    const redis = getRedisClient();
+    const count = await redis.sCard(`room:${roomId}:participants`);
     return count || 0;
   } catch (error) {
     console.error('Error getting room user count:', error);

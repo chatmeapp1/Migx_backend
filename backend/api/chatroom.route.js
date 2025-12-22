@@ -86,31 +86,33 @@ router.get('/:roomId/participants', async (req, res) => {
       return res.status(400).json({ error: 'Room ID is required' });
     }
     
-    const participantUsernames = await getRoomParticipants(roomId);
+    const participantIds = await getRoomParticipants(roomId);
     const userCount = await getRoomUserCount(roomId);
     
-    // Fetch user roles for each participant using userService
-    const participantsWithRoles = await Promise.all(
-      participantUsernames.map(async (username) => {
+    // Fetch user details for each participant
+    const participantsWithDetails = await Promise.all(
+      participantIds.map(async (id) => {
         try {
-          const user = await userService.getUserByUsername(username);
+          const user = await userService.getUserById(id);
           if (user) {
             return {
-              username,
+              username: user.username,
               role: user.role || 'user'
             };
           }
         } catch (e) {
-          console.warn(`Could not fetch role for user ${username}`);
+          console.warn(`Could not fetch details for user ID ${id}`);
         }
-        return { username, role: 'user' };
+        return null;
       })
     );
+    
+    const validParticipants = participantsWithDetails.filter(p => p !== null);
     
     res.json({
       success: true,
       roomId,
-      participants: participantsWithRoles,
+      participants: validParticipants,
       count: userCount
     });
     
