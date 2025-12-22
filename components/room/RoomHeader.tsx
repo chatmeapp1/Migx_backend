@@ -35,7 +35,7 @@ export function RoomHeader() {
         colors={['#082919', '#082919']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={[styles.header, { paddingTop: insets.top + 8 }]}
+        style={[styles.header, { paddingTop: insets.top + 16 }]}
       >
       <View style={[styles.topBar, { borderBottomColor: theme.border }]}>
         <View style={styles.leftSection}>
