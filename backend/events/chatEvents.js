@@ -578,13 +578,14 @@ module.exports = (io, socket) => {
           }
 
           const sharedUserIds = await redis.sMembers(`ip:${ip}:users`);
-          let responseMessage = '';
           const roomService = require('../services/roomService');
           const room = await roomService.getRoomById(roomId);
           const roomTag = room?.name || 'Indonesia';
+          
+          let responseMessage = '';
 
           if (sharedUserIds.length <= 1) {
-            responseMessage = `[${roomTag}] ${targetUsername} → ${ip}`;
+            responseMessage = `${roomTag}: ${targetUsername} -.${ip}`;
           } else {
             const sharedUsernames = await Promise.all(
               sharedUserIds.map(async (id) => {
@@ -592,8 +593,9 @@ module.exports = (io, socket) => {
                 return u ? u.username : null;
               })
             );
-            const filteredUsernames = sharedUsernames.filter(n => n !== null).join(', ');
-            responseMessage = `[${roomTag}] Digunakan Oleh ${filteredUsernames} (${ip})`;
+            const filteredUsernames = sharedUsernames.filter(n => n !== null);
+            const userIpPairs = filteredUsernames.map(name => `${name} -.${ip}`).join(', ');
+            responseMessage = `${roomTag}: ${userIpPairs}`;
           }
 
           socket.emit('chat:message', {
