@@ -354,7 +354,9 @@ module.exports = (io, socket) => {
         return;
       }
 
-      const timerKey = `${userId || socket.userId || 'unknown'}-${roomId}`;
+      const presenceUserId = userId || socket.userId;
+
+      const timerKey = `${presenceUserId || 'unknown'}-${roomId}`;
       if (disconnectTimers.has(timerKey)) {
         clearTimeout(disconnectTimers.get(timerKey));
         disconnectTimers.delete(timerKey);
@@ -365,7 +367,9 @@ module.exports = (io, socket) => {
       await removeUserRoom(username, roomId);
 
       // Remove room from user_room_history (DATABASE)
-      await roomService.deleteUserRoomHistory(userId, roomId);
+      if (presenceUserId) {
+        await roomService.deleteUserRoomHistory(presenceUserId, roomId);
+      }
 
       // Remove user from Redis presence
       await removeUserFromRoom(roomId, username);
@@ -384,11 +388,6 @@ module.exports = (io, socket) => {
       // Step 4️⃣: Remove TTL-based presence (cleanup)
       if (presenceUserId) {
         await removeUserPresence(roomId, presenceUserId);
-      }
-
-      // Delete room history from DATABASE immediately on leave
-      if (presenceUserId) {
-        await roomService.deleteUserRoomHistory(presenceUserId, roomId);
       }
 
       // Remove from participants (MIG33 style)

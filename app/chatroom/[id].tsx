@@ -313,10 +313,21 @@ export default function ChatRoomScreen() {
     }
     
     if (trimmedAction === 'kick') {
-      if (socket) {
-        socket.emit('room:get-participants', { roomId: currentActiveRoomId });
-      }
-      setKickModalVisible(true);
+      // Fetch participants list from API
+      fetch(`${API_BASE_URL}/api/chatroom/${currentActiveRoomId}/participants`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success && Array.isArray(data.participants)) {
+            const usernames = data.participants.map((p: any) => p.username);
+            setRoomUsers(usernames);
+            setKickModalVisible(true);
+          } else {
+            Alert.alert('Error', 'Failed to load participants');
+          }
+        })
+        .catch(() => {
+          Alert.alert('Error', 'Failed to load participants');
+        });
       return;
     }
     
