@@ -8,7 +8,11 @@ const {
   removeUserRoom,
   addRecentRoom,
   incrementRoomActive,
-  decrementRoomActive
+  decrementRoomActive,
+  getRoomParticipants,
+  getRoomParticipantsWithNames,
+  addRoomParticipant,
+  removeRoomParticipant
 } = require('../utils/redisUtils');
 const {
   addUserToRoom,
@@ -159,7 +163,6 @@ module.exports = (io, socket) => {
       await roomService.saveRoomHistory(userId, roomId);
 
       // Add to participants (MIG33 style - Redis Set)
-      const { addRoomParticipant } = require('../utils/redisUtils');
       await addRoomParticipant(roomId, username);
       
       // Broadcast updated participants to all users in room
