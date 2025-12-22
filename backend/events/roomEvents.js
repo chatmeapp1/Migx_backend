@@ -158,9 +158,16 @@ module.exports = (io, socket) => {
       // Save room history to DATABASE (for Chat menu)
       await roomService.saveRoomHistory(userId, roomId);
 
-      // Add to participants (MIG33 style - Redis only) with username
-      const { addRoomParticipant, getRoomParticipantsWithNames } = require('../utils/redisUtils');
-      await addRoomParticipant(roomId, userId, username);
+      // Add to participants (MIG33 style - Redis Set)
+      const { addRoomParticipant } = require('../utils/redisUtils');
+      await addRoomParticipant(roomId, username);
+      
+      // Broadcast updated participants to all users in room
+      const updatedParticipants = await getRoomParticipants(roomId);
+      io.to(`room:${roomId}`).emit('room:participants:update', {
+        roomId,
+        participants: updatedParticipants
+      });
 
       // Get updated count after adding user
       const newUserCount = await getRoomUserCount(roomId);
@@ -391,10 +398,17 @@ module.exports = (io, socket) => {
       }
 
       // Remove from participants (MIG33 style)
-      const { removeRoomParticipant, getRoomParticipantsWithNames } = require('../utils/redisUtils');
-      if (presenceUserId) {
-        await removeRoomParticipant(roomId, presenceUserId);
+      const { removeRoomParticipant } = require('../utils/redisUtils');
+      if (username) {
+        await removeRoomParticipant(roomId, username);
       }
+      
+      // Broadcast updated participants to all users in room
+      const updatedParticipants = await getRoomParticipants(roomId);
+      io.to(`room:${roomId}`).emit('room:participants:update', {
+        roomId,
+        participants: updatedParticipants
+      });
 
       // Get updated count after removing user
       const userCount = await getRoomUserCount(roomId);
@@ -869,7 +883,14 @@ module.exports = (io, socket) => {
       await addUserToRoom(roomId, username);
 
       const { addRoomParticipant } = require('../utils/redisUtils');
-      await addRoomParticipant(roomId, userId, username);
+      await addRoomParticipant(roomId, username);
+      
+      // Broadcast updated participants to all users in room
+      const rejoinParticipants = await getRoomParticipants(roomId);
+      io.to(`room:${roomId}`).emit('room:participants:update', {
+        roomId,
+        participants: rejoinParticipants
+      });
 
       const updatedUsers = await roomService.getRoomUsers(roomId);
       const usersWithPresence = await Promise.all(
@@ -939,7 +960,14 @@ module.exports = (io, socket) => {
 
         // Remove from participants
         const { removeRoomParticipant } = require('../utils/redisUtils');
-        await removeRoomParticipant(currentRoomId, userId);
+        await removeRoomParticipant(currentRoomId, username);
+        
+        // Broadcast updated participants to all users in room
+        const updatedParticipants = await getRoomParticipants(currentRoomId);
+        io.to(`room:${currentRoomId}`).emit('room:participants:update', {
+          roomId: currentRoomId,
+          participants: updatedParticipants
+        });
 
         // Remove from legacy set
         await removeUserFromRoom(currentRoomId, username);
@@ -1116,12 +1144,19 @@ module.exports = (io, socket) => {
 
               disconnectTimers.delete(timerKey);
 
-              // Step 4️⃣: Remove presence on timeout - CLEAN BOTH OLD AND NEW SYSTEMS
+              // Step 4️⃣: Remove presence on timeout
               if (userId && userId !== 'unknown') {
                 await removeUserPresence(currentRoomId, userId);
               }
 
-              await removeRoomParticipant(currentRoomId, userId);
+              await removeRoomParticipant(currentRoomId, username);
+              
+              // Broadcast updated participants
+              const timeoutParticipants = await getRoomParticipants(currentRoomId);
+              io.to(`room:${currentRoomId}`).emit('room:participants:update', {
+                roomId: currentRoomId,
+                participants: timeoutParticipants
+              });
               await removeUserFromRoom(currentRoomId, username);
               await removeUserRoom(username, currentRoomId);
 

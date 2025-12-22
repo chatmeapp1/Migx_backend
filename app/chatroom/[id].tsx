@@ -148,17 +148,10 @@ export default function ChatRoomScreen() {
         }
       });
 
-      newSocket.on('room:participants:update', (data: { roomId: string; participants: Array<{ userId: number; username: string }> }) => {
+      newSocket.on('room:participants:update', (data: { roomId: string; participants: string[] }) => {
         console.log('🔄 Participants update received:', data);
         if (data.roomId === currentActiveRoomId) {
-          setRoomUsers(data.participants.map(p => p.username));
-        }
-      });
-
-      newSocket.on('room:participants:list', (data: { roomId: string; participants: Array<{ userId: number; username: string }> }) => {
-        console.log('📋 Participants list received:', data);
-        if (data.roomId === currentActiveRoomId) {
-          setRoomUsers(data.participants.map(p => p.username));
+          setRoomUsers(data.participants);
         }
       });
 

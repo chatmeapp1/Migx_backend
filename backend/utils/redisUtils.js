@@ -209,20 +209,8 @@ const getRoomParticipants = async (roomId) => {
     const redis = getRedisClient();
     const key = `room:${roomId}:participants`;
     
-    // Check key type first and delete if wrong type
-    const keyType = await redis.type(key);
-    if (keyType === 'set' || keyType === 'string') {
-      await redis.del(key);
-      console.log(`🧹 Cleaned legacy key type (${keyType}): ${key}`);
-    }
-    
-    // Get all participants from HASH
-    const participantsHash = await redis.hGetAll(key);
-    const participants = Object.keys(participantsHash).map(userId => ({
-      userId: parseInt(userId),
-      username: participantsHash[userId]
-    }));
-    
+    // Get all participants from SET (single source of truth)
+    const participants = await redis.sMembers(key);
     return participants || [];
   } catch (error) {
     console.error('Error getting room participants:', error);
@@ -230,20 +218,13 @@ const getRoomParticipants = async (roomId) => {
   }
 };
 
-const addRoomParticipant = async (roomId, userId, username) => {
+const addRoomParticipant = async (roomId, username) => {
   try {
     const redis = getRedisClient();
     const key = `room:${roomId}:participants`;
     
-    // Check and clean if wrong type
-    const keyType = await redis.type(key);
-    if (keyType === 'set' || keyType === 'string') {
-      await redis.del(key);
-      console.log(`🧹 Cleaned legacy key type (${keyType}): ${key}`);
-    }
-    
-    await redis.hSet(key, userId.toString(), username || 'Unknown');
-    await redis.expire(key, 21600); // 6 hours
+    // Add username to SET
+    await redis.sAdd(key, username);
     return true;
   } catch (error) {
     console.error('Error adding room participant:', error);
@@ -251,10 +232,13 @@ const addRoomParticipant = async (roomId, userId, username) => {
   }
 };
 
-const removeRoomParticipant = async (roomId, userId) => {
+const removeRoomParticipant = async (roomId, username) => {
   try {
     const redis = getRedisClient();
-    await redis.hDel(`room:${roomId}:participants`, userId.toString());
+    const key = `room:${roomId}:participants`;
+    
+    // Remove username from SET
+    await redis.sRem(key, username);
     return true;
   } catch (error) {
     console.error('Error removing room participant:', error);
@@ -262,27 +246,24 @@ const removeRoomParticipant = async (roomId, userId) => {
   }
 };
 
-const getRoomParticipantsWithNames = async (roomId, excludeUserId = null) => {
+const getRoomParticipantsWithNames = async (roomId, excludeUsername = null) => {
   try {
     const redis = getRedisClient();
     const key = `room:${roomId}:participants`;
-    const participants = await redis.hGetAll(key);
     
-    if (!participants || Object.keys(participants).length === 0) {
+    // Get all participants from SET
+    let participants = await redis.sMembers(key);
+    
+    if (!participants || participants.length === 0) {
       return [];
     }
     
-    const list = Object.entries(participants).map(([userId, username]) => ({
-      userId: parseInt(userId),
-      username
-    }));
-    
     // Filter out excluded user if provided
-    if (excludeUserId) {
-      return list.filter(p => p.userId !== excludeUserId);
+    if (excludeUsername) {
+      participants = participants.filter(u => u !== excludeUsername);
     }
     
-    return list;
+    return participants;
   } catch (error) {
     console.error('Error getting room participants with names:', error);
     return [];

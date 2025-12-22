@@ -8,14 +8,20 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Updates (Dec 22, 2025)
 
-## Kick Modal - User List Display Fix
-- **Backend**: Fixed Redis participant storage using HASH type (`room:{roomId}:participants` with userId → username mapping)
-- **Events**: 
-  - `room:get-participants` handler requests fresh participant list from backend
-  - `room:participants:update` broadcasts when users join/leave
-  - `room:participants:list` responds to on-demand requests
-- **Frontend**: MenuKickModal now receives live participant list, excludes current user automatically
-- **Fixes**: Removed SET-based Redis conflicts, fixed function parameters (addRoomParticipant now requires userId), removed legacy participant key TTL operations
+## Room Participant Sync - Redis Set as Single Source of Truth
+- **Backend Redis Storage**: `room:{roomId}:participants` = Redis Set of usernames (classic MIG33 style)
+- **Functions Updated**:
+  - `addRoomParticipant(roomId, username)` - adds username to Set
+  - `removeRoomParticipant(roomId, username)` - removes username from Set
+  - `getRoomParticipants(roomId)` - returns array of usernames from Set
+- **Socket Events**:
+  - On join/rejoin: add to set, emit `room:participants:update` with full list to all users
+  - On leave/disconnect/kick: remove from set, emit `room:participants:update`
+- **Frontend Behavior**:
+  - Listens to `room:participants:update` with participant list (string array)
+  - Updates roomUsers state instantly
+  - MenuKickModal automatically excludes current user
+  - "Currently users in the room" always matches participant list
 
 # Earlier Updates (Dec 21, 2025)
 
