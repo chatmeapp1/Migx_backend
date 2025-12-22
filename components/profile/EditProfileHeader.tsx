@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     borderColor: '#fff',
   },
   userInfoContainer: {
-    marginTop: 12,
+    marginTop: 16,
     paddingBottom: 8,
   },
   usernameRow: {
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
   },
   username: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: 'normal',
   },
   level: {
     fontSize: 18,

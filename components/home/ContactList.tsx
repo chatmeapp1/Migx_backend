@@ -1,7 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useThemeCustom } from '@/theme/provider';
 import { ContactItem } from './ContactItem';
+import { API_ENDPOINTS } from '@/utils/api';
 
 type PresenceStatus = 'online' | 'away' | 'busy' | 'offline';
 
@@ -13,28 +15,57 @@ interface Contact {
   avatar: string;
 }
 
-const onlineFriends: Contact[] = [
-  { name: 'acun', status: '👑', presence: 'online', lastSeen: 'Last seen 04-Dec 17:30', avatar: '👤' },
-  { name: 'adit_namaq', status: 'sedang mengetik.....l', presence: 'online', lastSeen: 'Last seen 04-Dec 17:28', avatar: '👤' },
-  { name: 'bri', status: 'enter ( cebol sedunia )', presence: 'away', lastSeen: 'Last seen 04-Dec 16:45', avatar: '👤' },
-  { name: 'dee', status: '🏰Togel chātröõm', presence: 'offline', lastSeen: 'Last seen 04-Dec 15:20', avatar: '👤' },
-  { name: 'dessy', status: '😀', presence: 'busy', lastSeen: 'Last seen 04-Dec 17:25', avatar: '👤' },
-  { name: 'ecca', status: 'it\'s a dog🐶', presence: 'online', lastSeen: 'Last seen 04-Dec 17:29', avatar: '👤' },
-  { name: 'gita', status: 'I ❤️ YOU', presence: 'offline', lastSeen: 'Last seen 04-Dec 14:10', avatar: '👤' },
-  { name: 'glez', status: '💕 M♡rЯÿ♡r♡ 💕', presence: 'online', lastSeen: 'Last seen 04-Dec 17:31', avatar: '👤' },
-  { name: 'jib', status: 'MultiGram of War', presence: 'away', lastSeen: 'Last seen 04-Dec 17:27', avatar: '👤' },
-  { name: 'jova', status: '💘💘💘💘💘', presence: 'online', lastSeen: 'Last seen 04-Dec 17:32', avatar: '👤' },
-];
-
-const mig33Contacts: Contact[] = [
-  { name: 'l________', status: 'No pain no gain', presence: 'online', lastSeen: 'Last seen 04-Dec 17:15', avatar: '👤' },
-  { name: 'litz____', status: 'dapat jg orkor, wlpn of di teguin on wkwk', presence: 'busy', lastSeen: 'Last seen 04-Dec 12:30', avatar: '👤' },
-  { name: 'm________', status: 'عَ۞تبنَنہيک شَيُوَتہ،او مَےَوتہ ووَ', presence: 'offline', lastSeen: 'Last seen 04-Dec 10:20', avatar: '👤' },
-  { name: 'q______', status: '???', presence: 'away', lastSeen: 'Last seen 04-Dec 08:45', avatar: '👤' },
-];
-
 export function ContactList() {
   const { theme } = useThemeCustom();
+  const [onlineFriends, setOnlineFriends] = React.useState<Contact[]>([]);
+  const [mig33Contacts, setMig33Contacts] = React.useState<Contact[]>([]);
+
+  React.useEffect(() => {
+    loadContacts();
+  }, []);
+
+  const loadContacts = async () => {
+    try {
+      // Load following users
+      const userDataStr = await AsyncStorage.getItem('user_data');
+      if (!userDataStr) return;
+
+      const userData = JSON.parse(userDataStr);
+      const response = await fetch(`${API_ENDPOINTS.PROFILE.FOLLOWING(userData.id)}`);
+      const data = await response.json();
+
+      if (data.following) {
+        const contacts: Contact[] = data.following.map((user: any) => ({
+          name: user.username,
+          status: user.status_message || user.status || '👑',
+          presence: user.status === 'online' ? 'online' : user.status === 'away' ? 'away' : user.status === 'busy' ? 'busy' : 'offline',
+          lastSeen: `Last seen ${new Date(user.followed_at).toLocaleString()}`,
+          avatar: user.avatar || '👤',
+        }));
+        setOnlineFriends(contacts);
+      }
+
+      // Load all users as mig33 contacts
+      const allUsersResponse = await fetch(`${API_ENDPOINTS.PEOPLE.ALL}`);
+      const allUsersData = await allUsersResponse.json();
+
+      if (allUsersData.users) {
+        const allContacts: Contact[] = allUsersData.users
+          .filter((u: any) => u.id !== userData.id)
+          .slice(0, 10)
+          .map((user: any) => ({
+            name: user.username,
+            status: user.status_message || user.status || '???',
+            presence: user.status === 'online' ? 'online' : user.status === 'away' ? 'away' : user.status === 'busy' ? 'busy' : 'offline',
+            lastSeen: `Last seen ${new Date().toLocaleString()}`,
+            avatar: user.avatar || '👤',
+          }));
+        setMig33Contacts(allContacts);
+      }
+    } catch (error) {
+      console.error('Error loading contacts:', error);
+    }
+  };
 
   const handleContactPress = (contact: Contact) => {
     // Placeholder for handling contact press event

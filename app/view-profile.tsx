@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Modal, Alert, ActivityIndicator } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -7,12 +6,14 @@ import { useThemeCustom } from '@/theme/provider';
 import { ViewProfileHeader } from '@/components/profile/ViewProfileHeader';
 import { EditProfileStats } from '@/components/profile/EditProfileStats';
 import { API_ENDPOINTS } from '@/utils/api';
+import { getStoredUser } from '@/utils/storage';
+import { getSocket } from '@/hooks/useSocket';
 
 export default function ViewProfileScreen() {
   const { theme } = useThemeCustom();
   const params = useLocalSearchParams();
   const userId = params.userId as string;
-  
+
   const [profileData, setProfileData] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isFollowing, setIsFollowing] = useState(false);
@@ -26,17 +27,17 @@ export default function ViewProfileScreen() {
   const loadProfile = async () => {
     try {
       setLoading(true);
-      
+
       // Get current user
       const userDataStr = await AsyncStorage.getItem('user_data');
       if (userDataStr) {
         const userData = JSON.parse(userDataStr);
         setCurrentUser(userData);
-        
+
         // Fetch profile
         const response = await fetch(API_ENDPOINTS.VIEW_PROFILE.GET(userId, userData.id));
         const data = await response.json();
-        
+
         if (response.ok) {
           setProfileData(data);
           setIsFollowing(data.isFollowing || false);
@@ -58,20 +59,22 @@ export default function ViewProfileScreen() {
   };
 
   const handleFollowPress = async () => {
-    if (!currentUser) {
-      Alert.alert('Error', 'Please login first');
+    if (!currentUser || !profileData) {
+      Alert.alert('Error', 'Please login first or profile data is missing.');
       return;
     }
 
     try {
       setFollowLoading(true);
-      
-      const endpoint = isFollowing 
-        ? API_ENDPOINTS.PROFILE.UNFOLLOW 
+
+      const endpoint = isFollowing
+        ? API_ENDPOINTS.PROFILE.UNFOLLOW
         : API_ENDPOINTS.PROFILE.FOLLOW;
-      
+
+      const method = isFollowing ? 'DELETE' : 'POST';
+
       const response = await fetch(endpoint, {
-        method: isFollowing ? 'DELETE' : 'POST',
+        method: method,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -85,27 +88,44 @@ export default function ViewProfileScreen() {
 
       if (response.ok && data.success) {
         setIsFollowing(!isFollowing);
-        
+
         // Update follower count
         setProfileData((prev: any) => ({
           ...prev,
           stats: {
             ...prev.stats,
-            followersCount: isFollowing 
-              ? prev.stats.followersCount - 1 
+            followersCount: isFollowing
+              ? prev.stats.followersCount - 1
               : prev.stats.followersCount + 1,
           },
         }));
+
+        // Send notification to the followed user if following
+        if (!isFollowing) {
+          const socket = getSocket();
+          if (socket) {
+            socket.emit('notif:send', {
+              username: profileData.user.username, // The user being followed
+              notification: {
+                type: 'follow',
+                message: `${currentUser.username} started following you`,
+                from: currentUser.username,
+                timestamp: Date.now(),
+              },
+            });
+          }
+        }
       } else {
-        Alert.alert('Error', data.error || 'Failed to update follow status');
+        Alert.alert('Error', data.error || `Failed to ${isFollowing ? 'unfollow' : 'follow'} user`);
       }
     } catch (error) {
       console.error('Follow error:', error);
-      Alert.alert('Error', 'Failed to update follow status');
+      Alert.alert('Error', `Failed to ${isFollowing ? 'unfollow' : 'follow'} user`);
     } finally {
       setFollowLoading(false);
     }
   };
+
 
   const handlePostPress = () => {
     console.log('View posts');
@@ -168,7 +188,7 @@ export default function ViewProfileScreen() {
               />
             </>
           )}
-          
+
           {followLoading && (
             <View style={styles.followingOverlay}>
               <ActivityIndicator size="large" color={theme.primary} />

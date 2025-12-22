@@ -101,6 +101,20 @@ const GiftIcon = ({ size = 24, color = '#999' }) => (
   </Svg>
 );
 
+// Placeholder for FollowIcon if it's not defined elsewhere
+const FollowIcon = ({ size = 24, color = '#2563EB' }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Circle cx="9" cy="7" r="4" stroke={color} strokeWidth="2" />
+  </Svg>
+);
+
 export function EditProfileStats({
   userId,
   postCount: propPostCount,
@@ -126,7 +140,6 @@ export function EditProfileStats({
 
   useEffect(() => {
     if (propPostCount !== undefined) {
-      // Use props if provided
       setStats({
         postCount: propPostCount,
         giftCount: propGiftCount || 0,
@@ -135,7 +148,6 @@ export function EditProfileStats({
       });
       setLoading(false);
     } else {
-      // Otherwise load from API
       loadStats();
     }
   }, [userId, propPostCount, propGiftCount, propFollowersCount, propFollowingCount]);
@@ -161,6 +173,22 @@ export function EditProfileStats({
     }
   };
 
+  const handleFollowPress = async () => {
+    if (onFollowPress) {
+      onFollowPress();
+      // Implement notification logic here
+      try {
+        await fetch(API_ENDPOINTS.NOTIFICATION.SEND(userId), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: 'started following you' }),
+        });
+      } catch (error) {
+        console.error('Error sending follow notification:', error);
+      }
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -176,7 +204,7 @@ export function EditProfileStats({
         {/* Follow Button */}
         <TouchableOpacity
           style={[styles.followButton, { backgroundColor: '#2563EB' }]}
-          onPress={onFollowPress}
+          onPress={handleFollowPress}
           activeOpacity={0.8}
         >
           <UsersIcon size={20} color="#fff" />
@@ -213,7 +241,7 @@ export function EditProfileStats({
           activeOpacity={0.6}
         >
           <UsersIcon size={24} color="#2563EB" />
-          <Text style={[styles.menuLabel, { color: theme.text }]}>Follow</Text>
+          <Text style={[styles.menuLabel, { color: theme.text }]}>Followers</Text>
         </TouchableOpacity>
 
         <View style={[styles.menuDivider, { backgroundColor: theme.border }]} />

@@ -80,6 +80,31 @@ module.exports = (io, socket) => {
     }
   });
 
+  socket.on('notif:send', async (data) => {
+    try {
+      const { username, notification } = data;
+      
+      if (!username || !notification) {
+        socket.emit('error', { message: 'Username and notification required' });
+        return;
+      }
+      
+      // Add notification to user's list
+      await notificationService.addNotification(username, notification);
+      
+      // Send real-time notification to user if online
+      await sendNotificationToUser(username, notification);
+      
+      socket.emit('notif:sent', {
+        success: true
+      });
+      
+    } catch (error) {
+      console.error('Error sending notification:', error);
+      socket.emit('error', { message: 'Failed to send notification' });
+    }
+  });
+
   return {
     sendNotificationToUser
   };
