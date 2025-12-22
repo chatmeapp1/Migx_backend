@@ -174,7 +174,9 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
+    paddingTop: Platform.OS === 'android' ? 40 : 10,
+    paddingHorizontal: 14,
+    paddingBottom: 14,
     borderBottomWidth: 1,
     justifyContent: 'space-between',
   },
