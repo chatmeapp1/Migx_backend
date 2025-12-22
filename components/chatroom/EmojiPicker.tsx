@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emojiImage: {
-    width: 20,
-    height: 20,
+    width: 18,
+    height: 18,
   },
 });

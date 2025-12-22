@@ -133,8 +133,8 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   emojiImage: {
-    width: 20,
-    height: 20,
+    width: 18,
+    height: 18,
     marginBottom: -5,
   },
   noticeContainer: {
