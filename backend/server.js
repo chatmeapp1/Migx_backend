@@ -276,21 +276,21 @@ const verifyAdminAuth = async (req, res, next) => {
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({ success: false, error: 'No token provided' });
     }
-    
+
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'migx_secret_key');
-    
+
     const userService = require('./services/userService');
     const user = await userService.getUserById(decoded.id || decoded.userId);
-    
+
     if (!user) {
       return res.status(401).json({ success: false, error: 'User not found' });
     }
-    
+
     if (user.role !== 'admin' && user.role !== 'superadmin' && user.role !== 'creator') {
       return res.status(403).json({ success: false, error: 'Admin access required' });
     }
-    
+
     req.user = user;
     next();
   } catch (error) {
@@ -302,13 +302,13 @@ const verifyAdminAuth = async (req, res, next) => {
 app.post('/api/admin/unban', verifyAdminAuth, async (req, res) => {
   try {
     const { username } = req.body;
-    
+
     if (!username) {
       return res.status(400).json({ success: false, error: 'Username is required' });
     }
-    
+
     await clearGlobalBan(username);
-    
+
     res.json({ 
       success: true, 
       message: `${username} has been unbanned globally.` 
@@ -322,11 +322,11 @@ app.post('/api/admin/unban', verifyAdminAuth, async (req, res) => {
 app.post('/api/admin/clear-cooldown', verifyAdminAuth, async (req, res) => {
   try {
     const { username, roomId, type } = req.body;
-    
+
     if (!username || !roomId) {
       return res.status(400).json({ success: false, error: 'Username and roomId are required' });
     }
-    
+
     if (type === 'admin') {
       await clearAdminCooldown(username, roomId);
     } else if (type === 'vote') {
@@ -335,7 +335,7 @@ app.post('/api/admin/clear-cooldown', verifyAdminAuth, async (req, res) => {
       await clearAdminCooldown(username, roomId);
       await clearVoteCooldown(username, roomId);
     }
-    
+
     res.json({ 
       success: true, 
       message: `Cooldown cleared for ${username} in room ${roomId}` 
@@ -350,10 +350,10 @@ app.get('/api/admin/ban-status/:username', verifyAdminAuth, async (req, res) => 
   try {
     const { username } = req.params;
     const { roomId } = req.query;
-    
+
     const kickCount = await getAdminKickCount(username);
     const cooldownStatus = roomId ? await getCooldownStatus(username, roomId) : null;
-    
+
     res.json({ 
       success: true,
       username,
@@ -465,10 +465,10 @@ const startServer = async () => {
 
     server.listen(PORT, '0.0.0.0', () => {
       console.log(`Server running on 0.0.0.0:${PORT}`);
-      
+
       // Start presence cleanup job (Step 3️⃣)
       startPresenceCleanup(io);
-      
+
       voucherService.startVoucherGenerator(io);
       console.log(`
 ╔═══════════════════════════════════════════════════════╗

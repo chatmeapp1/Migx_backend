@@ -98,13 +98,15 @@ export function MenuParticipantsModal({ visible, onClose, roomId, onUserMenuPres
         const data = await response.json();
         
         if (data.success && data.user) {
-          // Close modals and navigate to view-profile
+          // Close modals
           setShowUserMenu(false);
           setSelectedUser(null);
           onClose(); // Close the participants modal
           
-          // Navigate to profile using the correct route
-          router.push(`/(tabs)/profile?userId=${data.user.id}`);
+          // Navigate to view-profile screen
+          router.push(`/view-profile?userId=${data.user.id}`);
+        } else {
+          console.error('User not found:', data.error);
         }
       } catch (error) {
         console.error('Error fetching user ID:', error);
