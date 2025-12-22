@@ -389,6 +389,120 @@ module.exports = (io, socket) => {
           return;
         }
 
+        // Handle /bump command - Admin only - Remove user from room temporarily
+        if (cmdKey === 'bump') {
+          const userService = require('../services/userService');
+          const { getRedisClient } = require('../redis');
+          const { getUserSocket } = require('../utils/presence');
+          
+          // Check if sender is admin
+          const isAdmin = await userService.isAdmin(userId);
+          if (!isAdmin) {
+            socket.emit('system:message', {
+              roomId,
+              message: '❌ Only admins can use /bump command.',
+              timestamp: new Date().toISOString(),
+              type: 'error'
+            });
+            return;
+          }
+
+          const targetUsername = parts[1];
+          if (!targetUsername) {
+            socket.emit('system:message', {
+              roomId,
+              message: `Usage: /bump <username>`,
+              timestamp: new Date().toISOString(),
+              type: 'warning'
+            });
+            return;
+          }
+
+          const targetUser = await userService.getUserByUsername(targetUsername);
+          if (!targetUser) {
+            socket.emit('system:message', {
+              roomId,
+              message: `❌ User ${targetUsername} not found.`,
+              timestamp: new Date().toISOString(),
+              type: 'error'
+            });
+            return;
+          }
+
+          // Don't allow bumping another admin
+          const targetIsAdmin = await userService.isAdmin(targetUser.id);
+          if (targetIsAdmin) {
+            socket.emit('system:message', {
+              roomId,
+              message: `❌ Cannot bump an admin user.`,
+              timestamp: new Date().toISOString(),
+              type: 'error'
+            });
+            return;
+          }
+
+          // Set bump cooldown in Redis (10 seconds)
+          const redis = getRedisClient();
+          const bumpKey = `room:bump:${roomId}:${targetUser.id}`;
+          await redis.set(bumpKey, '1');
+          await redis.expire(bumpKey, 10);
+
+          // Get target user's socket and remove from room
+          const targetSocketId = await getUserSocket(targetUser.id);
+          
+          if (targetSocketId) {
+            const targetSocket = io.sockets.sockets.get(targetSocketId);
+            if (targetSocket) {
+              // Remove from room
+              targetSocket.leave(`room:${roomId}`);
+              
+              // Send popup notification to target user
+              targetSocket.emit('room:bumped', {
+                roomId,
+                message: 'You have been removed by the administrator.',
+                bumpedBy: username,
+                timestamp: new Date().toISOString()
+              });
+
+              // Update presence
+              const { removeUserFromRoom } = require('../utils/presence');
+              const { removeUserRoom } = require('../utils/redisUtils');
+              await removeUserFromRoom(roomId, targetUser.id, targetUsername);
+              await removeUserRoom(targetUsername, roomId);
+
+              // Notify room about user leaving
+              const { getRoomUserCount } = require('../utils/presence');
+              const roomService = require('../services/roomService');
+              const userCount = await getRoomUserCount(roomId);
+              const room = await roomService.getRoomById(roomId);
+
+              io.to(`room:${roomId}`).emit('room:user:left', {
+                roomId,
+                username: targetUsername,
+                userCount
+              });
+
+              io.emit('rooms:updateCount', {
+                roomId,
+                userCount,
+                maxUsers: room?.max_users || 25
+              });
+            }
+          }
+
+          // Send confirmation to admin
+          socket.emit('system:message', {
+            roomId,
+            message: `✅ ${targetUsername} has been bumped from the room. They can rejoin in 10 seconds.`,
+            timestamp: new Date().toISOString(),
+            type: 'success',
+            isPrivate: true
+          });
+
+          console.log(`🚪 Admin ${username} bumped user ${targetUsername} from room ${roomId}`);
+          return;
+        }
+
         // Handle /clear command - Admin only - Clear kick count for user to prevent global ban
         if (cmdKey === 'clear') {
           const userService = require('../services/userService');

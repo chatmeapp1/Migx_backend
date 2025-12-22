@@ -22,6 +22,7 @@ const { adminKick: executeAdminKick, isGloballyBanned, isAdminGloballyBanned } =
 const { startVoteKick, addVote, hasActiveVote } = require('../utils/voteKick');
 const { checkJoinAllowed } = require('../utils/roomCooldown');
 const { storeUserPresence, updatePresenceActivity, removeUserPresence } = require('../utils/roomPresenceTTL');
+const { getRedisClient } = require('../redis');
 
 // Helper function to create system messages
 const createSystemMessage = (roomId, message) => ({
@@ -67,6 +68,20 @@ module.exports = (io, socket) => {
           reason: joinCheck.reason,
           type: joinCheck.type,
           remainingSeconds: joinCheck.remainingSeconds
+        });
+        return;
+      }
+
+      // Check if user is temporarily bumped from this room
+      const redis = getRedisClient();
+      const bumpKey = `room:bump:${roomId}:${userId}`;
+      const isBumped = await redis.exists(bumpKey);
+
+      if (isBumped) {
+        socket.emit('room:join:error', {
+          roomId,
+          message: 'You were recently removed by admin. Please wait a moment before rejoining.',
+          type: 'bumped'
         });
         return;
       }
@@ -119,7 +134,7 @@ module.exports = (io, socket) => {
 
       // Check if user is already in room (prevents duplicate join messages)
       const alreadyInRoom = await isUserInRoom(roomId, username);
-      
+
       await addUserRoom(username, roomId, room.name);
 
       // Get current users before adding new user
@@ -127,10 +142,10 @@ module.exports = (io, socket) => {
 
       // Add user to Redis presence
       await addUserToRoom(roomId, username);
-      
+
       // Save room history to DATABASE (for Chat menu)
       await roomService.saveRoomHistory(userId, roomId);
-      
+
       // Add to participants (MIG33 style - Redis only)
       const { addRoomParticipant, getRoomParticipants } = require('../utils/redisUtils');
       await addRoomParticipant(roomId, userId);
@@ -197,7 +212,7 @@ module.exports = (io, socket) => {
           const freshUserListString = freshUsersList.length > 0
             ? freshUsersList.join(', ')
             : username;
-          
+
           socket.emit('chat:message', {
             id: Date.now().toString() + '-3',
             roomId,
@@ -252,7 +267,7 @@ module.exports = (io, socket) => {
 
       // Save user room to Redis for chat list
       const redis = require('../redis').getRedisClient();
-      
+
       // Clear any existing key with wrong type first
       try {
         const keyType = await redis.type(`user:rooms:${username}`);
@@ -262,9 +277,9 @@ module.exports = (io, socket) => {
       } catch (err) {
         console.log('Redis key type check error:', err.message);
       }
-      
+
       await redis.sAdd(`user:rooms:${username}`, roomId);
-      
+
       // Set initial last message
       await redis.hSet(`room:lastmsg:${roomId}`, {
         message: `${username} joined`,
@@ -279,7 +294,7 @@ module.exports = (io, socket) => {
         roomId,
         roomName: room.name
       });
-      
+
       // Emit chatlist update to user's room
       io.to(`user:${username}`).emit('chatlist:update', { 
         roomId,
@@ -343,16 +358,16 @@ module.exports = (io, socket) => {
 
       // Remove user from Redis presence
       await removeUserFromRoom(roomId, username);
-      
+
       // Step 4️⃣: Remove TTL-based presence (cleanup)
       const presenceUserId = userId || socket.userId;
       if (presenceUserId) {
         await removeUserPresence(roomId, presenceUserId);
       }
-      
+
       // Delete room history from DATABASE immediately on leave
       await roomService.deleteUserRoomHistory(presenceUserId, roomId);
-      
+
       // Remove from participants (MIG33 style)
       const { removeRoomParticipant, getRoomParticipants } = require('../utils/redisUtils');
       if (presenceUserId) {
@@ -395,12 +410,12 @@ module.exports = (io, socket) => {
       // Remove user room from Redis
       const redis = require('../redis').getRedisClient();
       await redis.sRem(`user:rooms:${username}`, roomId);
-      
+
       console.log('📤 Emitting leave events to user:', username);
 
       socket.emit('room:left', { roomId });
       socket.emit('chatlist:roomLeft', { roomId });
-      
+
       // Emit chatlist update to user's room
       io.to(`user:${username}`).emit('chatlist:update', { 
         roomId,
@@ -439,13 +454,13 @@ module.exports = (io, socket) => {
     try {
       const { roomId } = data;
       const users = await roomService.getRoomUsers(roomId);
-      
+
       console.log('📤 Sending room users to client:', {
         roomId,
         userCount: users.length,
         users: users.map(u => u.username || u)
       });
-      
+
       socket.emit('room:users', {
         roomId,
         users,
@@ -721,7 +736,7 @@ module.exports = (io, socket) => {
           // Start new vote with payment
           const roomUserCount = await getRoomUserCount(roomId);
           const result = await startVoteKick(io, roomId, kickerUsername, targetUsername, roomUserCount, userId);
-          
+
           if (!result.success) {
             socket.emit('system:message', {
               roomId,
@@ -761,7 +776,7 @@ module.exports = (io, socket) => {
       }
 
       const result = await addVote(io, roomId, voterUsername, targetUsername);
-      
+
       if (result.kicked) {
         // User was kicked - find and remove from room
         const roomSockets = await io.in(`room:${roomId}`).fetchSockets();
@@ -782,7 +797,7 @@ module.exports = (io, socket) => {
 
         const userCount = await getRoomUserCount(roomId);
         const room = await roomService.getRoomById(roomId);
-        
+
         io.to(`room:${roomId}`).emit('room:user:left', {
           roomId,
           username: targetUsername,
@@ -805,36 +820,36 @@ module.exports = (io, socket) => {
   const rejoinRoom = async (data) => {
     try {
       const { roomId, userId, username } = data;
-      
+
       console.log(`🔄 User rejoining room (silent):`, { roomId, userId, username });
-      
+
       if (!roomId || !userId || !username) {
         socket.emit('error', { message: 'Missing required fields' });
         return;
       }
-      
+
       const timerKey = `${userId}-${roomId}`;
       if (disconnectTimers.has(timerKey)) {
         clearTimeout(disconnectTimers.get(timerKey));
         disconnectTimers.delete(timerKey);
         console.log(`✅ Rejoin - cleared disconnect timer for:`, username);
       }
-      
+
       const room = await roomService.getRoomById(roomId);
       if (!room) {
         socket.emit('error', { message: 'Room not found' });
         return;
       }
-      
+
       socket.join(`room:${roomId}`);
       socket.join(`user:${username}`);
       socket.username = username;
-      
+
       await addUserToRoom(roomId, username);
-      
+
       const { addRoomParticipant, getRoomParticipants } = require('../utils/redisUtils');
       await addRoomParticipant(roomId, username);
-      
+
       const updatedUsers = await roomService.getRoomUsers(roomId);
       const usersWithPresence = await Promise.all(
         updatedUsers.map(async (u) => ({
@@ -842,7 +857,7 @@ module.exports = (io, socket) => {
           presence: await getPresence(u.username)
         }))
       );
-      
+
       socket.emit('room:joined', {
         roomId,
         room,
@@ -851,9 +866,9 @@ module.exports = (io, socket) => {
         userCount: await getRoomUserCount(roomId),
         isRejoin: true
       });
-      
+
       console.log(`✅ User ${username} silently rejoined room ${roomId}`);
-      
+
     } catch (error) {
       console.error('Error rejoining room:', error);
       socket.emit('error', { message: 'Failed to rejoin room' });
@@ -868,7 +883,7 @@ module.exports = (io, socket) => {
 
       // Refresh TTL - update presence activity
       const success = await updatePresenceActivity(roomId, userId);
-      
+
       if (success) {
         // Confirm heartbeat to client (keep-alive confirmation)
         socket.emit('room:heartbeat:ack', {
@@ -887,40 +902,139 @@ module.exports = (io, socket) => {
       const username = socket.username;
       const userId = socket.userId;
       const currentRoomId = socket.currentRoomId;
-      
+
       if (username && currentRoomId && userId) {
         console.log(`🚪 User ${username} logging out from room ${currentRoomId}`);
-        
+
         // Cancel any pending disconnect timer
         const timerKey = `${userId}-${currentRoomId}`;
         if (disconnectTimers.has(timerKey)) {
           clearTimeout(disconnectTimers.get(timerKey));
           disconnectTimers.delete(timerKey);
         }
-        
+
         // Immediately remove from TTL system
         await removeUserPresence(currentRoomId, userId);
-        
+
         // Remove from participants
         const { removeRoomParticipant } = require('../utils/redisUtils');
         await removeRoomParticipant(currentRoomId, username);
-        
+
         // Remove from legacy set
         await removeUserFromRoom(currentRoomId, username);
         const { removeUserRoom } = require('../utils/redisUtils');
         await removeUserRoom(username, currentRoomId);
-        
-        // Clear from legacy room:users set
+
+        // Clear from legacy room:users set to avoid stale data
         const { getRedisClient } = require('../redis');
         const redis = getRedisClient();
         await redis.sRem(`room:users:${currentRoomId}`, username);
-        
+
         console.log(`✅ User ${username} successfully logged out from room ${currentRoomId}`);
       }
     } catch (error) {
       console.error('Error during logout:', error);
     }
   };
+
+  // New command handler for /bump
+  const bumpUser = async (data) => {
+    try {
+      const { roomId, targetUsername } = data;
+      const adminId = socket.userId; // Assuming socket has userId
+
+      if (!roomId || !targetUsername) {
+        socket.emit('error', { message: 'Missing required fields' });
+        return;
+      }
+
+      // Check if the user invoking the command is an admin
+      const isAdmin = await roomService.isRoomAdmin(roomId, adminId);
+      if (!isAdmin) {
+        socket.emit('error', { message: 'You are not an administrator.' });
+        return;
+      }
+
+      const room = await roomService.getRoomById(roomId);
+      if (!room) {
+        socket.emit('error', { message: 'Room not found.' });
+        return;
+      }
+
+      // Find the target user's socket ID
+      const roomSockets = await io.in(`room:${roomId}`).fetchSockets();
+      const targetSocket = roomSockets.find(s => s.username === targetUsername);
+
+      if (!targetSocket) {
+        socket.emit('system:message', {
+          roomId,
+          message: `${targetUsername} is not in this room.`,
+          timestamp: new Date().toISOString(),
+          type: 'warning'
+        });
+        return;
+      }
+
+      const targetUserId = targetSocket.userId; // Assuming target socket has userId
+
+      // Remove user from room (socket.leave)
+      targetSocket.leave(`room:${roomId}`);
+
+      // Send popup to user
+      targetSocket.emit('chat:message', {
+        id: `bump-popup-${Date.now()}`,
+        roomId,
+        username: room.name,
+        message: 'You have been removed by the administrator.',
+        timestamp: new Date().toISOString(),
+        type: 'system',
+        messageType: 'bump',
+        isPrivate: true
+      });
+
+      // Send system message to others in room
+      io.to(`room:${roomId}`).emit('chat:message', {
+        id: `bump-system-${Date.now()}`,
+        roomId,
+        username: room.name,
+        message: `${targetUsername} has been removed by the administrator.`,
+        timestamp: new Date().toISOString(),
+        type: 'system',
+        messageType: 'bump'
+      });
+
+      // Update presence and room state
+      await removeUserFromRoom(roomId, targetUsername);
+      await removeUserRoom(targetUsername, roomId);
+      await removeUserPresence(roomId, targetUserId); // Remove from TTL system
+
+      const userCount = await getRoomUserCount(roomId);
+      const updatedUsers = await getRoomPresenceUsers(roomId);
+      io.to(`room:${roomId}`).emit('room:user:left', {
+        roomId,
+        username: targetUsername,
+        users: updatedUsers
+      });
+
+      io.emit('rooms:updateCount', {
+        roomId,
+        userCount,
+        maxUsers: room.max_users || 25
+      });
+
+      // Save Redis key: room:bump:<roomId>:<userId> with TTL 10 seconds
+      const redis = getRedisClient();
+      const bumpKey = `room:bump:${roomId}:${targetUserId}`;
+      await redis.set(bumpKey, 'true', 'EX', 10); // 'true' as value, 10 seconds TTL
+
+      console.log(`✅ User ${targetUsername} (ID: ${targetUserId}) bumped from room ${roomId}. Cooldown set for 10s.`);
+
+    } catch (error) {
+      console.error('Error in bump handler:', error);
+      socket.emit('error', { message: 'Failed to bump user.' });
+    }
+  };
+
 
   socket.on('join_room', joinRoom);
   socket.on('rejoin_room', rejoinRoom);
@@ -936,48 +1050,51 @@ module.exports = (io, socket) => {
   socket.on('room:info:get', getRoomInfo);
   socket.on('room:create', createRoom);
   socket.on('room:heartbeat', heartbeat);
+  // Add handler for the new bump command
+  socket.on('room:bump', bumpUser);
+
 
   socket.on('disconnect', async () => {
     try {
       console.log(`⚠️ Socket disconnected: ${socket.id}`);
-      
+
       const username = socket.username;
       const userId = socket.userId || 'unknown';
-      
+
       if (username) {
         const { getUserCurrentRoom, removeRoomParticipant, getRoomParticipants } = require('../utils/redisUtils');
         const currentRoomId = await getUserCurrentRoom(username);
-        
+
         if (currentRoomId) {
           const timerKey = `${userId}-${currentRoomId}`;
-          
+
           console.log(`⏳ Starting 15s disconnect timer for ${username} in room ${currentRoomId}`);
-          
+
           const timer = setTimeout(async () => {
             try {
               console.log(`🚪 Disconnect timer expired - removing ${username} from room ${currentRoomId}`);
-              
+
               disconnectTimers.delete(timerKey);
-              
+
               // Step 4️⃣: Remove presence on timeout - CLEAN BOTH OLD AND NEW SYSTEMS
               if (userId && userId !== 'unknown') {
                 await removeUserPresence(currentRoomId, userId);
               }
-              
+
               await removeRoomParticipant(currentRoomId, username);
               await removeUserFromRoom(currentRoomId, username);
               await removeUserRoom(username, currentRoomId);
-              
+
               // Also clear from legacy room:users:{roomId} set to avoid stale data
               const { getRedisClient } = require('../redis');
               const redis = getRedisClient();
               const roomUsersKey = `room:users:${currentRoomId}`;
               await redis.sRem(roomUsersKey, username);
               console.log(`✅ Removed ${username} from legacy Redis set: ${roomUsersKey}`);
-              
+
               const room = await roomService.getRoomById(currentRoomId);
               const userCount = await getRoomUserCount(currentRoomId);
-              
+
               const leftMsg = `${username} [${userCount}] has left`;
               const leftMessage = {
                 id: `presence-left-${Date.now()}-${Math.random()}`,
@@ -998,7 +1115,7 @@ module.exports = (io, socket) => {
                 username,
                 users: updatedUsers
               });
-              
+
               const participants = await getRoomParticipants(currentRoomId);
               io.to(`room:${currentRoomId}`).emit('room:participantsUpdated', {
                 roomId: currentRoomId,
@@ -1017,7 +1134,7 @@ module.exports = (io, socket) => {
               console.error('Error in disconnect timer:', timerError);
             }
           }, 15000);
-          
+
           disconnectTimers.set(timerKey, timer);
         }
       }

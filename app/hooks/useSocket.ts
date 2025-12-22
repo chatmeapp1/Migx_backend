@@ -36,6 +36,18 @@ export const useSocket = () => {
       ]
     );
   });
+
+  socket.on('room:bumped', (data: any) => {
+    console.log('🚪 Bumped from room:', data);
+    // Show alert that user was removed by admin
+    const { Alert } = require('react-native');
+    Alert.alert(
+      'Removed from Room',
+      data.message || 'You have been removed by the administrator.',
+      [{ text: 'OK' }]
+    );
+    // The room leave is handled by the server
+  });
 */
 
 // The actual implementation would likely be within a `useEffect` hook where the socket is initialized.
