@@ -36,6 +36,16 @@ export default function UserManagementScreen() {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
+  
+  // Change Password
+  const [pwdUsername, setPwdUsername] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [pwdLoading, setPwdLoading] = useState(false);
+  
+  // Change Email
+  const [emailUsername, setEmailUsername] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [emailLoading, setEmailLoading] = useState(false);
 
   const handleSearchUser = async () => {
     if (!username.trim()) {
@@ -138,6 +148,157 @@ export default function UserManagementScreen() {
     }
   };
 
+  const handleChangePassword = async () => {
+    if (!pwdUsername.trim() || !newPassword.trim()) {
+      Alert.alert('Error', 'Please enter username and new password');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      Alert.alert('Error', 'Password must be at least 6 characters');
+      return;
+    }
+
+    setPwdLoading(true);
+    try {
+      const userData = await AsyncStorage.getItem('user_data');
+      if (!userData) {
+        Alert.alert('Error', 'Session expired. Please log in again.');
+        setPwdLoading(false);
+        return;
+      }
+
+      const parsedData = JSON.parse(userData);
+      const token = parsedData?.token;
+
+      if (!token) {
+        Alert.alert('Error', 'Session expired. Please log in again.');
+        setPwdLoading(false);
+        return;
+      }
+
+      // First, fetch user to get their ID
+      const getUserResponse = await fetch(`${API_BASE_URL}/api/admin/users`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!getUserResponse.ok) {
+        Alert.alert('Error', 'Failed to fetch user');
+        setPwdLoading(false);
+        return;
+      }
+
+      const userData_res = await getUserResponse.json();
+      const user = userData_res.users?.find((u: any) => u.username.toLowerCase().includes(pwdUsername.toLowerCase()));
+
+      if (!user) {
+        Alert.alert('Error', 'User not found');
+        setPwdLoading(false);
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/admin/users/${user.id}/password`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ newPassword }),
+      });
+
+      if (response.ok) {
+        Alert.alert('Success', `Password changed for ${user.username}`);
+        setPwdUsername('');
+        setNewPassword('');
+      } else {
+        const data = await response.json();
+        Alert.alert('Error', data.error || 'Failed to change password');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to change password');
+    } finally {
+      setPwdLoading(false);
+    }
+  };
+
+  const handleChangeEmail = async () => {
+    if (!emailUsername.trim() || !newEmail.trim()) {
+      Alert.alert('Error', 'Please enter username and new email');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
+    }
+
+    setEmailLoading(true);
+    try {
+      const userData = await AsyncStorage.getItem('user_data');
+      if (!userData) {
+        Alert.alert('Error', 'Session expired. Please log in again.');
+        setEmailLoading(false);
+        return;
+      }
+
+      const parsedData = JSON.parse(userData);
+      const token = parsedData?.token;
+
+      if (!token) {
+        Alert.alert('Error', 'Session expired. Please log in again.');
+        setEmailLoading(false);
+        return;
+      }
+
+      // First, fetch user to get their ID
+      const getUserResponse = await fetch(`${API_BASE_URL}/api/admin/users`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!getUserResponse.ok) {
+        Alert.alert('Error', 'Failed to fetch user');
+        setEmailLoading(false);
+        return;
+      }
+
+      const userData_res = await getUserResponse.json();
+      const user = userData_res.users?.find((u: any) => u.username.toLowerCase().includes(emailUsername.toLowerCase()));
+
+      if (!user) {
+        Alert.alert('Error', 'User not found');
+        setEmailLoading(false);
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/admin/users/${user.id}/email`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ newEmail }),
+      });
+
+      if (response.ok) {
+        Alert.alert('Success', `Email changed for ${user.username}`);
+        setEmailUsername('');
+        setNewEmail('');
+      } else {
+        const data = await response.json();
+        Alert.alert('Error', data.error || 'Failed to change email');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to change email');
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'admin': return '#3498DB';
@@ -171,7 +332,7 @@ export default function UserManagementScreen() {
               <TextInput
                 style={[styles.input, { backgroundColor: theme.background, color: theme.text }]}
                 placeholder="Enter username"
-                placeholderTextColor={theme.textSecondary}
+                placeholderTextColor={theme.text}
                 value={username}
                 onChangeText={setUsername}
                 autoCapitalize="none"
@@ -245,7 +406,7 @@ export default function UserManagementScreen() {
           {selectedUser && (
             <View style={[styles.section, { backgroundColor: theme.card }]}>
               <Text style={[styles.sectionTitle, { color: theme.text }]}>Change Role</Text>
-              <Text style={[styles.sectionSubtitle, { color: theme.textSecondary }]}>
+              <Text style={[styles.sectionSubtitle, { color: theme.text }]}>
                 Select a new role for {selectedUser.username}
               </Text>
 
@@ -291,10 +452,85 @@ export default function UserManagementScreen() {
             </View>
           )}
 
+          {/* Change Password Section */}
+          <View style={[styles.section, { backgroundColor: theme.card }]}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Change Password</Text>
+
+            <TextInput
+              style={[styles.input, { backgroundColor: theme.background, color: theme.text, marginBottom: 12 }]}
+              placeholder="Enter username"
+              placeholderTextColor={theme.text}
+              value={pwdUsername}
+              onChangeText={setPwdUsername}
+              autoCapitalize="none"
+              editable={!pwdLoading}
+            />
+
+            <TextInput
+              style={[styles.input, { backgroundColor: theme.background, color: theme.text, marginBottom: 12 }]}
+              placeholder="Enter new password"
+              placeholderTextColor={theme.text}
+              value={newPassword}
+              onChangeText={setNewPassword}
+              secureTextEntry
+              editable={!pwdLoading}
+            />
+
+            <TouchableOpacity
+              style={[styles.applyButton, { backgroundColor: HEADER_COLOR }]}
+              onPress={handleChangePassword}
+              disabled={pwdLoading}
+            >
+              {pwdLoading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.applyButtonText}>Change Password</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* Change Email Section */}
+          <View style={[styles.section, { backgroundColor: theme.card }]}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Change Email</Text>
+
+            <TextInput
+              style={[styles.input, { backgroundColor: theme.background, color: theme.text, marginBottom: 12 }]}
+              placeholder="Enter username"
+              placeholderTextColor={theme.text}
+              value={emailUsername}
+              onChangeText={setEmailUsername}
+              autoCapitalize="none"
+              editable={!emailLoading}
+            />
+
+            <TextInput
+              style={[styles.input, { backgroundColor: theme.background, color: theme.text, marginBottom: 12 }]}
+              placeholder="Enter new email"
+              placeholderTextColor={theme.text}
+              value={newEmail}
+              onChangeText={setNewEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              editable={!emailLoading}
+            />
+
+            <TouchableOpacity
+              style={[styles.applyButton, { backgroundColor: HEADER_COLOR }]}
+              onPress={handleChangeEmail}
+              disabled={emailLoading}
+            >
+              {emailLoading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.applyButtonText}>Change Email</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+
           {/* Empty State */}
           {!selectedUser && username && !searchLoading && (
             <View style={[styles.section, { backgroundColor: theme.card }]}>
-              <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
+              <Text style={[styles.emptyText, { color: theme.text }]}>
                 User not found. Try searching again.
               </Text>
             </View>

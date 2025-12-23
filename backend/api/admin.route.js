@@ -249,6 +249,88 @@ router.put('/rooms/:roomId', authMiddleware, superAdminMiddleware, async (req, r
   }
 });
 
+router.put('/users/:userId/password', authMiddleware, superAdminMiddleware, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { newPassword } = req.body;
+    
+    if (!newPassword) {
+      return res.status(400).json({ error: 'New password is required' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+    
+    const pool = getPool();
+    
+    // Check if user exists
+    const userResult = await pool.query('SELECT id FROM users WHERE id = $1', [userId]);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Hash and update password
+    const bcrypt = require('bcrypt');
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+    await pool.query(
+      'UPDATE users SET password_hash = $1 WHERE id = $2',
+      [hashedPassword, userId]
+    );
+    
+    console.log(`✅ Password changed for user: ${userId}`);
+    res.json({ success: true, message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Error changing password:', error);
+    res.status(500).json({ error: 'Failed to change password' });
+  }
+});
+
+router.put('/users/:userId/email', authMiddleware, superAdminMiddleware, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { newEmail } = req.body;
+    
+    if (!newEmail) {
+      return res.status(400).json({ error: 'New email is required' });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+    
+    const pool = getPool();
+    
+    // Check if user exists
+    const userResult = await pool.query('SELECT id FROM users WHERE id = $1', [userId]);
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if email already exists
+    const emailResult = await pool.query(
+      'SELECT id FROM users WHERE email = $1 AND id != $2',
+      [newEmail, userId]
+    );
+    if (emailResult.rows.length > 0) {
+      return res.status(400).json({ error: 'Email already in use' });
+    }
+    
+    await pool.query(
+      'UPDATE users SET email = $1 WHERE id = $2',
+      [newEmail, userId]
+    );
+    
+    console.log(`✅ Email changed for user: ${userId}`);
+    res.json({ success: true, message: 'Email changed successfully' });
+  } catch (error) {
+    console.error('Error changing email:', error);
+    res.status(500).json({ error: 'Failed to change email' });
+  }
+});
+
 router.delete('/rooms/:roomId', authMiddleware, superAdminMiddleware, async (req, res) => {
   try {
     const { roomId } = req.params;

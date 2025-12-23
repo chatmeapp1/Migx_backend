@@ -8,6 +8,24 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Updates (Dec 23, 2025)
 
+## User Management - Change Password & Email (NEW)
+- **Added Sections**: Two new sections in `app/user-management.tsx` for admin operations
+- **Change Password Section**:
+  - Username input field
+  - New password input field (hidden/masked)
+  - Submit button that calls `PUT /api/admin/users/{userId}/password`
+  - Validates password length (min 6 characters)
+- **Change Email Section**:
+  - Username input field
+  - New email input field with email validation
+  - Submit button that calls `PUT /api/admin/users/{userId}/email`
+  - Validates email format and checks for duplicate emails
+- **Backend Endpoints Created**:
+  - `PUT /api/admin/users/:userId/password` - Changes user password (admin only)
+  - `PUT /api/admin/users/:userId/email` - Changes user email (admin only)
+  - Both endpoints require admin or super_admin role
+- **UI Pattern**: Consistent with existing sections, uses theme colors, shows loading states
+
 ## Dedicated User Management Page - Username Input & Role Selection
 - **New Page**: `app/user-management.tsx` - Dedicated page for admin user role management
 - **Features**:
