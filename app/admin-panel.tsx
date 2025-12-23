@@ -785,7 +785,7 @@ export default function AdminPanelScreen() {
                                 { text: 'Mentor', onPress: () => handleChangeRole(user.id, 'mentor') },
                                 { text: 'Merchant', onPress: () => handleChangeRole(user.id, 'merchant') },
                                 { text: 'Admin', onPress: () => handleChangeRole(user.id, 'admin') },
-                                { text: 'CS', onPress: () => handleChangeRole(user.id, 'customer_service') },
+                                { text: 'Customer Service', onPress: () => handleChangeRole(user.id, 'customer_service') },
                               ]
                             );
                           }}
