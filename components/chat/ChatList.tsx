@@ -4,7 +4,7 @@ import { ScrollView, StyleSheet, View, Text, ActivityIndicator } from 'react-nat
 import { useThemeCustom } from '@/theme/provider';
 import { ChatItem } from './ChatItem';
 import API_BASE_URL from '@/utils/api';
-import { useSocket } from '@/hooks/useSocket';
+import { useRoomTabsStore } from '@/stores/useRoomTabsStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface ChatData {
@@ -24,7 +24,7 @@ export function ChatList() {
   const [chatData, setChatData] = useState<ChatData[]>([]);
   const [loading, setLoading] = useState(true);
   const [username, setUsername] = useState<string>('');
-  const socket = useSocket();
+  const socket = useRoomTabsStore((state) => state.socket);
 
   useEffect(() => {
     loadUsername();
