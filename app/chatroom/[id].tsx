@@ -105,6 +105,10 @@ export default function ChatRoomScreen() {
       socketInitialized.current = true;
       
       const newSocket = io(API_BASE_URL, {
+        auth: {
+          username: currentUsername,
+          userId: currentUserId
+        },
         transports: ['websocket'],
         reconnection: true,
         reconnectionDelay: 1000,

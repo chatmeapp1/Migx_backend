@@ -5,6 +5,15 @@ import API_BASE_URL from '@/utils/api';
 
 let socketInstance: Socket | null = null;
 
+/**
+ * ⚠️ WARNING: DO NOT USE THIS HOOK IN FEED, PROFILE, OR OTHER NON-CHAT SCREENS
+ * 
+ * This hook should ONLY be used in:
+ * - app/chatroom/[id].tsx (chat room screen)
+ * - Chat-related components
+ * 
+ * For feed and other screens, use REST API (fetch/axios) instead!
+ */
 export function useSocket() {
   const [socket, setSocket] = useState<Socket | null>(null);
 
@@ -35,7 +44,7 @@ export function useSocket() {
     setSocket(socketInstance);
 
     return () => {
-      // Don't disconnect on unmount, keep connection alive
+      // Don't disconnect on unmount, keep connection alive for chat
     };
   }, []);
 

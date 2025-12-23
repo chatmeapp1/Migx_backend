@@ -401,7 +401,19 @@ const chatNamespace = io.of('/chat');
 chatNamespace.on('connection', (socket) => {
   const username = socket.handshake.auth?.username || 'Anonymous';
   const userId = socket.handshake.auth?.userId || 'Unknown';
-  console.log(`Client connected: ${socket.id} | User: ${username} (ID: ${userId})`);
+  
+  // ⚠️ WARNING: Reject anonymous connections to prevent resource waste
+  if (username === 'Anonymous' || userId === 'Unknown') {
+    console.warn(`⚠️  REJECTED anonymous connection attempt: ${socket.id}`);
+    socket.emit('error', { 
+      message: 'Authentication required. Please login first.',
+      code: 'AUTH_REQUIRED'
+    });
+    socket.disconnect(true);
+    return;
+  }
+  
+  console.log(`✅ Client connected: ${socket.id} | User: ${username} (ID: ${userId})`);
 
   roomEvents(io.of('/chat'), socket);
   chatEvents(io.of('/chat'), socket);
@@ -419,6 +431,10 @@ chatNamespace.on('connection', (socket) => {
 
   socket.on('error', (error) => {
     console.error(`Socket error for ${socket.id}:`, error);
+  });
+  
+  socket.on('disconnect', (reason) => {
+    console.log(`🔌 Client disconnected: ${socket.id} | User: ${username} | Reason: ${reason}`);
   });
 });
 
