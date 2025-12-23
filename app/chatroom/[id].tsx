@@ -104,7 +104,7 @@ export default function ChatRoomScreen() {
     if (!socket && !socketInitialized.current) {
       socketInitialized.current = true;
       
-      const newSocket = io(API_BASE_URL, {
+      const newSocket = io(`${API_BASE_URL}/chat`, {
         auth: {
           username: currentUsername,
           userId: currentUserId

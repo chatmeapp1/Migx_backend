@@ -90,22 +90,85 @@ export default function FeedScreen() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentText, setCommentText] = useState('');
 
+  // Assume these are available from context or other hooks
+  // For demonstration, we'll mock them. In a real app, get these from a store or context.
+  const [username, setUsername] = useState<string | null>(null);
+  const [userId, setUserId] = useState<number | null>(null);
+  const [socket, setSocket] = useState<any>(null); // Replace 'any' with your Socket.IO client type if available
+
+  // Mock API_BASE_URL and initialize socket when component mounts
+  const API_BASE_URL = 'http://localhost:3000'; // Replace with your actual API base URL
+
   useEffect(() => {
-    loadCurrentUser();
+    loadCurrentUserAndInitializeSocket();
     fetchPosts(1);
   }, []);
 
-  const loadCurrentUser = async () => {
+  const loadCurrentUserAndInitializeSocket = async () => {
     try {
       const userStr = await AsyncStorage.getItem('user_data');
       if (userStr) {
         const user = JSON.parse(userStr);
         setCurrentUserId(user.id);
+        setUsername(user.username); // Assuming user object has username
+        setUserId(user.id); // Assuming user object has id
       }
     } catch (error) {
       console.error('Error loading user:', error);
     }
   };
+
+  useEffect(() => {
+    if (!username || !userId) return;
+
+    if (!socket) {
+      const newSocket = io(`${API_BASE_URL}/chat`, {
+        auth: { username, userId },
+        transports: ['websocket'],
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionAttempts: Infinity,
+        timeout: 10000,
+      });
+
+      newSocket.on('connect', () => {
+        console.log('Socket connected successfully!');
+        // You might want to emit a 'join' event or handle room joining here
+        // newSocket.emit('joinRoom', { roomId: 'general' }); // Example
+      });
+
+      newSocket.on('disconnect', (reason) => {
+        console.log(`Socket disconnected: ${reason}`);
+      });
+
+      newSocket.on('connect_error', (error) => {
+        console.error('Socket connection error:', error);
+        Alert.alert('Connection Error', 'Could not connect to the chat server.');
+      });
+
+      // Example of listening for chat messages
+      newSocket.on('newMessage', (message) => {
+        console.log('Received message:', message);
+        // Handle new messages, e.g., add to chat state
+      });
+
+      // Example of listening for system messages
+      newSocket.on('systemMessage', (message) => {
+        console.log('Received system message:', message);
+        // Handle system messages, e.g., user joined/left
+      });
+
+      setSocket(newSocket);
+    }
+
+    // Cleanup on component unmount
+    return () => {
+      if (socket) {
+        socket.disconnect();
+        setSocket(null);
+      }
+    };
+  }, [username, userId, API_BASE_URL]); // Re-run if username, userId, or API_BASE_URL changes
 
   const fetchPosts = async (pageNum: number, isRefresh = false) => {
     if (loading) return;
@@ -126,7 +189,7 @@ export default function FeedScreen() {
       if (data.success) {
         // Normalize all posts to ensure proper field defaults
         const normalizedPosts = normalizeFeedArray(data.posts);
-        
+
         if (isRefresh) {
           setPosts(normalizedPosts);
         } else {
@@ -283,7 +346,7 @@ export default function FeedScreen() {
             const currentLikes = Number(post.likes_count ?? 0);
             const isCurrentlyLiked = post.is_liked ?? false;
             const newLikes = isCurrentlyLiked ? currentLikes - 1 : currentLikes + 1;
-            
+
             return {
               ...post,
               is_liked: !isCurrentlyLiked,
@@ -407,7 +470,7 @@ export default function FeedScreen() {
   const renderPost = ({ item }: { item: Post }) => {
     const mediaUrl = item.image_url || item.mediaUrl;
     const mediaType = item.mediaType;
-    
+
     // Get avatar URI
     const getAvatarUri = (avatar?: string) => {
       if (!avatar) return null;
@@ -417,7 +480,7 @@ export default function FeedScreen() {
     };
 
     const avatarUri = getAvatarUri(item.avatar_url);
-    
+
     // Get level config
     const getLevelConfig = (level: number) => {
       const LEVEL_MAPPING = [
