@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useThemeCustom } from '@/theme/provider';
 import API_BASE_URL from '@/utils/api';
 
 interface TransactionHistoryModalProps {
@@ -28,6 +29,7 @@ interface Transaction {
 }
 
 export function TransactionHistoryModal({ onClose }: TransactionHistoryModalProps) {
+  const { theme } = useThemeCustom();
   const [activeCategory, setActiveCategory] = useState<TransactionCategory>('game');
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(false);
@@ -156,21 +158,23 @@ export function TransactionHistoryModal({ onClose }: TransactionHistoryModalProp
   ];
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Transaction History</Text>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={[styles.header, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
+        <Text style={[styles.title, { color: theme.text }]}>Transaction History</Text>
         <TouchableOpacity onPress={onClose}>
-          <Ionicons name="close-outline" size={24} color="#333" />
+          <Ionicons name="close-outline" size={24} color={theme.text} />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.categoryTabs}>
+      <View style={[styles.categoryTabs, { backgroundColor: theme.background }]}>
         {categories.map((cat) => (
           <TouchableOpacity
             key={cat.id}
             style={[
               styles.categoryTab,
               activeCategory === cat.id && styles.categoryTabActive,
+              activeCategory === cat.id && {},
+              { borderColor: activeCategory === cat.id ? getCategoryColor(cat.id) : theme.border, backgroundColor: activeCategory === cat.id ? getCategoryColor(cat.id) : theme.card },
             ]}
             onPress={() => setActiveCategory(cat.id)}
           >
@@ -183,6 +187,7 @@ export function TransactionHistoryModal({ onClose }: TransactionHistoryModalProp
               style={[
                 styles.categoryTabText,
                 activeCategory === cat.id && styles.categoryTabTextActive,
+                { color: activeCategory === cat.id ? '#fff' : theme.text },
               ]}
             >
               {cat.label}
@@ -191,7 +196,7 @@ export function TransactionHistoryModal({ onClose }: TransactionHistoryModalProp
         ))}
       </View>
 
-      <ScrollView style={styles.transactionList}>
+      <ScrollView style={[styles.transactionList, { backgroundColor: theme.background }]}>
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={getCategoryColor(activeCategory)} />
@@ -201,13 +206,13 @@ export function TransactionHistoryModal({ onClose }: TransactionHistoryModalProp
             <Ionicons
               name={getCategoryIcon(activeCategory)}
               size={48}
-              color="#BDC3C7"
+              color={theme.secondary}
             />
-            <Text style={styles.emptyText}>No transactions found</Text>
+            <Text style={[styles.emptyText, { color: theme.secondary }]}>No transactions found</Text>
           </View>
         ) : (
           transactions.map((tx) => (
-            <View key={tx.id} style={styles.transactionItem}>
+            <View key={tx.id} style={[styles.transactionItem, { borderBottomColor: theme.border }]}>
               <View style={styles.transactionLeft}>
                 <View
                   style={[
@@ -222,11 +227,11 @@ export function TransactionHistoryModal({ onClose }: TransactionHistoryModalProp
                   />
                 </View>
                 <View style={styles.transactionInfo}>
-                  <Text style={styles.transactionType}>
+                  <Text style={[styles.transactionType, { color: theme.text }]}>
                     {getTypeLabel(tx.type)}
                   </Text>
-                  <Text style={styles.transactionUsername}>{tx.username}</Text>
-                  <Text style={styles.transactionTime}>
+                  <Text style={[styles.transactionUsername, { color: theme.secondary }]}>{tx.username}</Text>
+                  <Text style={[styles.transactionTime, { color: theme.secondary }]}>
                     {new Date(tx.created_at).toLocaleString()}
                   </Text>
                 </View>
@@ -251,21 +256,20 @@ export function TransactionHistoryModal({ onClose }: TransactionHistoryModalProp
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingVertical: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#ECF0F1',
+    marginTop: 10,
   },
   title: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    flex: 1,
   },
   categoryTabs: {
     flexDirection: 'row',
@@ -282,18 +286,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: '#ECF0F1',
-    backgroundColor: '#F8F9FA',
     gap: 6,
   },
   categoryTabActive: {
-    backgroundColor: '#E74C3C',
-    borderColor: '#E74C3C',
   },
   categoryTabText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#666',
   },
   categoryTabTextActive: {
     color: '#fff',
@@ -316,7 +315,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
-    color: '#95A5A6',
     marginTop: 12,
   },
   transactionItem: {
@@ -326,7 +324,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#ECF0F1',
   },
   transactionLeft: {
     flex: 1,
@@ -351,12 +348,10 @@ const styles = StyleSheet.create({
   },
   transactionUsername: {
     fontSize: 12,
-    color: '#666',
     marginTop: 2,
   },
   transactionTime: {
     fontSize: 11,
-    color: '#95A5A6',
     marginTop: 2,
   },
   transactionAmount: {
