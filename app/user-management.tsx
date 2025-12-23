@@ -198,17 +198,17 @@ export default function UserManagementScreen() {
 
               <View style={styles.userInfoCard}>
                 <View style={styles.userInfoRow}>
-                  <Text style={[styles.userInfoLabel, { color: theme.textSecondary }]}>Username</Text>
+                  <Text style={[styles.userInfoLabel, { color: '#fff' }]}>Username</Text>
                   <Text style={[styles.userInfoValue, { color: theme.text }]}>{selectedUser.username}</Text>
                 </View>
 
                 <View style={styles.userInfoRow}>
-                  <Text style={[styles.userInfoLabel, { color: theme.textSecondary }]}>Email</Text>
+                  <Text style={[styles.userInfoLabel, { color: '#fff' }]}>Email</Text>
                   <Text style={[styles.userInfoValue, { color: theme.text }]}>{selectedUser.email}</Text>
                 </View>
 
                 <View style={styles.userInfoRow}>
-                  <Text style={[styles.userInfoLabel, { color: theme.textSecondary }]}>Current Role</Text>
+                  <Text style={[styles.userInfoLabel, { color: '#fff' }]}>Current Role</Text>
                   <View
                     style={[
                       styles.roleBadge,
@@ -222,17 +222,17 @@ export default function UserManagementScreen() {
                 </View>
 
                 <View style={styles.userInfoRow}>
-                  <Text style={[styles.userInfoLabel, { color: theme.textSecondary }]}>Credits</Text>
+                  <Text style={[styles.userInfoLabel, { color: '#fff' }]}>Credits</Text>
                   <Text style={[styles.userInfoValue, { color: '#2ECC71' }]}>{selectedUser.credits || 0}</Text>
                 </View>
 
                 <View style={styles.userInfoRow}>
-                  <Text style={[styles.userInfoLabel, { color: theme.textSecondary }]}>Level</Text>
+                  <Text style={[styles.userInfoLabel, { color: '#fff' }]}>Level</Text>
                   <Text style={[styles.userInfoValue, { color: theme.text }]}>Lv {selectedUser.level || 1}</Text>
                 </View>
 
                 <View style={styles.userInfoRow}>
-                  <Text style={[styles.userInfoLabel, { color: theme.textSecondary }]}>Last IP</Text>
+                  <Text style={[styles.userInfoLabel, { color: '#fff' }]}>Last IP</Text>
                   <Text style={[styles.userInfoValue, { color: '#fff' }]}>
                     {selectedUser.last_ip || 'N/A'}
                   </Text>
