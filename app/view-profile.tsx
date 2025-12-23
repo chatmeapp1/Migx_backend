@@ -8,11 +8,11 @@ import { ViewProfileHeader } from '@/components/profile/ViewProfileHeader';
 import { EditProfileStats } from '@/components/profile/EditProfileStats';
 import { API_ENDPOINTS } from '@/utils/api';
 import { getStoredUser } from '@/utils/storage';
-import { useSocket } from '@/hooks/useSocket';
+import { useRoomTabsStore } from '@/stores/useRoomTabsStore';
 
 export default function ViewProfileScreen() {
   const { theme } = useThemeCustom();
-  const { socket } = useSocket();
+  const socket = useRoomTabsStore((state) => state.socket);
   const params = useLocalSearchParams();
   const userId = params.userId as string;
 

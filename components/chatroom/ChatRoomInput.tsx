@@ -67,7 +67,8 @@ const SendIcon = ({ size = 22, color = '#8B5CF6' }) => (
 
 export const ChatRoomInput = forwardRef<ChatRoomInputRef, ChatRoomInputProps>(({ 
   onSend, 
-  onMenuItemPress: externalMenuItemPress, 
+  onMenuItemPress: externalMenuItemPress,
+  onMenuPress,
   onOpenParticipants,
   onEmojiPress,
   emojiPickerVisible = false,
@@ -206,7 +207,7 @@ export const ChatRoomInput = forwardRef<ChatRoomInputRef, ChatRoomInputProps>(({
       ]}
     >
       <View style={[styles.container, { backgroundColor: '#0a5229' }]}>
-        <TouchableOpacity style={styles.iconButton} onPress={() => setMenuVisible(true)}>
+        <TouchableOpacity style={styles.iconButton} onPress={onMenuPress}>
           <MenuIcon color={theme.secondary} />
         </TouchableOpacity>
 
