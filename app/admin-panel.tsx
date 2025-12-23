@@ -53,7 +53,7 @@ export default function AdminPanelScreen() {
   
   const [roomName, setRoomName] = useState('');
   const [roomDescription, setRoomDescription] = useState('');
-  const [roomCategory, setRoomCategory] = useState<'global' | 'managed' | 'games'>('global');
+  const [roomCategory, setRoomCategory] = useState<'global' | 'official' | 'managed' | 'games'>('global');
   const [roomCapacity, setRoomCapacity] = useState('');
   const [roomModalLoading, setRoomModalLoading] = useState(false);
 
@@ -879,7 +879,7 @@ export default function AdminPanelScreen() {
 
               <Text style={[styles.inputLabel, { color: theme.text }]}>Category</Text>
               <View style={styles.categoryButtonsGrid}>
-                {(['global', 'managed', 'games'] as const).map(cat => (
+                {(['global', 'official', 'managed', 'games'] as const).map(cat => (
                   <TouchableOpacity
                     key={cat}
                     style={[
@@ -1271,11 +1271,12 @@ const styles = StyleSheet.create({
   },
   categoryButtonsGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 10,
     marginBottom: 20,
   },
   categoryButtonLarge: {
-    flex: 1,
+    width: '48%',
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
