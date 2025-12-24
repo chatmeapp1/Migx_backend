@@ -247,20 +247,22 @@ module.exports = (io, socket) => {
         }, 200);
 
         // MIG33-style enter message to all users in room (presence event - not saved to Redis)
-        const enterMsg = `${username} [${newUserCount}] has entered`;
-        const enterMessage = {
-          id: `presence-enter-${Date.now()}-${Math.random()}`,
-          roomId,
-          username: room.name,
-          message: enterMsg,
-          timestamp: new Date().toISOString(),
-          type: 'presence',
-          messageType: 'presence'
-        };
+        setTimeout(() => {
+          const enterMsg = `${username} [${newUserCount}] has entered`;
+          const enterMessage = {
+            id: `presence-enter-${Date.now()}-${Math.random()}`,
+            roomId,
+            username: room.name,
+            message: enterMsg,
+            timestamp: new Date().toISOString(),
+            type: 'presence',
+            messageType: 'presence'
+          };
 
-        // Broadcast to ALL users including the joining user
-        io.to(`room:${roomId}`).emit('chat:message', enterMessage);
-        // Note: Presence events are NOT saved to Redis - they are realtime only
+          // Broadcast to ALL users including the joining user
+          io.to(`room:${roomId}`).emit('chat:message', enterMessage);
+          // Note: Presence events are NOT saved to Redis - they are realtime only
+        }, 300);
 
         io.to(`room:${roomId}`).emit('room:user:joined', {
           roomId,
