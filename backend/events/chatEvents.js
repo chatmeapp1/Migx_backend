@@ -169,21 +169,18 @@ module.exports = (io, socket) => {
           }
 
           try {
-            // Follow the user
-            await profileService.followUser(userId, targetUser.id);
-
-            // Send private success response to sender
+            // Send private success response to sender (follow pending acceptance)
             socket.emit('chat:message', {
               id: generateMessageId(),
               roomId,
-              message: `✅ You are now following ${targetUsername}.`,
+              message: `✅ Follow request sent to ${targetUsername}. Waiting for acceptance...`,
               messageType: 'cmdFollow',
               type: 'notice',
               timestamp: new Date().toISOString(),
               isPrivate: true
             });
 
-            // Send follow notification to target user
+            // Send follow notification to target user (without saving follow yet)
             const notificationService = require('../services/notificationService');
             await notificationService.addNotification(targetUsername, {
               type: 'follow',
@@ -193,7 +190,7 @@ module.exports = (io, socket) => {
               timestamp: Date.now(),
             });
 
-            console.log(`👤 ${username} followed ${targetUsername} via /f command`);
+            console.log(`👤 ${username} sent follow request to ${targetUsername} via /f command (pending acceptance)`);
           } catch (error) {
             console.error('Error following user via /f command:', error);
             socket.emit('chat:message', {

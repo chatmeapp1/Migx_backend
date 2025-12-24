@@ -380,6 +380,7 @@ router.post('/follow/accept', async (req, res) => {
   try {
     const { followerId, followingUsername } = req.body;
     const notificationService = require('../services/notificationService');
+    const userService = require('../services/userService');
     
     if (!followerId || !followingUsername) {
       return res.status(400).json({ 
@@ -388,8 +389,23 @@ router.post('/follow/accept', async (req, res) => {
       });
     }
     
+    // Get the user ID of the follower by username
+    const followerUser = await userService.getUserByUsername(followingUsername);
+    
+    if (!followerUser) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'Follower user not found' 
+      });
+    }
+    
+    // NOW save the follow relationship to database (after acceptance)
+    await profileService.followUser(followerId, followerUser.id);
+    
     // Remove the notification
     await notificationService.removeNotification(followingUsername, followerId);
+    
+    console.log(`✅ ${followingUsername} accepted follow request from user ${followerId}`);
     
     res.json({
       success: true,

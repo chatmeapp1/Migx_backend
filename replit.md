@@ -55,7 +55,9 @@ Key REST API endpoints include authentication (`/api/auth/login`), user data (`/
 ### Commands
 
 Chat commands available to users:
-- `/f [username]` - Follow a user (private response, sends notification with Accept/Reject)
+- `/f [username]` - Send follow request to a user (private response, target user gets Accept/Reject notification)
+  - Follow relationship is ONLY saved after target accepts the request
+  - Both users must accept to see each other in contact lists
 - `/uf [username]` - Unfollow a user and remove from contact list (private response)
 - `/me <action>` - Perform an action
 - `/roll` - Roll a random number (1-100)
