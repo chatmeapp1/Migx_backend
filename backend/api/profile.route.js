@@ -272,6 +272,14 @@ router.post('/block', authMiddleware, async (req, res) => {
     const userId = req.user.id;
     if (!blockedUsername) return res.status(400).json({ success: false, message: 'Username required' });
     const result = await profileService.blockUser(userId, blockedUsername);
+    
+    // Invalidate Redis cache when block list changes
+    if (result.success) {
+      const { getRedisClient } = require('../redis');
+      const redis = getRedisClient();
+      await redis.del(`user:blocks:${userId}`);
+    }
+    
     return res.json(result);
   } catch (error) {
     console.error('Error blocking user:', error);
@@ -285,6 +293,14 @@ router.post('/unblock', authMiddleware, async (req, res) => {
     const userId = req.user.id;
     if (!blockedUsername) return res.status(400).json({ success: false, message: 'Username required' });
     const result = await profileService.unblockUser(userId, blockedUsername);
+    
+    // Invalidate Redis cache when block list changes
+    if (result.success) {
+      const { getRedisClient } = require('../redis');
+      const redis = getRedisClient();
+      await redis.del(`user:blocks:${userId}`);
+    }
+    
     return res.json(result);
   } catch (error) {
     console.error('Error unblocking user:', error);

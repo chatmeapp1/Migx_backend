@@ -39,9 +39,31 @@ module.exports = (io, socket) => {
         recipientUsername = recipient.username;
       }
 
-      // Check if sender has been blocked by recipient
-      const profileService = require('../services/profileService');
-      const isBlocked = await profileService.isBlockedBy(toUserId, fromUserId);
+      // Check if sender blocked by recipient using Redis cache (efficient)
+      const { getRedisClient } = require('../redis');
+      const redis = getRedisClient();
+      let isBlocked = false;
+      
+      try {
+        const cachedBlocked = await redis.get(`user:blocks:${toUserId}`);
+        if (cachedBlocked) {
+          const blockedIds = JSON.parse(cachedBlocked);
+          isBlocked = blockedIds.includes(fromUserId);
+        } else {
+          // Fallback to database query if cache miss
+          const profileService = require('../services/profileService');
+          const blockedUsers = await profileService.getBlockedUsers(toUserId);
+          const blockedIds = blockedUsers.map(u => u.id);
+          isBlocked = blockedIds.includes(fromUserId);
+          
+          // Cache for 5 minutes
+          await redis.setex(`user:blocks:${toUserId}`, 300, JSON.stringify(blockedIds));
+        }
+      } catch (err) {
+        console.warn('Redis cache error, defaulting to allow PM:', err.message);
+        isBlocked = false;
+      }
+      
       if (isBlocked) {
         socket.emit('pm:blocked', {
           message: 'You has blocked',

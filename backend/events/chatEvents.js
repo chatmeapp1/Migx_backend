@@ -46,22 +46,37 @@ module.exports = (io, socket) => {
         return;
       }
 
-      // Check if sender is blocked - get all users who blocked this sender in ONE query
-      const profileService = require('../services/profileService');
+      // Check if sender is blocked using Redis cache (most efficient)
       const { getRoomParticipantsWithNames } = require('../utils/redisUtils');
+      const { getRedisClient } = require('../redis');
       const roomParticipants = await getRoomParticipantsWithNames(roomId);
       
-      // Build map of room participant IDs for quick lookup
-      const participantIds = new Set(roomParticipants.map(p => p.userId));
+      // Get blocked list from Redis cache (fast in-memory lookup)
+      const redis = getRedisClient();
+      let blockedByUserIds = new Set();
       
-      // Get all users who blocked this sender (single optimized query)
-      const blockedByQuery = await require('../db/db').query(
-        'SELECT blocker_id FROM user_blocks WHERE blocked_id = $1',
-        [userId]
-      );
-      const blockedByUserIds = new Set(blockedByQuery.rows.map(r => r.blocker_id));
+      try {
+        const cachedBlocked = await redis.get(`user:blocks:${userId}`);
+        if (cachedBlocked) {
+          // Cache hit - use cached data
+          blockedByUserIds = new Set(JSON.parse(cachedBlocked));
+        } else {
+          // Cache miss - fetch from database and cache for 5 minutes
+          const profileService = require('../services/profileService');
+          const blockedUsers = await profileService.getBlockedUsers(userId);
+          const blockedIds = blockedUsers.map(u => u.id);
+          blockedByUserIds = new Set(blockedIds);
+          
+          // Cache for 5 minutes
+          await redis.setex(`user:blocks:${userId}`, 300, JSON.stringify(blockedIds));
+        }
+      } catch (err) {
+        console.warn('Redis cache error, using fallback:', err.message);
+        // Fallback: empty set if cache fails
+        blockedByUserIds = new Set();
+      }
       
-      // Find intersection - room participants who have blocked this sender
+      // Find room participants who have blocked this sender
       const blockedByUsers = new Set();
       for (const participant of roomParticipants) {
         if (blockedByUserIds.has(participant.userId)) {
