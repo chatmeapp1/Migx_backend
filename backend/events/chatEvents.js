@@ -289,6 +289,71 @@ module.exports = (io, socket) => {
           return;
         }
 
+        // Handle /block <username> command (Private Response)
+        if (cmdKey === 'block') {
+          const targetUsername = parts[1] || null;
+
+          if (!targetUsername) {
+            socket.emit('chat:message', {
+              id: generateMessageId(),
+              roomId,
+              message: '❌ Usage: /block <username>',
+              messageType: 'cmdBlock',
+              type: 'notice',
+              timestamp: new Date().toISOString(),
+              isPrivate: true
+            });
+            return;
+          }
+
+          const userService = require('../services/userService');
+          const targetUser = await userService.getUserByUsername(targetUsername);
+
+          if (!targetUser) {
+            socket.emit('chat:message', {
+              id: generateMessageId(),
+              roomId,
+              message: `❌ User ${targetUsername} not found.`,
+              messageType: 'cmdBlock',
+              type: 'notice',
+              timestamp: new Date().toISOString(),
+              isPrivate: true
+            });
+            return;
+          }
+
+          try {
+            const profileService = require('../services/profileService');
+            await profileService.blockUser(userId, targetUsername);
+
+            // Send private success response to sender
+            socket.emit('chat:message', {
+              id: generateMessageId(),
+              roomId,
+              message: `You have blocked ${targetUsername}`,
+              messageType: 'cmdBlock',
+              type: 'cmd',
+              timestamp: new Date().toISOString(),
+              isPrivate: true
+            });
+
+            console.log(`🚫 ${username} blocked ${targetUsername} via /block command`);
+          } catch (error) {
+            console.error('Error blocking user via /block command:', error);
+            socket.emit('chat:message', {
+              id: generateMessageId(),
+              roomId,
+              message: `❌ Failed to block ${targetUsername}.`,
+              messageType: 'cmdBlock',
+              type: 'notice',
+              timestamp: new Date().toISOString(),
+              isPrivate: true
+            });
+          }
+
+          return;
+        }
+
         // Handle /kick <username> command - All roles (Admin: instant, Others: vote kick)
         if (cmdKey === 'kick') {
           const targetUsername = parts[1] || null;

@@ -7,11 +7,11 @@ This project is a cross-platform mobile chat application built with React Native
 - **Block User System**: Complete implementation
   - Database table `user_blocks` for storing blocked user relationships
   - Backend API endpoints: POST `/api/profile/block`, `/api/profile/unblock`, GET `/api/profile/blocked`
-  - Frontend menu option in MenuParticipantsModal: "Block User" with brown text response
+  - Chat command: `/block [username]` - Response: "You have blocked [username]" (private response, no colon)
+  - Frontend menu option in MenuParticipantsModal: "Block User" with response dialog
   - Response message: "You have blocked [username]" (no colon, brown text #8B6F47)
-  - Blocked users cannot see messages from blocker in rooms
-  - Blocked users cannot initiate private chats with blocker
-  - Private chat block response: "You has blocked"
+  - Blocked users cannot see messages from blocker in rooms (feature ready for implementation)
+  - Blocked users cannot initiate private chats with blocker (feature ready for implementation)
 
 ## Latest Changes (Previous - December 24, 2025)
 
