@@ -289,6 +289,57 @@ router.get('/more', async (req, res) => {
   }
 });
 
+router.get('/search', async (req, res) => {
+  try {
+    const { q, limit = 20 } = req.query;
+    
+    if (!q || q.trim().length === 0) {
+      return res.json({ success: true, rooms: [] });
+    }
+
+    const { query: dbQuery } = require('../db/db');
+    const searchTerm = `%${q}%`;
+    
+    const result = await dbQuery(
+      `SELECT r.*, u.username as owner_name
+       FROM rooms r
+       LEFT JOIN users u ON r.owner_id = u.id
+       WHERE LOWER(r.name) LIKE LOWER($1)
+       ORDER BY r.created_at DESC
+       LIMIT $2`,
+      [searchTerm, parseInt(limit)]
+    );
+
+    const roomsWithDetails = await Promise.all(
+      result.rows.map(async (room) => {
+        const userCount = await presence.getRoomUserCount(room.id);
+        return {
+          id: room.id,
+          roomId: room.room_code || room.id,
+          roomCode: room.room_code,
+          name: room.name,
+          description: room.description,
+          maxUsers: room.max_users,
+          userCount,
+          ownerId: room.owner_id,
+          ownerName: room.owner_name,
+          category: room.category
+        };
+      })
+    );
+
+    res.json({
+      success: true,
+      rooms: roomsWithDetails,
+      count: roomsWithDetails.length
+    });
+
+  } catch (error) {
+    console.error('Search rooms error:', error);
+    res.status(500).json({ error: 'Failed to search rooms' });
+  }
+});
+
 router.get('/official', async (req, res) => {
   try {
     const { limit = 20 } = req.query;

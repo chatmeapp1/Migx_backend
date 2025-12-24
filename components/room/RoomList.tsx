@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, View, TouchableOpacity, Text, ActivityIndicator
 import { useRouter } from 'expo-router';
 import { useThemeCustom } from '@/theme/provider';
 import { RoomCategory } from './RoomCategory';
+import { SearchRoomModal } from './SearchRoomModal';
 import { API_ENDPOINTS, createSocket } from '@/utils/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Svg, { Path } from 'react-native-svg';
@@ -46,6 +47,7 @@ export function RoomList() {
   const [officialRooms, setOfficialRooms] = useState<Room[]>([]);
   const [gameRooms, setGameRooms] = useState<Room[]>([]);
   const [username, setUsername] = useState<string | null>(null);
+  const [searchModalVisible, setSearchModalVisible] = useState(false);
 
   const formatRoomForDisplay = (room: Room) => ({
     id: room.id,
@@ -293,7 +295,10 @@ export function RoomList() {
           </View>
         </TouchableOpacity>
         
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: theme.card }]}>
+        <TouchableOpacity 
+          style={[styles.actionButton, { backgroundColor: theme.card }]}
+          onPress={() => setSearchModalVisible(true)}
+        >
           <View style={styles.actionContent}>
             <SearchIcon color={theme.primary} />
             <Text style={[styles.actionText, { color: theme.primary }]}>Search Rooms</Text>
@@ -311,6 +316,12 @@ export function RoomList() {
           <Text style={[styles.footerText, { color: theme.secondary }]}>Menu</Text>
         </TouchableOpacity>
       </View>
+
+      <SearchRoomModal
+        visible={searchModalVisible}
+        onClose={() => setSearchModalVisible(false)}
+        onRoomPress={handleRoomPress}
+      />
     </View>
   );
 }

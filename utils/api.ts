@@ -93,6 +93,7 @@ export const API_ENDPOINTS = {
     REMOVE_FAVORITE: `${API_BASE_URL}/api/rooms/favorites/remove`,
     OFFICIAL: `${API_BASE_URL}/api/rooms/official`,
     GAME: `${API_BASE_URL}/api/rooms/game`,
+    SEARCH: (query: string) => `${API_BASE_URL}/api/rooms/search?q=${encodeURIComponent(query)}`,
   },
   CREDIT: {
     BALANCE: `${API_BASE_URL}/api/credit/balance`,
