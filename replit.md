@@ -4,6 +4,14 @@ This project is a cross-platform mobile chat application built with React Native
 
 ## Latest Changes (December 24, 2025)
 
+- **Unfollow Command**: Implemented `/uf [username]` command
+  - Command unfollows a user and removes from contact list
+  - Private response: "You are now unfollow [username]"
+  - Checks if user exists and if currently following before unfollowing
+  - Integrated with profileService.unfollowUser()
+- **Follow Notification Fix**: Changed `/f` command to directly save notifications to Redis
+  - Previously used io.emit() which wasn't saving to Redis
+  - Now uses notificationService.addNotification() for proper persistence
 - **NotificationModal Redesign**: Complete UI overhaul for full-screen notifications
   - Changed from modal popup to full-screen display
   - Removed all icons - text-only display with colored left borders
@@ -48,6 +56,7 @@ Key REST API endpoints include authentication (`/api/auth/login`), user data (`/
 
 Chat commands available to users:
 - `/f [username]` - Follow a user (private response, sends notification with Accept/Reject)
+- `/uf [username]` - Unfollow a user and remove from contact list (private response)
 - `/me <action>` - Perform an action
 - `/roll` - Roll a random number (1-100)
 - `/gift <name> <username>` - Send a gift
@@ -56,7 +65,7 @@ Chat commands available to users:
 - `/suspend <username>` - Admin only: Suspend a user's account
 - `/unsuspend <username>` - Admin only: Unsuspend a user's account
 
-Commands starting with `/f` are special - they send private responses visible only to the sender.
+Commands starting with `/f` and `/uf` are special - they send private responses visible only to the sender.
 
 ### Game and Economy Systems
 

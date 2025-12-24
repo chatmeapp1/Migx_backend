@@ -210,6 +210,88 @@ module.exports = (io, socket) => {
           return;
         }
 
+        // Handle /uf <username> command for Unfollow User (Private Response)
+        if (cmdKey === 'uf') {
+          const targetUsername = parts[1] || null;
+
+          if (!targetUsername) {
+            socket.emit('chat:message', {
+              id: generateMessageId(),
+              roomId,
+              message: '❌ Usage: /uf <username>',
+              messageType: 'cmdUnfollow',
+              type: 'notice',
+              timestamp: new Date().toISOString(),
+              isPrivate: true
+            });
+            return;
+          }
+
+          const userService = require('../services/userService');
+          const targetUser = await userService.getUserByUsername(targetUsername);
+
+          if (!targetUser) {
+            socket.emit('chat:message', {
+              id: generateMessageId(),
+              roomId,
+              message: `❌ User ${targetUsername} not found.`,
+              messageType: 'cmdUnfollow',
+              type: 'notice',
+              timestamp: new Date().toISOString(),
+              isPrivate: true
+            });
+            return;
+          }
+
+          // Check if currently following
+          const profileService = require('../services/profileService');
+          const isFollowing = await profileService.isFollowing(userId, targetUser.id);
+
+          if (!isFollowing) {
+            socket.emit('chat:message', {
+              id: generateMessageId(),
+              roomId,
+              message: `ℹ️ You are not following ${targetUsername}.`,
+              messageType: 'cmdUnfollow',
+              type: 'notice',
+              timestamp: new Date().toISOString(),
+              isPrivate: true
+            });
+            return;
+          }
+
+          try {
+            // Unfollow the user
+            await profileService.unfollowUser(userId, targetUser.id);
+
+            // Send private success response to sender
+            socket.emit('chat:message', {
+              id: generateMessageId(),
+              roomId,
+              message: `✅ You are now unfollow ${targetUsername}.`,
+              messageType: 'cmdUnfollow',
+              type: 'notice',
+              timestamp: new Date().toISOString(),
+              isPrivate: true
+            });
+
+            console.log(`👤 ${username} unfollowed ${targetUsername} via /uf command`);
+          } catch (error) {
+            console.error('Error unfollowing user via /uf command:', error);
+            socket.emit('chat:message', {
+              id: generateMessageId(),
+              roomId,
+              message: `❌ Failed to unfollow ${targetUsername}.`,
+              messageType: 'cmdUnfollow',
+              type: 'notice',
+              timestamp: new Date().toISOString(),
+              isPrivate: true
+            });
+          }
+
+          return;
+        }
+
         // Handle /c <code> command for Free Credit Claim (Voucher)
         if (cmdKey === 'c') {
           const code = parts[1] || null;
