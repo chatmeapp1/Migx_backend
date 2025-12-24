@@ -80,7 +80,7 @@ export function SearchUserModal({ visible, onClose }: SearchUserModalProps) {
     >
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         {/* Header */}
-        <View style={[styles.header, { backgroundColor: '#0a5229', borderBottomColor: theme.border }]}>
+        <View style={[styles.header, { backgroundColor: '#0a5229', borderBottomColor: theme.border }, { backgroundColor: '#0a5229' }]}>
           <View style={styles.searchInputWrapper}>
             <SearchIcon color="#999" size={16} />
             <TextInput
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.15)',
     borderRadius: 6,
     paddingHorizontal: 10,
     gap: 6,
