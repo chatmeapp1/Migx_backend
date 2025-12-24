@@ -81,24 +81,17 @@ module.exports = (io, socket) => {
         return;
       }
 
-      const savedMessage = await messageService.savePrivateMessage(
-        fromUserId,
-        toUserId,
-        fromUsername,
-        recipientUsername,
-        message
-      );
-
+      // Private messages are NOT saved to database - only real-time Socket.IO for privacy
       await addXp(fromUserId, XP_REWARDS.SEND_MESSAGE, 'send_pm', io);
 
       const messageData = {
-        id: savedMessage?.id || generateMessageId(),
+        id: generateMessageId(),
         fromUserId,
         toUserId,
         fromUsername,
         toUsername: recipientUsername,
         message,
-        timestamp: savedMessage?.created_at || new Date().toISOString(),
+        timestamp: new Date().toISOString(),
         isRead: false
       };
 

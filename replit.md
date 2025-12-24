@@ -2,9 +2,12 @@
 
 This project is a cross-platform mobile chat application built with React Native and Expo, designed to offer a classic chat experience. It features real-time messaging, chat rooms, private conversations, user profiles, and social networking functionalities like friends lists and online status. The application supports iOS, Android, and Web, incorporating room browsing, favorite management, user leveling, theme customization, and a credit transfer system. The goal is to create an engaging social platform that fosters community and interaction, reminiscent of early chat services.
 
-## Latest Changes (December 24, 2025 - Block User Feature + Performance Optimization + Redis Caching)
+## Latest Changes (December 24, 2025 - Block User Feature + Performance Optimization + Redis Caching + No PM Database Storage)
 
 - **Block User System**: Complete multi-part implementation with Redis caching
+- **Private Messages**: Real-time Socket.IO ONLY - NO database persistence for complete privacy
+
+- **Block User System (Details)**: Complete multi-part implementation with Redis caching
   - Database table `user_blocks` for storing blocked user relationships
   - Backend API endpoints: POST `/api/profile/block`, `/api/profile/unblock`, GET `/api/profile/blocked`
   - Chat command: `/block [username]` - Response: "You have blocked [username]" (private response, no colon)
