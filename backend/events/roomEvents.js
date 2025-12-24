@@ -258,8 +258,8 @@ module.exports = (io, socket) => {
           messageType: 'presence'
         };
 
-        // Broadcast to OTHER users only - the joining user should not see their own "has entered" message
-        socket.broadcast.to(`room:${roomId}`).emit('chat:message', enterMessage);
+        // Broadcast to ALL users including the joining user
+        io.to(`room:${roomId}`).emit('chat:message', enterMessage);
         // Note: Presence events are NOT saved to Redis - they are realtime only
 
         io.to(`room:${roomId}`).emit('room:user:joined', {
