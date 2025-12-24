@@ -2,6 +2,13 @@
 
 This project is a cross-platform mobile chat application built with React Native and Expo, designed to offer a classic chat experience. It features real-time messaging, chat rooms, private conversations, user profiles, and social networking functionalities like friends lists and online status. The application supports iOS, Android, and Web, incorporating room browsing, favorite management, user leveling, theme customization, and a credit transfer system. The goal is to create an engaging social platform that fosters community and interaction, reminiscent of early chat services.
 
+## Latest Changes (December 23, 2025)
+
+- **Follow User Feature**: Implemented both UI-based follow (from participants menu) and command-based follow via `/d [username]` command
+  - Follow via participants menu: Shows system message in chat + sends follow notification with Accept/Reject buttons
+  - Follow via `/d [username]` command: Private response message visible only to sender + follow notification with Accept/Reject buttons
+  - Both methods use same backend follow system and notification workflow
+
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -30,7 +37,21 @@ The `/chat` namespace facilitates real-time events such as joining/leaving rooms
 
 ### REST API Endpoints
 
-Key REST API endpoints include authentication (`/api/auth/login`), user data (`/api/users/:id`), room management (`/api/rooms`, `/api/rooms/official`, `/api/rooms/game`, `/api/rooms/recent/:username`, `/api/rooms/favorites/:username`), chatroom lifecycle (`/api/chatroom/:roomId/join`, `/api/chatroom/:roomId/leave`), messages (`/api/messages/:roomId`), credit transfers (`/api/credits/transfer`), and merchant creation (`/api/merchants/create`).
+Key REST API endpoints include authentication (`/api/auth/login`), user data (`/api/users/:id`), room management (`/api/rooms`, `/api/rooms/official`, `/api/rooms/game`, `/api/rooms/recent/:username`, `/api/rooms/favorites/:username`), chatroom lifecycle (`/api/chatroom/:roomId/join`, `/api/chatroom/:roomId/leave`), messages (`/api/messages/:roomId`), credit transfers (`/api/credits/transfer`), merchant creation (`/api/merchants/create`), and profile endpoints for follows (`/api/profile/follow`, `/api/profile/follow/accept`, `/api/profile/follow/reject`).
+
+### Commands
+
+Chat commands available to users:
+- `/d [username]` - Follow a user (private response, sends notification with Accept/Reject)
+- `/me <action>` - Perform an action
+- `/roll` - Roll a random number (1-100)
+- `/gift <name> <username>` - Send a gift
+- `/c <code>` - Claim free credits using voucher code
+- `/unban <username>` - Admin only: Unban a user from all rooms
+- `/suspend <username>` - Admin only: Suspend a user's account
+- `/unsuspend <username>` - Admin only: Unsuspend a user's account
+
+Commands starting with `/d` are special - they send private responses visible only to the sender.
 
 ### Game and Economy Systems
 

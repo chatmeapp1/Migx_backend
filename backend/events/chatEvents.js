@@ -118,6 +118,100 @@ module.exports = (io, socket) => {
           return;
         }
 
+        // Handle /d <username> command for Follow User (Private Response)
+        if (cmdKey === 'd') {
+          const targetUsername = parts[1] || null;
+
+          if (!targetUsername) {
+            socket.emit('chat:message', {
+              id: generateMessageId(),
+              roomId,
+              message: '❌ Usage: /d <username>',
+              messageType: 'cmdFollow',
+              type: 'notice',
+              timestamp: new Date().toISOString(),
+              isPrivate: true
+            });
+            return;
+          }
+
+          const userService = require('../services/userService');
+          const targetUser = await userService.getUserByUsername(targetUsername);
+
+          if (!targetUser) {
+            socket.emit('chat:message', {
+              id: generateMessageId(),
+              roomId,
+              message: `❌ User ${targetUsername} not found.`,
+              messageType: 'cmdFollow',
+              type: 'notice',
+              timestamp: new Date().toISOString(),
+              isPrivate: true
+            });
+            return;
+          }
+
+          // Check if already following
+          const profileService = require('../services/profileService');
+          const isFollowing = await profileService.isFollowing(userId, targetUser.id);
+
+          if (isFollowing) {
+            socket.emit('chat:message', {
+              id: generateMessageId(),
+              roomId,
+              message: `ℹ️ You are already following ${targetUsername}.`,
+              messageType: 'cmdFollow',
+              type: 'notice',
+              timestamp: new Date().toISOString(),
+              isPrivate: true
+            });
+            return;
+          }
+
+          try {
+            // Follow the user
+            await profileService.followUser(userId, targetUser.id);
+
+            // Send private success response to sender
+            socket.emit('chat:message', {
+              id: generateMessageId(),
+              roomId,
+              message: `✅ You are now following ${targetUsername}.`,
+              messageType: 'cmdFollow',
+              type: 'notice',
+              timestamp: new Date().toISOString(),
+              isPrivate: true
+            });
+
+            // Send follow notification to target user
+            io.emit('notif:send', {
+              username: targetUsername,
+              notification: {
+                type: 'follow',
+                message: `${username} has follow you`,
+                from: username,
+                fromUserId: userId,
+                timestamp: Date.now(),
+              },
+            });
+
+            console.log(`👤 ${username} followed ${targetUsername} via /d command`);
+          } catch (error) {
+            console.error('Error following user via /d command:', error);
+            socket.emit('chat:message', {
+              id: generateMessageId(),
+              roomId,
+              message: `❌ Failed to follow ${targetUsername}.`,
+              messageType: 'cmdFollow',
+              type: 'notice',
+              timestamp: new Date().toISOString(),
+              isPrivate: true
+            });
+          }
+
+          return;
+        }
+
         // Handle /c <code> command for Free Credit Claim (Voucher)
         if (cmdKey === 'c') {
           const code = parts[1] || null;
