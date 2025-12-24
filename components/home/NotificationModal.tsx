@@ -246,9 +246,16 @@ export function NotificationModal({ visible, onClose, username, socket }: Notifi
       <View style={[styles.modalOverlay, { backgroundColor: theme.background }]}>
         <View style={[styles.header, { borderBottomColor: theme.border }]}>
           <Text style={[styles.title, { color: theme.text }]}>Notifications</Text>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <CloseIcon color={theme.text} />
-          </TouchableOpacity>
+          <View style={styles.headerRight}>
+            {notifications.length > 0 && (
+              <TouchableOpacity onPress={clearNotifications} style={styles.clearAllButton}>
+                <Text style={[styles.clearAllText, { color: theme.text }]}>Clear All</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <CloseIcon color={theme.text} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {loading ? (
@@ -262,20 +269,12 @@ export function NotificationModal({ visible, onClose, username, socket }: Notifi
             </Text>
           </View>
         ) : (
-          <>
-            <FlatList
-              data={notifications}
-              renderItem={renderNotification}
-              keyExtractor={(item, index) => `${item.timestamp}-${index}`}
-              style={styles.list}
-            />
-            <TouchableOpacity
-              style={[styles.clearButton, { backgroundColor: '#E91E63' }]}
-              onPress={clearNotifications}
-            >
-              <Text style={styles.clearButtonText}>Clear All</Text>
-            </TouchableOpacity>
-          </>
+          <FlatList
+            data={notifications}
+            renderItem={renderNotification}
+            keyExtractor={(item, index) => `${item.timestamp}-${index}`}
+            style={styles.list}
+          />
         )}
       </View>
     </Modal>
@@ -299,10 +298,23 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
   },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  clearAllButton: {
+    padding: 8,
+  },
+  clearAllText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
   closeButton: {
     padding: 8,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 2,
   },
   list: {
     flex: 1,
@@ -363,16 +375,5 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-  },
-  clearButton: {
-    margin: 16,
-    padding: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  clearButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
 });
