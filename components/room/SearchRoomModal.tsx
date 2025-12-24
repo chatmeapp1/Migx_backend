@@ -73,7 +73,7 @@ export function SearchRoomModal({ visible, onClose, onRoomPress }: SearchRoomMod
     >
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         {/* Header */}
-        <View style={[styles.header, { backgroundColor: theme.primary, borderBottomColor: theme.border }]}>
+        <View style={[styles.header, { backgroundColor: '#0a5229', borderBottomColor: theme.border }]}>
           <Text style={styles.headerTitle}>Search Rooms</Text>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <CloseIcon color="#fff" size={24} />
