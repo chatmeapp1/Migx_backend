@@ -138,45 +138,102 @@ export function NotificationModal({ visible, onClose, username, socket }: Notifi
 
   const handleFollowAccept = async (notification: Notification) => {
     try {
+      console.log('Accept clicked for notification:', notification);
+      
+      // Get followerId - either from fromUserId or fetch it from the from username
+      let followerId = notification.fromUserId;
+      
+      if (!followerId && notification.from) {
+        // Fetch user ID from username
+        console.log('Fetching user ID for username:', notification.from);
+        const userResponse = await fetch(`${API_BASE_URL}/api/users/username/${notification.from}`);
+        const userData = await userResponse.json();
+        if (userData?.id) {
+          followerId = userData.id;
+          console.log('Got user ID from username:', followerId);
+        }
+      }
+      
+      if (!followerId) {
+        console.error('❌ Cannot get followerId from notification:', notification);
+        Alert.alert('Error', 'Invalid notification data - cannot identify user');
+        return;
+      }
+
       const response = await fetch(`${API_BASE_URL}/api/profile/follow/accept`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          followerId: notification.fromUserId,
+          followerId: followerId,
           followingUsername: username,
         }),
       });
 
       const data = await response.json();
+      console.log('Follow accept response:', response.status, data);
+      
       if (response.ok && data.success) {
-        // Remove notification after accepting
-        const newNotifications = notifications.filter(n => n.id !== notification.id);
-        setNotifications(newNotifications);
+        // Show success popup
+        Alert.alert('✅ Full Accepted', `You are now following ${notification.from}!`, [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Remove notification after accepting
+              const newNotifications = notifications.filter(n => n.id !== notification.id);
+              setNotifications(newNotifications);
+            }
+          }
+        ]);
       } else {
         Alert.alert('Error', data.error || 'Failed to accept follow');
       }
     } catch (error) {
       console.error('Error accepting follow:', error);
-      Alert.alert('Error', 'Failed to accept follow');
+      Alert.alert('Error', 'Failed to accept follow: ' + (error as any).message);
     }
   };
 
   const handleFollowReject = async (notification: Notification) => {
     try {
+      // Get followerId - either from fromUserId or fetch it from the from username
+      let followerId = notification.fromUserId;
+      
+      if (!followerId && notification.from) {
+        // Fetch user ID from username
+        const userResponse = await fetch(`${API_BASE_URL}/api/users/username/${notification.from}`);
+        const userData = await userResponse.json();
+        if (userData?.id) {
+          followerId = userData.id;
+        }
+      }
+      
+      if (!followerId) {
+        Alert.alert('Error', 'Invalid notification data - cannot identify user');
+        return;
+      }
+
       const response = await fetch(`${API_BASE_URL}/api/profile/follow/reject`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          followerId: notification.fromUserId,
+          followerId: followerId,
           followingUsername: username,
         }),
       });
 
       const data = await response.json();
       if (response.ok && data.success) {
-        // Remove notification after rejecting
-        const newNotifications = notifications.filter(n => n.id !== notification.id);
-        setNotifications(newNotifications);
+        // Show rejection success
+        Alert.alert('✅ Rejected', `You rejected ${notification.from}'s follow request`, [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Remove notification after rejecting
+              const newNotifications = notifications.filter(n => n.id !== notification.id);
+              setNotifications(newNotifications);
+            }
+          }
+        ]);
       } else {
         Alert.alert('Error', data.error || 'Failed to reject follow');
       }
