@@ -23,12 +23,6 @@ interface ChatRoomContentProps {
 export function ChatRoomContent({ messages, bottomPadding = 70 }: ChatRoomContentProps) {
   const flatListRef = useRef<FlatList>(null);
 
-  useEffect(() => {
-    if (messages.length > 0 && flatListRef.current) {
-      flatListRef.current?.scrollToEnd({ animated: true });
-    }
-  }, [messages.length]);
-
   const allMessages = useMemo(() => {
     return messages;
   }, [messages]);
@@ -53,9 +47,6 @@ export function ChatRoomContent({ messages, bottomPadding = 70 }: ChatRoomConten
         />
       )}
       contentContainerStyle={[styles.container, { paddingBottom: bottomPadding }]}
-      onContentSizeChange={() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }}
       removeClippedSubviews={true}
     />
   );
