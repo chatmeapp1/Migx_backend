@@ -28,7 +28,12 @@ export default function Gifts() {
   const loadGifts = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/gifts`);
+      const token = localStorage.getItem('adminToken');
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await axios.get(`${API_BASE_URL}/gifts`, { headers });
       setGifts(response.data.gifts || []);
       setError('');
     } catch (err) {
@@ -80,12 +85,17 @@ export default function Gifts() {
       const formDataObj = new FormData();
       formDataObj.append('file', file);
 
+      // Get token from localStorage
+      const token = localStorage.getItem('adminToken');
+      const headers = { 'Content-Type': 'multipart/form-data' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await axios.post(
         `${API_BASE_URL}/upload/gifts`,
         formDataObj,
-        {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        }
+        { headers }
       );
 
       if (response.data.success) {
@@ -122,6 +132,12 @@ export default function Gifts() {
 
     try {
       setLoading(true);
+      const token = localStorage.getItem('adminToken');
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const method = editingId ? 'put' : 'post';
       const url = editingId 
         ? `${API_BASE_URL}/gifts/${editingId}`
@@ -131,7 +147,7 @@ export default function Gifts() {
         name: formData.name.trim(),
         price,
         image_url: formData.image_url || null
-      });
+      }, { headers });
 
       if (response.data.success) {
         await loadGifts();
@@ -168,7 +184,12 @@ export default function Gifts() {
 
     try {
       setLoading(true);
-      const response = await axios.delete(`${API_BASE_URL}/gifts/${id}`);
+      const token = localStorage.getItem('adminToken');
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await axios.delete(`${API_BASE_URL}/gifts/${id}`, { headers });
       if (response.data.success) {
         await loadGifts();
         setError('');
