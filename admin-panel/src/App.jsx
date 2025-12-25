@@ -6,6 +6,7 @@ import { Users } from './pages/Users';
 import { Rooms } from './pages/Rooms';
 import { Announcements } from './pages/Announcements';
 import { Transactions } from './pages/Transactions';
+import Gifts from './pages/Gifts';
 import './styles/App.css';
 
 function App() {
@@ -49,6 +50,7 @@ function App() {
         {currentPage === 'rooms' && <Rooms />}
         {currentPage === 'announcements' && <Announcements />}
         {currentPage === 'transactions' && <Transactions />}
+        {currentPage === 'gifts' && <Gifts />}
       </main>
     </div>
   );

@@ -11,6 +11,7 @@ export function Navigation({ currentPage, onPageChange, onLogout }) {
     { id: 'rooms', label: '💬 Rooms' },
     { id: 'announcements', label: '📢 Announcements' },
     { id: 'transactions', label: '💰 Transactions' },
+    { id: 'gifts', label: '💝 Gifts' },
   ];
 
   return (

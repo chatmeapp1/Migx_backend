@@ -57,6 +57,24 @@ The application includes an XP & Level System. A Merchant Commission System allo
 
 # Recent Feature Additions (December 25, 2025)
 
+## Gift Management System (Admin Panel)
+- Database: New `gifts` table with columns: `id` (PK), `name` (unique), `price`, `image_url`, `created_at`, `updated_at`
+- Backend API (`/api/gifts`):
+  - `GET /api/gifts` - List all available gifts
+  - `POST /api/gifts/create` - Create gift (super_admin only, with image upload to Cloudinary)
+  - `PUT /api/gifts/:id` - Update gift details (super_admin only)
+  - `DELETE /api/gifts/:id` - Delete gift (super_admin only)
+- Admin Panel:
+  - New "💝 Gifts" page with grid view of all gifts
+  - Create/Edit modal with fields: Gift Name, Price (credits), Image Upload (PNG/JPG)
+  - Image upload to Cloudinary with folder structure: `mig33/gifts/`
+  - Automatic image preview and removal functionality
+  - Success/error messaging, responsive design matching admin theme
+- Frontend Integration:
+  - App fetches gifts from `/api/gifts` endpoint to display in gift modal
+  - Gifts displayed with name, price, and uploaded image from Cloudinary
+  - Used in `/gift <name> <username>` chat command
+
 ## Admin Panel Super Admin Role Restriction
 - Admin panel login now requires `super_admin` role exclusively
 - Backend: `superAdminMiddleware` in `/middleware/auth.js` validates role on all `/api/admin/*` routes
