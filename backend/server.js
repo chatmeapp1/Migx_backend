@@ -273,6 +273,8 @@ const adminRoute = require('./api/admin.route');
 app.use('/api/admin', adminRoute);
 app.use('/api/abuse', abuseRoutes);
 app.use('/api/streak', streakRoutes);
+app.use('/api/gifts', giftsRoute);
+app.use('/api/upload', uploadRoute);
 
 // Admin unban endpoint
 const { clearGlobalBan, getAdminKickCount } = require('./utils/adminKick');
@@ -539,8 +541,5 @@ process.on('SIGINT', async () => {
 });
 
 startServer();
-
-app.use('/api/gifts', giftsRoute);
-app.use('/api/upload', uploadRoute);
 
 module.exports = { app, server, io };
