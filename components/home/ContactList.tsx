@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef, useImperativeHandle } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useThemeCustom } from '@/theme/provider';
@@ -15,7 +15,7 @@ interface Contact {
   avatar: string;
 }
 
-export function ContactList() {
+const ContactListComponent = forwardRef<{ refreshContacts: () => Promise<void> }>((props, ref) => {
   const { theme } = useThemeCustom();
   const [onlineFriends, setOnlineFriends] = React.useState<Contact[]>([]);
   const [mig33Contacts, setMig33Contacts] = React.useState<Contact[]>([]);
@@ -23,6 +23,11 @@ export function ContactList() {
   React.useEffect(() => {
     loadContacts();
   }, []);
+
+  // Expose refresh function via ref
+  useImperativeHandle(ref, () => ({
+    refreshContacts: loadContacts,
+  }));
 
   const loadContacts = async () => {
     try {
@@ -148,3 +153,5 @@ const styles = StyleSheet.create({
     height: 20,
   },
 });
+
+export const ContactList = forwardRef(ContactListComponent);
