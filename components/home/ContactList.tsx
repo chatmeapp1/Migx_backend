@@ -130,7 +130,7 @@ const ContactListComponent = forwardRef<{ refreshContacts: () => Promise<void> }
       <View style={styles.spacer} />
     </ScrollView>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -154,4 +154,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export const ContactList = forwardRef(ContactListComponent);
+export const ContactList = ContactListComponent;
