@@ -7,15 +7,14 @@ const db = require('../db/db');
 router.get('/stats', superAdminMiddleware, async (req, res) => {
   try {
     const totalUsers = await db.query('SELECT COUNT(*) as count FROM users');
-    const activeRooms = await db.query('SELECT COUNT(*) as count FROM rooms WHERE category IS NOT NULL');
+    const activeRooms = await db.query('SELECT COUNT(*) as count FROM rooms');
     const pendingReports = await db.query('SELECT COUNT(*) as count FROM abuse_reports WHERE status = $1', ['pending']);
-    const onlineUsers = await db.query('SELECT COUNT(DISTINCT user_id) as count FROM user_presence WHERE expires_at > NOW()');
 
     res.json({
       totalUsers: totalUsers.rows[0]?.count || 0,
       activeRooms: activeRooms.rows[0]?.count || 0,
       pendingReports: pendingReports.rows[0]?.count || 0,
-      onlineUsers: onlineUsers.rows[0]?.count || 0
+      onlineUsers: 0
     });
   } catch (error) {
     console.error('Error fetching stats:', error);
