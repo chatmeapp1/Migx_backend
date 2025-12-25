@@ -92,6 +92,24 @@ The application includes an XP & Level System. A Merchant Commission System allo
 - Success/error messaging with form validation
 - Styling: Responsive modal with dark green theme matching admin panel design
 
+## Admin Panel Responsive Design
+- **Desktop (1024px+)**: Full layout with side-by-side navigation and content
+- **Tablet (768-1024px)**: Adjusted font sizes, optimized grid layouts, compact spacing
+- **Mobile (≤768px)**: 
+  - Hamburger menu toggle for navigation
+  - Single column layouts
+  - Full-width buttons and forms
+  - Card-based table display (mobile-optimized data presentation)
+  - Optimized font sizes and padding for touch
+- **Small Mobile (≤480px)**: 
+  - Extra-compact spacing
+  - Smaller navigation header
+  - Simplified grid layouts
+  - Touch-friendly button sizes
+- CSS media queries: 1024px, 768px, 480px breakpoints
+- Flexbox and grid for flexible layouts
+- Font size scaling: 16px (desktop) → 14px (tablet) → 13px (mobile)
+
 # External Dependencies
 
 ## Core Expo Modules
