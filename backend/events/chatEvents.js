@@ -78,7 +78,7 @@ module.exports = (io, socket) => {
           blockedByUserIds = new Set(blockedIds);
           
           // Cache for 5 minutes
-          await redis.setex(`user:blocks:${userId}`, 300, JSON.stringify(blockedIds));
+          await redis.set(`user:blocks:${userId}`, JSON.stringify(blockedIds), 'EX', 300);
         }
       } catch (err) {
         console.warn('Redis cache error, using fallback:', err.message);
@@ -169,7 +169,7 @@ module.exports = (io, socket) => {
           const currentTarget = await redis.get(`roll:target:${roomId}`);
           if (currentTarget && parseInt(currentTarget) === rollResult) {
             // Target matched! Silence user and announce
-            await redis.setex(`silence:${roomId}:${userId}`, 10, '1'); // 10 second silence
+            await redis.set(`silence:${roomId}:${userId}`, '1', 'EX', 10); // 10 second silence
             
             const targetMsg = {
               id: generateMessageId(),
