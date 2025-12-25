@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, Alert, ScrollView } from 'react-native';
 import { useThemeCustom } from '@/theme/provider';
+import API_BASE_URL from '@/utils/api';
 
 interface ReportAbuseModalProps {
   visible: boolean;
@@ -25,7 +26,7 @@ export function ReportAbuseModal({
   const [messageText, setMessageText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (!target.trim()) {
       Alert.alert('Error', 'Please enter target username');
       return;
@@ -37,7 +38,7 @@ export function ReportAbuseModal({
 
     setIsSubmitting(true);
     try {
-      const response = await fetch('https://c1a0709e-b20d-4687-ab11-e0584b9914f2-00-pfaqheie55z6.pike.replit.dev/api/abuse/report', {
+      const response = await fetch(`${API_BASE_URL}/api/abuse/report`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -62,7 +63,7 @@ export function ReportAbuseModal({
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [target, reason, messageText, targetUsername, roomId, onClose]);
 
   return (
     <Modal

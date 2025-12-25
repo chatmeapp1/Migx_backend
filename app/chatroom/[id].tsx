@@ -23,6 +23,7 @@ import { MenuParticipantsModal } from '@/components/chatroom/MenuParticipantsMod
 import { RoomInfoModal } from '@/components/chatroom/RoomInfoModal';
 import { VoteKickButton } from '@/components/chatroom/VoteKickButton';
 import { ChatRoomMenu } from '@/components/chatroom/ChatRoomMenu';
+import { ReportAbuseModal } from '@/components/chatroom/ReportAbuseModal';
 import { useRoomTabsStore, useActiveRoom, useActiveRoomId, useOpenRooms } from '@/stores/useRoomTabsStore';
 
 const HEADER_COLOR = '#0a5229';
@@ -59,6 +60,7 @@ export default function ChatRoomScreen() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [roomInfoModalVisible, setRoomInfoModalVisible] = useState(false);
   const [roomInfoData, setRoomInfoData] = useState<any>(null);
+  const [reportAbuseModalVisible, setReportAbuseModalVisible] = useState(false);
   
   const [activeVote, setActiveVote] = useState<{
     target: string;
@@ -334,6 +336,12 @@ export default function ChatRoomScreen() {
         { text: 'Cancel', style: 'cancel' },
         { text: 'Leave', style: 'destructive', onPress: handleLeaveRoom },
       ]);
+      return;
+    }
+
+    if (trimmedAction === 'report-abuse') {
+      setReportAbuseModalVisible(true);
+      return;
     }
   }, [handleOpenRoomInfo, currentUsername, currentActiveRoomId, handleLeaveRoom]);
 
@@ -436,6 +444,13 @@ export default function ChatRoomScreen() {
         onClose={() => setMenuVisible(false)}
         onMenuItemPress={handleMenuAction}
         onOpenParticipants={handleOpenParticipants}
+      />
+
+      <ReportAbuseModal
+        visible={reportAbuseModalVisible}
+        onClose={() => setReportAbuseModalVisible(false)}
+        roomId={currentActiveRoomId}
+        roomName={roomName}
       />
     </View>
   );

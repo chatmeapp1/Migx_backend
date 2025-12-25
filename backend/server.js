@@ -22,6 +22,7 @@ const profileRouter = require('./api/profile.route');
 const viewProfileRouter = require('./api/viewprofile.route');
 const messageRouter = require('./api/message.route');
 const notificationRouter = require('./api/notification.route');
+const abuseRoutes = require('./api/abuse.route');
 
 const roomEvents = require('./events/roomEvents');
 const chatEvents = require('./events/chatEvents');
@@ -264,6 +265,7 @@ app.use('/api/feed', feedRoute);
 
 const adminRoute = require('./api/admin.route');
 app.use('/api/admin', adminRoute);
+app.use('/api/abuse', abuseRoutes);
 
 // Admin unban endpoint
 const { clearGlobalBan, getAdminKickCount } = require('./utils/adminKick');
