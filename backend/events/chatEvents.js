@@ -884,7 +884,8 @@ module.exports = (io, socket) => {
 
           try {
             // Check if room exists
-            const room = await roomService.getRoomById(roomId);
+            const roomServiceInstance = require('../services/roomService');
+            const room = await roomServiceInstance.getRoomById(roomId);
             if (!room) {
               socket.emit('chat:message', {
                 id: generateMessageId(),
@@ -913,7 +914,8 @@ module.exports = (io, socket) => {
             }
 
             // Get target user
-            const targetUser = await userService.getUserByUsername(targetUsername);
+            const userServiceInstance = require('../services/userService');
+            const targetUser = await userServiceInstance.getUserByUsername(targetUsername);
             if (!targetUser) {
               socket.emit('chat:message', {
                 id: generateMessageId(),
@@ -928,7 +930,8 @@ module.exports = (io, socket) => {
             }
 
             // Check if is moderator
-            const isMod = await moderatorService.isModerator(roomId, targetUser.id);
+            const modServiceInstance = require('../services/moderatorService');
+            const isMod = await modServiceInstance.isModerator(roomId, targetUser.id);
             if (!isMod) {
               socket.emit('chat:message', {
                 id: generateMessageId(),
@@ -943,13 +946,13 @@ module.exports = (io, socket) => {
             }
 
             // Remove moderator
-            await moderatorService.removeModerator(roomId, targetUser.id);
+            await modServiceInstance.removeModerator(roomId, targetUser.id);
 
             // Broadcast announcement (public, visible to all)
             io.to(`room:${roomId}`).emit('chat:message', {
               id: generateMessageId(),
               roomId,
-              message: `${targetUsername} Has Removed Moderator in Chatroom ${room.name}`,
+              message: `${targetUsername} Has No Longer Moderator in Chatroom ${room.name}`,
               messageType: 'modRemoval',
               type: 'cmd',
               timestamp: new Date().toISOString()
