@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db/db');
 
-// POST /api/abuse/report - Submit abuse report
+// POST /api/abuse/report - Submit abuse report (public endpoint)
 router.post('/report', async (req, res) => {
   try {
     const { reporter, target, roomId, reason, messageText, timestamp } = req.body;
@@ -35,6 +35,52 @@ router.post('/report', async (req, res) => {
   } catch (error) {
     console.error('Error submitting abuse report:', error);
     res.status(500).json({ error: 'Failed to submit report' });
+  }
+});
+
+// GET /api/abuse/reports - Get all abuse reports (admin only)
+router.get('/reports', async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT * FROM abuse_reports ORDER BY created_at DESC`
+    );
+
+    res.json({
+      success: true,
+      reports: result.rows
+    });
+  } catch (error) {
+    console.error('Error fetching abuse reports:', error);
+    res.status(500).json({ error: 'Failed to fetch reports' });
+  }
+});
+
+// PATCH /api/abuse/reports/:id - Update report status (admin only)
+router.patch('/reports/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!status || !['pending', 'reviewed', 'actioned'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+
+    const result = await db.query(
+      `UPDATE abuse_reports SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING *`,
+      [status, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Report not found' });
+    }
+
+    res.json({
+      success: true,
+      report: result.rows[0]
+    });
+  } catch (error) {
+    console.error('Error updating abuse report:', error);
+    res.status(500).json({ error: 'Failed to update report' });
   }
 });
 

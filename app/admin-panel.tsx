@@ -21,6 +21,7 @@ import { UsersTab } from '@/components/admin/UsersTab';
 import { RoomsTab } from '@/components/admin/RoomsTab';
 import { CreateRoomModal } from '@/components/admin/CreateRoomModal';
 import { TransactionHistoryModal } from '@/components/admin/TransactionHistoryModal';
+import { ReportAbuseListModal } from '@/components/admin/ReportAbuseListModal';
 
 const HEADER_COLOR = '#0a5229';
 
@@ -38,6 +39,8 @@ export default function AdminPanelScreen() {
   const [addCoinModalVisible, setAddCoinModalVisible] = useState(false);
   const [createAccountModalVisible, setCreateAccountModalVisible] = useState(false);
   const [transactionHistoryVisible, setTransactionHistoryVisible] = useState(false);
+  const [reportAbuseModalVisible, setReportAbuseModalVisible] = useState(false);
+  const [adminToken, setAdminToken] = useState('');
   
   const [coinUsername, setCoinUsername] = useState('');
   const [coinAmount, setCoinAmount] = useState('');
@@ -59,6 +62,14 @@ export default function AdminPanelScreen() {
   const [roomModalLoading, setRoomModalLoading] = useState(false);
 
   useEffect(() => {
+    const loadToken = async () => {
+      const userData = await AsyncStorage.getItem('user_data');
+      if (userData) {
+        const parsed = JSON.parse(userData);
+        setAdminToken(parsed.token);
+      }
+    };
+    loadToken();
     fetchUsers();
     if (selectedTab === 'rooms') {
       fetchRooms();
@@ -500,6 +511,7 @@ export default function AdminPanelScreen() {
             onAddCoin={() => setAddCoinModalVisible(true)}
             onCreateAccount={() => setCreateAccountModalVisible(true)}
             onTransactionHistory={() => setTransactionHistoryVisible(true)}
+            onReportAbuse={() => setReportAbuseModalVisible(true)}
             onClose={() => setMenuVisible(false)}
           />
         </Modal>
@@ -555,6 +567,12 @@ export default function AdminPanelScreen() {
         onCapacityChange={setRoomCapacity}
         loading={roomModalLoading}
         onSubmit={handleCreateRoom}
+      />
+
+      <ReportAbuseListModal
+        visible={reportAbuseModalVisible}
+        onClose={() => setReportAbuseModalVisible(false)}
+        token={adminToken}
       />
 
       <View style={styles.tabContainer}>
