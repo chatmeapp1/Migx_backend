@@ -59,6 +59,20 @@ The application includes an XP & Level System. A Merchant Commission System allo
 
 # Recent Feature Additions (December 26, 2025)
 
+## Moderator System for Rooms
+- Command: `/mod [username]` - Room owner only, makes a user a moderator of that room
+- Database: New `room_moderators` table (room_id, user_id with unique constraint)
+- Moderator role: **Per-room only** - moderators only have special status in the room where they're promoted
+- Moderator color: **Yellow (#FFD700)** - same as room owner/creator
+- Owner color: **Orange (#FF8C00)** - applies in their created rooms
+- Backend validates:
+  - Only room owner can add moderators
+  - Cannot add duplicate moderators
+  - Prevents self-promotion
+- System messages announce moderator promotions to all room participants
+
+# Previous Feature Additions (December 26, 2025)
+
 ## Room Info Modal UI Updates
 - Modal now displays **full screen** instead of half-screen (flex: 1 layout)
 - Changed "Online Users" section header to **"List Moderator"**

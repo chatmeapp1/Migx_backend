@@ -12,7 +12,7 @@ interface ChatMessageProps {
   isNotice?: boolean;
   isCmd?: boolean;
   isPresence?: boolean;
-  userType?: 'creator' | 'admin' | 'normal' | 'mentor' | 'merchant';
+  userType?: 'creator' | 'admin' | 'normal' | 'mentor' | 'merchant' | 'moderator';
   isOwnMessage?: boolean;
   messageType?: string;
 }
@@ -40,6 +40,7 @@ export function ChatMessage({
     if (userType === 'admin') return roleColors.admin;
     if (userType === 'mentor') return roleColors.mentor;
     if (userType === 'merchant') return roleColors.merchant;
+    if (userType === 'moderator') return roleColors.moderator;
     return roleColors.normal;
   };
 

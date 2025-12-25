@@ -755,6 +755,129 @@ module.exports = (io, socket) => {
           return;
         }
 
+        // Handle /mod <username> command - Room owner only
+        if (cmdKey === 'mod') {
+          const moderatorService = require('../services/moderatorService');
+          const roomService = require('../services/roomService');
+          const userService = require('../services/userService');
+          
+          const targetUsername = parts[1];
+          if (!targetUsername) {
+            socket.emit('chat:message', {
+              id: generateMessageId(),
+              roomId,
+              message: '❌ Usage: /mod <username>',
+              messageType: 'cmdMod',
+              type: 'notice',
+              timestamp: new Date().toISOString(),
+              isPrivate: true
+            });
+            return;
+          }
+
+          try {
+            // Check if room exists
+            const room = await roomService.getRoomById(roomId);
+            if (!room) {
+              socket.emit('chat:message', {
+                id: generateMessageId(),
+                roomId,
+                message: '❌ Room not found.',
+                messageType: 'cmdMod',
+                type: 'notice',
+                timestamp: new Date().toISOString(),
+                isPrivate: true
+              });
+              return;
+            }
+
+            // Check if sender is room owner
+            if (room.owner_id !== userId) {
+              socket.emit('chat:message', {
+                id: generateMessageId(),
+                roomId,
+                message: '❌ Only room owner can add moderators.',
+                messageType: 'cmdMod',
+                type: 'notice',
+                timestamp: new Date().toISOString(),
+                isPrivate: true
+              });
+              return;
+            }
+
+            // Get target user
+            const targetUser = await userService.getUserByUsername(targetUsername);
+            if (!targetUser) {
+              socket.emit('chat:message', {
+                id: generateMessageId(),
+                roomId,
+                message: `❌ User ${targetUsername} not found.`,
+                messageType: 'cmdMod',
+                type: 'notice',
+                timestamp: new Date().toISOString(),
+                isPrivate: true
+              });
+              return;
+            }
+
+            // Check if already moderator
+            const isMod = await moderatorService.isModerator(roomId, targetUser.id);
+            if (isMod) {
+              socket.emit('chat:message', {
+                id: generateMessageId(),
+                roomId,
+                message: `❌ ${targetUsername} is already a moderator.`,
+                messageType: 'cmdMod',
+                type: 'notice',
+                timestamp: new Date().toISOString(),
+                isPrivate: true
+              });
+              return;
+            }
+
+            // Add moderator
+            await moderatorService.addModerator(roomId, targetUser.id);
+
+            // Broadcast announcement
+            io.to(`room:${roomId}`).emit('chat:message', {
+              id: generateMessageId(),
+              roomId,
+              username: 'System',
+              message: `👑 ${targetUsername} is now a moderator of this room.`,
+              messageType: 'cmdMod',
+              type: 'system',
+              timestamp: new Date().toISOString(),
+              isSystem: true
+            });
+
+            // Send private confirmation
+            socket.emit('chat:message', {
+              id: generateMessageId(),
+              roomId,
+              message: `✅ ${targetUsername} has been promoted to moderator.`,
+              messageType: 'cmdMod',
+              type: 'notice',
+              timestamp: new Date().toISOString(),
+              isPrivate: true
+            });
+
+            console.log(`👑 ${username} made ${targetUsername} a moderator in room ${roomId}`);
+          } catch (error) {
+            console.error('Error adding moderator:', error);
+            socket.emit('chat:message', {
+              id: generateMessageId(),
+              roomId,
+              message: '❌ Failed to add moderator.',
+              messageType: 'cmdMod',
+              type: 'notice',
+              timestamp: new Date().toISOString(),
+              isPrivate: true
+            });
+          }
+
+          return;
+        }
+
         // Handle /c <code> command for Free Credit Claim (Voucher)
         if (cmdKey === 'c') {
           const code = parts[1] || null;
