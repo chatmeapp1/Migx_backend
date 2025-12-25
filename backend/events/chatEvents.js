@@ -766,9 +766,9 @@ module.exports = (io, socket) => {
             socket.emit('chat:message', {
               id: generateMessageId(),
               roomId,
-              message: '❌ Usage: /mod <username>',
-              messageType: 'cmdMod',
-              type: 'notice',
+              message: 'Usage: /mod <username>',
+              messageType: 'error',
+              type: 'error',
               timestamp: new Date().toISOString(),
               isPrivate: true
             });
@@ -782,9 +782,9 @@ module.exports = (io, socket) => {
               socket.emit('chat:message', {
                 id: generateMessageId(),
                 roomId,
-                message: '❌ Room not found.',
-                messageType: 'cmdMod',
-                type: 'notice',
+                message: 'Room not found.',
+                messageType: 'error',
+                type: 'error',
                 timestamp: new Date().toISOString(),
                 isPrivate: true
               });
@@ -796,9 +796,9 @@ module.exports = (io, socket) => {
               socket.emit('chat:message', {
                 id: generateMessageId(),
                 roomId,
-                message: '❌ Only room owner can add moderators.',
-                messageType: 'cmdMod',
-                type: 'notice',
+                message: 'Only room owner can add moderators.',
+                messageType: 'error',
+                type: 'error',
                 timestamp: new Date().toISOString(),
                 isPrivate: true
               });
@@ -811,9 +811,9 @@ module.exports = (io, socket) => {
               socket.emit('chat:message', {
                 id: generateMessageId(),
                 roomId,
-                message: `❌ User ${targetUsername} not found.`,
-                messageType: 'cmdMod',
-                type: 'notice',
+                message: `User ${targetUsername} not found.`,
+                messageType: 'error',
+                type: 'error',
                 timestamp: new Date().toISOString(),
                 isPrivate: true
               });
@@ -826,9 +826,9 @@ module.exports = (io, socket) => {
               socket.emit('chat:message', {
                 id: generateMessageId(),
                 roomId,
-                message: `❌ ${targetUsername} is already a moderator.`,
-                messageType: 'cmdMod',
-                type: 'notice',
+                message: `${targetUsername} is already a moderator.`,
+                messageType: 'error',
+                type: 'error',
                 timestamp: new Date().toISOString(),
                 isPrivate: true
               });
@@ -867,9 +867,9 @@ module.exports = (io, socket) => {
             socket.emit('chat:message', {
               id: generateMessageId(),
               roomId,
-              message: '❌ Failed to add moderator.',
-              messageType: 'cmdMod',
-              type: 'notice',
+              message: 'Failed to add moderator.',
+              messageType: 'error',
+              type: 'error',
               timestamp: new Date().toISOString(),
               isPrivate: true
             });

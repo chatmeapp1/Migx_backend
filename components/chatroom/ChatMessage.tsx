@@ -12,6 +12,7 @@ interface ChatMessageProps {
   isNotice?: boolean;
   isCmd?: boolean;
   isPresence?: boolean;
+  isError?: boolean;
   userType?: 'creator' | 'admin' | 'normal' | 'mentor' | 'merchant' | 'moderator';
   isOwnMessage?: boolean;
   messageType?: string;
@@ -25,6 +26,7 @@ export function ChatMessage({
   isNotice,
   isCmd,
   isPresence,
+  isError,
   userType,
   isOwnMessage,
   messageType
@@ -48,6 +50,18 @@ export function ChatMessage({
     if (isSystem) return theme.text;
     return theme.text;
   };
+
+  const isErrorMessage = isError || messageType === 'error';
+  
+  if (isErrorMessage) {
+    return (
+      <View style={styles.messageContainer}>
+        <Text style={[styles.errorText]}>
+          Error: {message}
+        </Text>
+      </View>
+    );
+  }
 
   if (isCmd) {
     // Check if it's a follow/unfollow message
@@ -158,5 +172,13 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     fontWeight: 'bold',
     fontSize: 13,
+  },
+  errorText: {
+    color: '#FF3333',
+    fontWeight: 'bold',
+    fontSize: 13,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    marginRight: 50,
   },
 });
