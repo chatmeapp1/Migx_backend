@@ -433,18 +433,20 @@ router.post('/follow/accept', async (req, res) => {
       });
     }
     
-    // Get the user ID of the follower by username
-    const followerUser = await userService.getUserByUsername(followingUsername);
+    // Get the user ID of the requester by username
+    const requesterUser = await userService.getUserByUsername(followingUsername);
     
-    if (!followerUser) {
+    if (!requesterUser) {
       return res.status(404).json({ 
         success: false,
-        error: 'Follower user not found' 
+        error: 'Requester user not found' 
       });
     }
     
     // NOW save the follow relationship to database (after acceptance)
-    await profileService.followUser(followerId, followerUser.id);
+    // requesterUser is the one who sent the follow request
+    // followerId is the one accepting - so requesterUser should follow followerId
+    await profileService.followUser(requesterUser.id, followerId);
     
     // Remove the notification
     await notificationService.removeNotification(followingUsername, followerId);
