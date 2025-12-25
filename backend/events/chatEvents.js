@@ -251,6 +251,92 @@ module.exports = (io, socket) => {
           return;
         }
 
+        // Handle /whois <username> command - Get user info
+        if (cmdKey === 'whois') {
+          const targetUsername = parts[1] || null;
+
+          if (!targetUsername) {
+            socket.emit('system:message', {
+              roomId,
+              message: `Usage: /whois <username>`,
+              timestamp: new Date().toISOString(),
+              type: 'warning'
+            });
+            return;
+          }
+
+          try {
+            const userService = require('../services/userService');
+            const targetUser = await userService.getUserByUsername(targetUsername);
+
+            if (!targetUser) {
+              socket.emit('chat:message', {
+                id: generateMessageId(),
+                roomId,
+                message: `❌ User ${targetUsername} not found.`,
+                messageType: 'cmdWhois',
+                type: 'notice',
+                timestamp: new Date().toISOString(),
+                isPrivate: true
+              });
+              return;
+            }
+
+            // Get user's current rooms from Redis
+            const { getRedisClient } = require('../redis');
+            const redis = getRedisClient();
+            const userRoomKey = `user:${targetUser.id}:rooms`;
+            const userRooms = await redis.smembers(userRoomKey);
+
+            // Get room names
+            const roomService = require('../services/roomService');
+            const roomNames = [];
+            for (const rid of userRooms) {
+              const room = await roomService.getRoomById(rid);
+              if (room) roomNames.push(room.name);
+            }
+
+            const roomsText = roomNames.length > 0 ? roomNames.join(', ') : 'None';
+            const gender = targetUser.gender || 'Unknown';
+            const country = targetUser.country || 'Unknown';
+            const level = targetUser.level || 1;
+
+            const whoisMsg = `** Username: ${targetUsername}, Level ${level}, Gender: ${gender}, Country: ${country}, Chatting in, ${roomsText} **`;
+
+            socket.emit('chat:message', {
+              id: generateMessageId(),
+              roomId,
+              message: whoisMsg,
+              messageType: 'cmdWhois',
+              type: 'notice',
+              timestamp: new Date().toISOString(),
+              isPrivate: false
+            });
+
+            io.to(`room:${roomId}`).emit('chat:message', {
+              id: generateMessageId(),
+              roomId,
+              message: whoisMsg,
+              messageType: 'cmdWhois',
+              type: 'notice',
+              timestamp: new Date().toISOString()
+            });
+
+          } catch (error) {
+            console.error('Error processing /whois command:', error);
+            socket.emit('chat:message', {
+              id: generateMessageId(),
+              roomId,
+              message: `❌ Failed to get user info.`,
+              messageType: 'cmdWhois',
+              type: 'notice',
+              timestamp: new Date().toISOString(),
+              isPrivate: true
+            });
+          }
+          return;
+        }
+
         // Handle /f <username> command for Follow User (Private Response)
         if (cmdKey === 'f') {
           const targetUsername = parts[1] || null;
