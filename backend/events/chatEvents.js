@@ -1451,14 +1451,17 @@ module.exports = (io, socket) => {
         }
       }
 
+      // Save message to database
+      const savedMessage = await messageService.saveMessage(roomId, userId, username, message, 'chat');
+      
       const messageData = {
-        id: generateMessageId(),
+        id: savedMessage?.id || generateMessageId(),
         roomId,
         userId,
         username,
         message,
         messageType: 'chat',
-        timestamp: new Date().toISOString()
+        timestamp: savedMessage?.created_at || new Date().toISOString()
       };
 
       // Broadcast to room, filtering out users who blocked sender
