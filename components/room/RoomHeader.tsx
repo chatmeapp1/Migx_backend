@@ -43,12 +43,6 @@ export function RoomHeader() {
           <Text style={[styles.title, { color: '#FFFFFF' }]}>Chat Rooms</Text>
         </View>
         <View style={styles.rightSection}>
-          <TouchableOpacity style={[styles.iconButton, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-            <ChatIcon size={18} color="#FFFFFF" />
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.iconButton, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-            <MenuIcon size={18} color="#FFFFFF" />
-          </TouchableOpacity>
         </View>
       </View>
     </LinearGradient>
