@@ -85,8 +85,9 @@ The application includes an XP & Level System. A Merchant Commission System allo
 
 ## Admin Panel Create Room Feature
 - New "+ Create Room" button in Rooms management page
-- Modal form with fields: Room Name, Room Owner (dropdown), Description
-- Validation: Name required, 3-50 character limit, owner selection required
+- Modal form with fields: Category (dropdown), Room Name, Room Owner (dropdown), Description
+- **Category Dropdown**: Three options (Official, Game, Global) - defaults to Global
+- Validation: Name required (3-50 chars), category required, owner selection required
 - API calls `/api/rooms/create` matching app's room creation endpoint
 - Auto-loads users list for owner selection dropdown
 - Success/error messaging with form validation

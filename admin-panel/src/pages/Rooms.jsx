@@ -8,7 +8,7 @@ export function Rooms() {
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [formData, setFormData] = useState({ name: '', description: '', ownerId: '', creatorName: '' });
+  const [formData, setFormData] = useState({ name: '', description: '', ownerId: '', creatorName: '', category: 'global' });
   const [users, setUsers] = useState([]);
   const [formError, setFormError] = useState('');
   const [formLoading, setFormLoading] = useState(false);
@@ -70,6 +70,10 @@ export function Rooms() {
       setFormError('Please select a room owner');
       return;
     }
+    if (!formData.category) {
+      setFormError('Please select a category');
+      return;
+    }
 
     setFormLoading(true);
     try {
@@ -79,10 +83,10 @@ export function Rooms() {
         ownerId: parseInt(formData.ownerId),
         creatorName: owner.username,
         description: formData.description.trim(),
-        category: 'general'
+        category: formData.category
       });
       setShowCreateModal(false);
-      setFormData({ name: '', description: '', ownerId: '', creatorName: '' });
+      setFormData({ name: '', description: '', ownerId: '', creatorName: '', category: 'global' });
       loadRooms();
       alert('Room created successfully!');
     } catch (err) {
@@ -130,6 +134,19 @@ export function Rooms() {
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
                   placeholder="Enter room name"
                 />
+              </div>
+
+              <div className="form-group">
+                <label>Category *</label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => setFormData({...formData, category: e.target.value})}
+                >
+                  <option value="">Select category</option>
+                  <option value="official">Official</option>
+                  <option value="game">Game</option>
+                  <option value="global">Global</option>
+                </select>
               </div>
 
               <div className="form-group">
