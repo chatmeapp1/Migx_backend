@@ -842,7 +842,7 @@ module.exports = (io, socket) => {
             io.to(`room:${roomId}`).emit('chat:message', {
               id: generateMessageId(),
               roomId,
-              message: `${targetUsername} Has Been Moderator in Chatroom ${roomInfo.name}`,
+              message: `${targetUsername} Has Been Moderator in Chatroom ${room.name}`,
               messageType: 'modPromotion',
               type: 'cmd',
               timestamp: new Date().toISOString()
