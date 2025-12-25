@@ -1461,14 +1461,8 @@ module.exports = (io, socket) => {
         timestamp: new Date().toISOString()
       };
 
-      // Broadcast to room, filtering out users who blocked sender
-      const roomSockets = io.sockets.adapter.rooms.get(`room:${roomId}`) || new Set();
-      for (const socketId of roomSockets) {
-        const targetSocket = io.sockets.sockets.get(socketId);
-        if (targetSocket && targetSocket.username && !blockedByUsers.has(targetSocket.username)) {
-          targetSocket.emit('chat:message', messageData);
-        }
-      }
+      // Broadcast to room
+      io.to(`room:${roomId}`).emit('chat:message', messageData);
       socket.emit('chat:message', messageData);
 
       // Notify all room members of chatlist update
