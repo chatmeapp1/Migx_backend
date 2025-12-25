@@ -267,6 +267,7 @@ module.exports = (io, socket) => {
 
           try {
             const userService = require('../services/userService');
+            const roomService = require('../services/roomService');
             const targetUser = await userService.getUserByUsername(targetUsername);
 
             if (!targetUser) {
@@ -286,7 +287,30 @@ module.exports = (io, socket) => {
             const country = targetUser.country || 'Unknown';
             const level = targetUser.level || 1;
 
-            const whoisMsg = `** Username: ${targetUsername}, Level ${level}, Gender: ${gender}, Country: ${country}, Chatting in, Online **`;
+            // Get user's rooms from database
+            let userRoomNames = [];
+            
+            try {
+              // Query rooms where user has sent messages
+              const query = `
+                SELECT DISTINCT r.name 
+                FROM rooms r 
+                JOIN messages m ON r.id = m.room_id 
+                WHERE m.user_id = $1 
+                LIMIT 5
+              `;
+              const result = await require('../db').default.raw(query, [targetUser.id]);
+              if (result.rows && result.rows.length > 0) {
+                userRoomNames = result.rows.map(r => r.name);
+              }
+            } catch (e) {
+              console.log('Could not fetch user rooms:', e.message);
+            }
+
+            const roomsText = userRoomNames.length > 0 ? userRoomNames.join(', ') : '';
+            const whoisMsg = roomsText 
+              ? `** Username ${targetUsername}, Level ${level}, Gender: ${gender}, Country: ${country}, Chatting in, ${roomsText} **`
+              : `** Username ${targetUsername}, Level ${level}, Gender: ${gender}, Country: ${country} **`;
 
             io.to(`room:${roomId}`).emit('chat:message', {
               id: generateMessageId(),

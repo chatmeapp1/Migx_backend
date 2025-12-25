@@ -45,7 +45,7 @@ Chat commands available to users:
 - `/goal` - Cheer for a goal.
 - `/go` - Cheer for the team.
 - `/gift <name> <username>` - Send a gift.
-- `/whois <username>` - Get user info: username, level, gender, country, and rooms they're chatting in.
+- `/whois <username>` - Get user info: username, level, gender, country, and list of rooms they've chatted in. Format: `** Username {name}, Level {level}, Gender: {gender}, Country: {country}, Chatting in, {room1}, {room2}, ... **`
 - `/c <code>` - Claim free credits.
 - `/unban <username>` - Admin only: Unban a user.
 - `/suspend <username>` - Admin only: Suspend account.
