@@ -25,6 +25,7 @@ const notificationRouter = require('./api/notification.route');
 const abuseRoutes = require('./api/abuse.route');
 const streakRoutes = require('./api/streak.route');
 const giftsRoute = require('./api/gifts.route');
+const uploadRoute = require('./api/upload.route');
 
 const roomEvents = require('./events/roomEvents');
 const chatEvents = require('./events/chatEvents');
@@ -539,9 +540,7 @@ process.on('SIGINT', async () => {
 
 startServer();
 
+app.use('/api/gifts', giftsRoute);
+app.use('/api/upload', uploadRoute);
+
 module.exports = { app, server, io };
-// Add gifts routes if not already added
-if (!require('fs').readFileSync(__filename, 'utf8').includes('giftsRoute')) {
-  const giftsRoute = require('./api/gifts.route');
-  app.use('/api/gifts', giftsRoute);
-}

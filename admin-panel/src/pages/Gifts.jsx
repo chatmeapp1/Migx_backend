@@ -77,29 +77,29 @@ export default function Gifts() {
   const uploadToCloudinary = async (file) => {
     try {
       setUploading(true);
-      const cloudinaryUploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'mig33_assets';
-      const cloudinaryCloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dy74r3flk';
-
       const formDataObj = new FormData();
       formDataObj.append('file', file);
-      formDataObj.append('upload_preset', cloudinaryUploadPreset);
-      formDataObj.append('folder', 'mig33/gifts');
 
       const response = await axios.post(
-        `https://api.cloudinary.com/v1_1/${cloudinaryCloudName}/image/upload`,
-        formDataObj
+        `${API_BASE_URL}/upload/gifts`,
+        formDataObj,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        }
       );
 
-      const imageUrl = response.data.secure_url;
-      setCloudinaryUrl(imageUrl);
-      setFormData(prev => ({
-        ...prev,
-        image_url: imageUrl
-      }));
-      setError('');
+      if (response.data.success) {
+        const imageUrl = response.data.url;
+        setCloudinaryUrl(imageUrl);
+        setFormData(prev => ({
+          ...prev,
+          image_url: imageUrl
+        }));
+        setError('');
+      }
     } catch (err) {
-      console.error('Cloudinary upload error:', err);
-      setError('Failed to upload image to Cloudinary. Check your credentials.');
+      console.error('Upload error:', err);
+      setError(err.response?.data?.error || 'Failed to upload image');
       setImagePreview(null);
     } finally {
       setUploading(false);
