@@ -1,5 +1,5 @@
 import React, { forwardRef, useImperativeHandle } from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useThemeCustom } from '@/theme/provider';
 import { ContactItem } from './ContactItem';
@@ -23,6 +23,8 @@ const ContactListComponent = forwardRef<{ refreshContacts: () => Promise<void> }
   const { theme } = useThemeCustom();
   const [onlineFriends, setOnlineFriends] = React.useState<Contact[]>([]);
   const [mig33Contacts, setMig33Contacts] = React.useState<Contact[]>([]);
+  const [onlineCollapsed, setOnlineCollapsed] = React.useState(false);
+  const [offlineCollapsed, setOfflineCollapsed] = React.useState(false);
 
   React.useEffect(() => {
     loadContacts();
@@ -130,45 +132,65 @@ const ContactListComponent = forwardRef<{ refreshContacts: () => Promise<void> }
     // For demonstration purposes, we'll assume the update is successful.
   };
 
+  // Count online and offline users
+  const onlineCount = onlineFriends.filter(f => f.presence === 'online').length;
+  const offlineCount = mig33Contacts.filter(c => c.presence === 'offline').length;
+
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.background }]} showsVerticalScrollIndicator={false}>
-      <View style={[styles.sectionHeader, { backgroundColor: theme.card, borderColor: theme.border, borderWidth: 1 }]}>
-        <Text style={[styles.sectionTitle, { color: theme.secondary }]}>Email (0)</Text>
-      </View>
+      <TouchableOpacity
+        style={[styles.sectionHeader, { backgroundColor: theme.card, borderColor: theme.border, borderWidth: 1 }]}
+        onPress={() => setOnlineCollapsed(!onlineCollapsed)}
+        activeOpacity={0.7}
+      >
+        <Text style={[styles.sectionTitle, { color: theme.secondary }]}>
+          User Online ({onlineCount})
+        </Text>
+      </TouchableOpacity>
 
-      <View style={styles.section}>
-        {onlineFriends.map((friend, index) => (
-          <ContactItem
-            key={`online-${index}`}
-            name={friend.name}
-            status={friend.status}
-            presence={friend.presence}
-            lastSeen={friend.lastSeen}
-            avatar={friend.avatar}
-            onPress={() => handleContactPress(friend)}
-            onStatusUpdate={(newStatus) => updateStatusMessage(friend.name, newStatus)}
-          />
-        ))}
-      </View>
+      {!onlineCollapsed && (
+        <View style={styles.section}>
+          {onlineFriends.map((friend, index) => (
+            <ContactItem
+              key={`online-${index}`}
+              name={friend.name}
+              status={friend.status}
+              presence={friend.presence}
+              lastSeen={friend.lastSeen}
+              avatar={friend.avatar}
+              onPress={() => handleContactPress(friend)}
+              onStatusUpdate={(newStatus) => updateStatusMessage(friend.name, newStatus)}
+            />
+          ))}
+        </View>
+      )}
 
-      <View style={[styles.sectionHeader, { backgroundColor: theme.card, borderColor: theme.border, borderWidth: 1 }]}>
-        <Text style={[styles.sectionTitle, { color: theme.secondary }]}>migx Contacts (0/33)</Text>
-      </View>
+      <TouchableOpacity
+        style={[styles.sectionHeader, { backgroundColor: theme.card, borderColor: theme.border, borderWidth: 1 }]}
+        onPress={() => setOfflineCollapsed(!offlineCollapsed)}
+        activeOpacity={0.7}
+      >
+        <Text style={[styles.sectionTitle, { color: theme.secondary }]}>
+          User Offline ({offlineCount})
+        </Text>
+      </TouchableOpacity>
 
-      <View style={styles.section}>
-        {mig33Contacts.map((contact, index) => (
-          <ContactItem
-            key={`mig33-${index}`}
-            name={contact.name}
-            status={contact.status}
-            presence={contact.presence}
-            lastSeen={contact.lastSeen}
-            avatar={contact.avatar}
-            onPress={() => handleContactPress(contact)}
-            onStatusUpdate={(newStatus) => updateStatusMessage(contact.name, newStatus)}
-          />
-        ))}
-      </View>
+      {!offlineCollapsed && (
+        <View style={styles.section}>
+          {mig33Contacts.map((contact, index) => (
+            <ContactItem
+              key={`mig33-${index}`}
+              name={contact.name}
+              status={contact.status}
+              presence={contact.presence}
+              lastSeen={contact.lastSeen}
+              avatar={contact.avatar}
+              onPress={() => handleContactPress(contact)}
+              onStatusUpdate={(newStatus) => updateStatusMessage(contact.name, newStatus)}
+            />
+          ))}
+        </View>
+      )}
       <View style={styles.spacer} />
     </ScrollView>
   );
