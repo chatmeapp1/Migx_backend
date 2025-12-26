@@ -88,7 +88,7 @@ export default function EditProfileScreen() {
         hasToken: !!userData.token
       });
 
-      const token = ...
+      const token = userData.token;
       const deviceId = await AsyncStorage.getItem('device_id');
       
       if (!token) {
@@ -210,7 +210,7 @@ export default function EditProfileScreen() {
         hasToken: !!userData.token
       });
 
-      const token = ...
+      const token = userData.token;
       const deviceId = await AsyncStorage.getItem('device_id');
       
       if (!token) {

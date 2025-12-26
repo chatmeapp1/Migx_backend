@@ -68,7 +68,7 @@ export default function UserManagementScreen() {
       }
 
       const parsedData = JSON.parse(userData);
-      const token = ...
+      const token = parsedData.token;
       const deviceId = await AsyncStorage.getItem('device_id');
 
       if (!token) {
@@ -122,7 +122,7 @@ export default function UserManagementScreen() {
       }
 
       const parsedData = JSON.parse(userData);
-      const token = ...
+      const token = parsedData.token;
       const deviceId = await AsyncStorage.getItem('device_id');
 
       if (!token) {
@@ -178,7 +178,7 @@ export default function UserManagementScreen() {
       }
 
       const parsedData = JSON.parse(userData);
-      const token = ...
+      const token = parsedData.token;
       const deviceId = await AsyncStorage.getItem('device_id');
 
       if (!token) {
@@ -257,7 +257,7 @@ export default function UserManagementScreen() {
       }
 
       const parsedData = JSON.parse(userData);
-      const token = ...
+      const token = parsedData.token;
       const deviceId = await AsyncStorage.getItem('device_id');
 
       if (!token) {
@@ -335,7 +335,7 @@ export default function UserManagementScreen() {
       }
 
       const parsedData = JSON.parse(userData);
-      const token = ...
+      const token = parsedData.token;
       const deviceId = await AsyncStorage.getItem('device_id');
 
       if (!token) {
