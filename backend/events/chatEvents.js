@@ -46,7 +46,7 @@ module.exports = (io, socket) => {
         return;
       }
 
-      // Check if user is silenced (from /roll target match)
+      // Check if user is silenced
       const { getRedisClient } = require('../redis');
       const redis = getRedisClient();
       const isSilenced = await redis.exists(`silence:${roomId}:${userId}`);
@@ -60,40 +60,6 @@ module.exports = (io, socket) => {
         return;
       }
 
-      // Check if sender is blocked using Redis cache (most efficient)
-      const { getRoomParticipantsWithNames } = require('../utils/redisUtils');
-      const roomParticipants = await getRoomParticipantsWithNames(roomId);
-      let blockedByUserIds = new Set();
-      
-      try {
-        const cachedBlocked = await redis.get(`user:blocks:${userId}`);
-        if (cachedBlocked) {
-          // Cache hit - use cached data
-          blockedByUserIds = new Set(JSON.parse(cachedBlocked));
-        } else {
-          // Cache miss - fetch from database and cache for 5 minutes
-          const profileService = require('../services/profileService');
-          const blockedUsers = await profileService.getBlockedUsers(userId);
-          const blockedIds = blockedUsers.map(u => u.id);
-          blockedByUserIds = new Set(blockedIds);
-          
-          // Cache for 5 minutes
-          await redis.set(`user:blocks:${userId}`, JSON.stringify(blockedIds), 'EX', 300);
-        }
-      } catch (err) {
-        console.warn('Redis cache error, using fallback:', err.message);
-        // Fallback: empty set if cache fails
-        blockedByUserIds = new Set();
-      }
-      
-      // Find room participants who have blocked this sender
-      const blockedByUsers = new Set();
-      for (const participant of roomParticipants) {
-        if (blockedByUserIds.has(participant.userId)) {
-          blockedByUsers.add(participant.username);
-        }
-      }
-
       // Check if message is a CMD command
       if (message.startsWith('/')) {
         const parts = message.slice(1).split(' ');
@@ -102,133 +68,70 @@ module.exports = (io, socket) => {
         // Handle /me command
         if (cmdKey === 'me') {
           const actionText = parts.slice(1).join(' ');
-          let formatted;
+          let formatted = actionText ? `** ${username} ${actionText} **` : username;
           
-          if (!actionText) {
-            // No text: just show username
-            formatted = username;
-          } else {
-            // With text: show with formatting
-            formatted = `** ${username} ${actionText} **`;
-          }
-          
-          const systemMsg = {
+          io.to(`room:${roomId}`).emit('chat:message', {
             id: generateMessageId(),
             roomId,
             message: formatted,
             messageType: 'cmdMe',
             type: 'cmdMe',
             timestamp: new Date().toISOString()
-          };
-          io.to(`room:${roomId}`).emit('chat:message', systemMsg);
+          });
           return;
         }
 
-        // Handle /roll command with optional target
+        // Handle /roll command
         if (cmdKey === 'roll') {
           const targetParam = parts[1];
-          
-          // If target is specified, set it
           if (targetParam && /^\d+$/.test(targetParam)) {
             const target = parseInt(targetParam);
-            if (target < 1 || target > 100) {
-              socket.emit('chat:message', {
+            if (target >= 1 && target <= 100) {
+              await redis.set(`roll:target:${roomId}`, target, 'EX', 3600);
+              io.to(`room:${roomId}`).emit('chat:message', {
                 id: generateMessageId(),
                 roomId,
-                message: '❌ Target must be between 1 and 100',
-                messageType: 'notice',
-                type: 'notice',
-                timestamp: new Date().toISOString(),
-                isPrivate: true
+                message: `${username}: Roll's target has been set to ${target} by ${username}.`,
+                messageType: 'cmdRoll',
+                type: 'cmdRoll',
+                timestamp: new Date().toISOString()
               });
               return;
             }
-            
-            // Store target for this room
-            await redis.set(`roll:target:${roomId}`, target, 'EX', 3600); // 1 hour expiry
-            
-            // Announce target being set
-            const formatted = `${username}: Roll's target has been set to ${target} by ${username}.`;
-            const systemMsg = {
-              id: generateMessageId(),
-              roomId,
-              message: formatted,
-              messageType: 'cmdRoll',
-              type: 'cmdRoll',
-              timestamp: new Date().toISOString()
-            };
-            io.to(`room:${roomId}`).emit('chat:message', systemMsg);
-            return;
           }
           
-          // Regular roll (check against target)
           const rollResult = Math.floor(Math.random() * 100) + 1;
           const formatted = `** ${username} rolls ${rollResult} **`;
           
-          // Check if roll matches target
           const currentTarget = await redis.get(`roll:target:${roomId}`);
           if (currentTarget && parseInt(currentTarget) === rollResult) {
-            // Target matched! Silence user and announce
-            await redis.set(`silence:${roomId}:${userId}`, '1', 'EX', 10); // 10 second silence
-            
-            const targetMsg = {
+            await redis.set(`silence:${roomId}:${userId}`, '1', 'EX', 10);
+            io.to(`room:${roomId}`).emit('chat:message', {
               id: generateMessageId(),
               roomId,
               message: `${username}: Roll's has been temporary disabled due to rolls target being matched ${rollResult} [${username}]`,
               messageType: 'cmdRoll',
               type: 'cmdRoll',
               timestamp: new Date().toISOString()
-            };
-            io.to(`room:${roomId}`).emit('chat:message', targetMsg);
+            });
             return;
           }
           
-          const systemMsg = {
+          io.to(`room:${roomId}`).emit('chat:message', {
             id: generateMessageId(),
             roomId,
             message: formatted,
             messageType: 'cmdRoll',
             type: 'cmdRoll',
             timestamp: new Date().toISOString()
-          };
-          io.to(`room:${roomId}`).emit('chat:message', systemMsg);
-          return;
-        }
-
-        // Handle /goal command
-        if (cmdKey === 'goal') {
-          const formatted = `** ${username} cheers "GOALLLLLLLLLLL" **`;
-          const systemMsg = {
-            id: generateMessageId(),
-            roomId,
-            message: formatted,
-            messageType: 'cmdGoal',
-            type: 'cmdGoal',
-            timestamp: new Date().toISOString()
-          };
-          io.to(`room:${roomId}`).emit('chat:message', systemMsg);
-          return;
-        }
-
-        // Handle /go command
-        if (cmdKey === 'go') {
-          const formatted = `** ${username} cheers,"GO TEAM GO! **`;
-          const systemMsg = {
-            id: generateMessageId(),
-            roomId,
-            message: formatted,
-            messageType: 'cmdGo',
-            type: 'cmdGo',
-            timestamp: new Date().toISOString()
-          };
-          io.to(`room:${roomId}`).emit('chat:message', systemMsg);
+          });
           return;
         }
 
         // Handle /gift command
         if (cmdKey === 'gift') {
-          const giftName = parts[1] || null;
-          const targetUser = parts[2] || null;
+          const giftName = parts[1];
+          const targetUser = parts[2];
           if (!giftName || !targetUser) {
             socket.emit('system:message', {
               roomId,
@@ -238,1312 +141,47 @@ module.exports = (io, socket) => {
             });
             return;
           }
-          const formatted = `** ${username} sent [${giftName}] to ${targetUser} **`;
-          const systemMsg = {
+          io.to(`room:${roomId}`).emit('chat:message', {
             id: generateMessageId(),
             roomId,
-            message: formatted,
+            message: `** ${username} sent [${giftName}] to ${targetUser} **`,
             messageType: 'cmdGift',
             type: 'cmdGift',
             timestamp: new Date().toISOString()
-          };
-          io.to(`room:${roomId}`).emit('chat:message', systemMsg);
+          });
           return;
         }
 
-        // Handle /whois <username> command - Get user info
-        if (cmdKey === 'whois') {
-          const targetUsername = parts[1] || null;
-
-          if (!targetUsername) {
-            socket.emit('system:message', {
-              roomId,
-              message: `Usage: /whois <username>`,
-              timestamp: new Date().toISOString(),
-              type: 'warning'
-            });
-            return;
-          }
-
-          try {
-            const userService = require('../services/userService');
-            const roomService = require('../services/roomService');
-            const { getRedisClient } = require('../redis');
-            const redis = getRedisClient();
-            
-            const targetUser = await userService.getUserByUsername(targetUsername);
-
-            if (!targetUser) {
-              socket.emit('chat:message', {
-                id: generateMessageId(),
-                roomId,
-                message: `❌ User ${targetUsername} not found`,
-                messageType: 'cmdWhois',
-                type: 'notice',
-                timestamp: new Date().toISOString(),
-                isPrivate: true
-              });
-              return;
-            }
-
-            const gender = targetUser.gender || 'Unknown';
-            const country = targetUser.country || 'Unknown';
-            const level = targetUser.level || 1;
-
-            // 🔐 Check if user is CURRENTLY ONLINE (from Redis presence)
-            const userPresence = await redis.get(`user:${targetUser.id}:presence`);
-            let userRoomNames = [];
-            
-            // Get ALL rooms user is currently in (stored in Redis set)
-            if (userPresence) {
-              try {
-                // Try to get all rooms from user's active rooms set
-                const userRoomsKey = `user:${targetUser.id}:rooms`;
-                const roomIds = await redis.smembers(userRoomsKey);
-                
-                console.log(`🔍 /whois ${targetUsername}: checking Redis set ${userRoomsKey}, found rooms:`, roomIds);
-                
-                if (roomIds && roomIds.length > 0) {
-                  // Fetch details for each room
-                  for (const roomId of roomIds) {
-                    try {
-                      const room = await roomService.getRoomById(roomId);
-                      if (room) {
-                        userRoomNames.push(room.name);
-                      }
-                    } catch (e) {
-                      console.log('Could not fetch room details:', e.message);
-                    }
-                  }
-                }
-              } catch (e) {
-                console.log('Could not get user rooms:', e.message);
-              }
-            } else {
-              console.log(`🔍 /whois ${targetUsername}: user NOT online (no presence found)`);
-            }
-
-            // Build response message with room count
-            const roomCount = userRoomNames.length;
-            const roomsText = userRoomNames.length > 0 ? userRoomNames.join(', ') : '';
-            
-            const whoisMsg = roomsText 
-              ? `** Username ${targetUsername}, Level ${level}, Gender ${gender}, Country ${country}, Chatting in [${roomCount}], ${roomsText} **`
-              : `** Username ${targetUsername}, Level ${level}, Gender ${gender}, Country ${country}, Chatting in [0] **`;
-
-            io.to(`room:${roomId}`).emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: whoisMsg,
-              messageType: 'cmdWhois',
-              type: 'cmd',
-              color: '#A0826D',
-              timestamp: new Date().toISOString()
-            });
-
-          } catch (error) {
-            console.error('Error processing /whois command:', error);
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: `❌ Failed to get user info`,
-              messageType: 'cmdWhois',
-              type: 'notice',
-              timestamp: new Date().toISOString(),
-              isPrivate: true
-            });
-          }
-          return;
-        }
-
-        // Handle /f <username> command for Follow User (Private Response)
-        if (cmdKey === 'f') {
-          const targetUsername = parts[1] || null;
-
-          if (!targetUsername) {
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: '❌ Usage: /d <username>',
-              messageType: 'cmdFollow',
-              type: 'notice',
-              timestamp: new Date().toISOString(),
-              isPrivate: true
-            });
-            return;
-          }
-
-          const userService = require('../services/userService');
-          const targetUser = await userService.getUserByUsername(targetUsername);
-
-          if (!targetUser) {
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: `❌ User ${targetUsername} not found.`,
-              messageType: 'cmdFollow',
-              type: 'notice',
-              timestamp: new Date().toISOString(),
-              isPrivate: true
-            });
-            return;
-          }
-
-          // Check if already following
-          const profileService = require('../services/profileService');
-          const isFollowing = await profileService.isFollowing(userId, targetUser.id);
-
-          if (isFollowing) {
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: `ℹ️ You are already following ${targetUsername}.`,
-              messageType: 'cmdFollow',
-              type: 'notice',
-              timestamp: new Date().toISOString(),
-              isPrivate: true
-            });
-            return;
-          }
-
-          try {
-            // Send private success response to sender (follow pending acceptance)
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: `You are now follow ${targetUsername}`,
-              messageType: 'cmdFollow',
-              type: 'cmd',
-              timestamp: new Date().toISOString(),
-              isPrivate: true
-            });
-
-            // Send follow notification to target user (without saving follow yet)
-            const notificationService = require('../services/notificationService');
-            await notificationService.addNotification(targetUsername, {
-              type: 'follow',
-              message: `${username} wants to follow you`,
-              from: username,
-              fromUserId: userId,
-              timestamp: Date.now(),
-            });
-
-            console.log(`👤 ${username} sent follow request to ${targetUsername} via /f command (pending acceptance)`);
-          } catch (error) {
-            console.error('Error following user via /f command:', error);
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: `❌ Failed to follow ${targetUsername}.`,
-              messageType: 'cmdFollow',
-              type: 'notice',
-              timestamp: new Date().toISOString(),
-              isPrivate: true
-            });
-          }
-
-          return;
-        }
-
-        // Handle /uf <username> command for Unfollow User (Private Response)
-        if (cmdKey === 'uf') {
-          const targetUsername = parts[1] || null;
-
-          if (!targetUsername) {
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: '❌ Usage: /uf <username>',
-              messageType: 'cmdUnfollow',
-              type: 'notice',
-              timestamp: new Date().toISOString(),
-              isPrivate: true
-            });
-            return;
-          }
-
-          const userService = require('../services/userService');
-          const targetUser = await userService.getUserByUsername(targetUsername);
-
-          if (!targetUser) {
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: `❌ User ${targetUsername} not found.`,
-              messageType: 'cmdUnfollow',
-              type: 'notice',
-              timestamp: new Date().toISOString(),
-              isPrivate: true
-            });
-            return;
-          }
-
-          // Check if currently following
-          const profileService = require('../services/profileService');
-          const isFollowing = await profileService.isFollowing(userId, targetUser.id);
-
-          if (!isFollowing) {
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: `ℹ️ You are not following ${targetUsername}.`,
-              messageType: 'cmdUnfollow',
-              type: 'notice',
-              timestamp: new Date().toISOString(),
-              isPrivate: true
-            });
-            return;
-          }
-
-          try {
-            // Unfollow the user
-            await profileService.unfollowUser(userId, targetUser.id);
-
-            // Send private success response to sender
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: `You are now unfollow ${targetUsername}`,
-              messageType: 'cmdUnfollow',
-              type: 'cmd',
-              timestamp: new Date().toISOString(),
-              isPrivate: true
-            });
-
-            console.log(`👤 ${username} unfollowed ${targetUsername} via /uf command`);
-          } catch (error) {
-            console.error('Error unfollowing user via /uf command:', error);
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: `❌ Failed to unfollow ${targetUsername}.`,
-              messageType: 'cmdUnfollow',
-              type: 'notice',
-              timestamp: new Date().toISOString(),
-              isPrivate: true
-            });
-          }
-
-          return;
-        }
-
-        // Handle /block <username> command (Private Response)
-        if (cmdKey === 'block') {
-          const targetUsername = parts[1] || null;
-
-          if (!targetUsername) {
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: '❌ Usage: /block <username>',
-              messageType: 'cmdBlock',
-              type: 'notice',
-              timestamp: new Date().toISOString(),
-              isPrivate: true
-            });
-            return;
-          }
-
-          const userService = require('../services/userService');
-          const targetUser = await userService.getUserByUsername(targetUsername);
-
-          if (!targetUser) {
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: `❌ User ${targetUsername} not found.`,
-              messageType: 'cmdBlock',
-              type: 'notice',
-              timestamp: new Date().toISOString(),
-              isPrivate: true
-            });
-            return;
-          }
-
-          try {
-            const profileService = require('../services/profileService');
-            await profileService.blockUser(userId, targetUsername);
-
-            // Send private success response to sender
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: `You have blocked ${targetUsername}`,
-              messageType: 'cmdBlock',
-              type: 'cmd',
-              timestamp: new Date().toISOString(),
-              isPrivate: true
-            });
-
-            console.log(`🚫 ${username} blocked ${targetUsername} via /block command`);
-          } catch (error) {
-            console.error('Error blocking user via /block command:', error);
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: `❌ Failed to block ${targetUsername}.`,
-              messageType: 'cmdBlock',
-              type: 'notice',
-              timestamp: new Date().toISOString(),
-              isPrivate: true
-            });
-          }
-
-          return;
-        }
-
-        // Handle /unblock <username> command (Private Response)
-        if (cmdKey === 'unblock') {
-          const targetUsername = parts[1] || null;
-
-          if (!targetUsername) {
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: '❌ Usage: /unblock <username>',
-              messageType: 'cmdUnblock',
-              type: 'notice',
-              timestamp: new Date().toISOString(),
-              isPrivate: true
-            });
-            return;
-          }
-
-          const userService = require('../services/userService');
-          const targetUser = await userService.getUserByUsername(targetUsername);
-
-          if (!targetUser) {
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: `❌ User ${targetUsername} not found.`,
-              messageType: 'cmdUnblock',
-              type: 'notice',
-              timestamp: new Date().toISOString(),
-              isPrivate: true
-            });
-            return;
-          }
-
-          try {
-            const profileService = require('../services/profileService');
-            await profileService.unblockUser(userId, targetUsername);
-
-            // Send private success response to sender
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: `You have unblocked ${targetUsername}`,
-              messageType: 'cmdUnblock',
-              type: 'cmd',
-              timestamp: new Date().toISOString(),
-              isPrivate: true
-            });
-
-            console.log(`🔓 ${username} unblocked ${targetUsername} via /unblock command`);
-          } catch (error) {
-            console.error('Error unblocking user via /unblock command:', error);
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: `❌ Failed to unblock ${targetUsername}.`,
-              messageType: 'cmdUnblock',
-              type: 'notice',
-              timestamp: new Date().toISOString(),
-              isPrivate: true
-            });
-          }
-
-          return;
-        }
-
-        // Handle /kick <username> command - All roles (Admin: instant, Others: vote kick)
+        // Handle /kick command
         if (cmdKey === 'kick') {
-          const targetUsername = parts[1] || null;
-
-          if (!targetUsername) {
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: '❌ Usage: /kick <username>',
-              messageType: 'cmdKick',
-              type: 'notice',
-              timestamp: new Date().toISOString(),
-              isPrivate: true
-            });
-            return;
-          }
-
-          const userService = require('../services/userService');
-          const targetUser = await userService.getUserByUsername(targetUsername);
-
-          if (!targetUser) {
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: `❌ User ${targetUsername} not found.`,
-              messageType: 'cmdKick',
-              type: 'notice',
-              timestamp: new Date().toISOString(),
-              isPrivate: true
-            });
-            return;
-          }
-
-          // Check if target is the same as sender
-          if (targetUsername === username) {
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: '❌ You cannot kick yourself.',
-              messageType: 'cmdKick',
-              type: 'notice',
-              timestamp: new Date().toISOString(),
-              isPrivate: true
-            });
-            return;
-          }
-
-          try {
-            // Check if user is in this room
-            const roomService = require('../services/roomService');
-            const room = await roomService.getRoomById(roomId);
-            if (!room) {
-              socket.emit('chat:message', {
-                id: generateMessageId(),
-                roomId,
-                message: '❌ Room not found.',
-                messageType: 'cmdKick',
-                type: 'notice',
-                timestamp: new Date().toISOString(),
-                isPrivate: true
-              });
-              return;
-            }
-
-            // Check if user is admin
-            const isAdmin = await userService.isAdmin(userId);
-
-            // If not admin, check if they have enough credits for vote kick
-            if (!isAdmin) {
-              const userCredits = await userService.getUserCredits(userId);
-              if (userCredits < 500) {
-                socket.emit('chat:message', {
-                  id: generateMessageId(),
-                  roomId,
-                  message: `You don't have credite for start kick`,
-                  messageType: 'cmdKick',
-                  type: 'notice',
-                  timestamp: new Date().toISOString(),
-                  isPrivate: true
-                });
-                return;
-              }
-            }
-
-            // Emit room:kick event to roomEvents handler
-            // The handler will check if user is admin (instant kick) or non-admin (vote kick)
-            socket.emit('room:kick', {
-              roomId,
-              targetUsername,
-              kickerUserId: userId,
-              kickerUsername: username,
-              isAdmin: isAdmin
-            });
-
-            console.log(`⚔️ ${username} initiated kick for ${targetUsername} via /kick command in room ${roomId}`);
-          } catch (error) {
-            console.error('Error processing /kick command:', error);
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: `❌ Failed to process kick command.`,
-              messageType: 'cmdKick',
-              type: 'notice',
-              timestamp: new Date().toISOString(),
-              isPrivate: true
-            });
-          }
-
-          return;
-        }
-
-        // Handle /mod <username> command - Room owner only
-        if (cmdKey === 'mod') {
-          const moderatorService = require('../services/moderatorService');
-          const roomService = require('../services/roomService');
-          const userService = require('../services/userService');
-          
           const targetUsername = parts[1];
           if (!targetUsername) {
-            socket.emit('chat:message', {
-              id: generateMessageId(),
+            socket.emit('system:message', {
               roomId,
-              message: 'Usage: /mod <username>',
-              messageType: 'error',
-              type: 'error',
+              message: `Usage: /kick <username>`,
               timestamp: new Date().toISOString(),
-              isPrivate: true
+              type: 'warning'
             });
             return;
           }
 
-          try {
-            // Check if room exists
-            const room = await roomService.getRoomById(roomId);
-            if (!room) {
-              socket.emit('chat:message', {
-                id: generateMessageId(),
-                roomId,
-                message: 'Room not found.',
-                messageType: 'error',
-                type: 'error',
-                timestamp: new Date().toISOString(),
-                isPrivate: true
-              });
-              return;
-            }
-
-            // Check if sender is room owner
-            if (room.owner_id !== userId) {
-              socket.emit('chat:message', {
-                id: generateMessageId(),
-                roomId,
-                message: 'Only room owner can add moderators.',
-                messageType: 'error',
-                type: 'error',
-                timestamp: new Date().toISOString(),
-                isPrivate: true
-              });
-              return;
-            }
-
-            // Get target user
-            const targetUser = await userService.getUserByUsername(targetUsername);
-            if (!targetUser) {
-              socket.emit('chat:message', {
-                id: generateMessageId(),
-                roomId,
-                message: `User ${targetUsername} not found.`,
-                messageType: 'error',
-                type: 'error',
-                timestamp: new Date().toISOString(),
-                isPrivate: true
-              });
-              return;
-            }
-
-            // Check if already moderator
-            const isMod = await moderatorService.isModerator(roomId, targetUser.id);
-            if (isMod) {
-              socket.emit('chat:message', {
-                id: generateMessageId(),
-                roomId,
-                message: `${targetUsername} is already a moderator.`,
-                messageType: 'error',
-                type: 'error',
-                timestamp: new Date().toISOString(),
-                isPrivate: true
-              });
-              return;
-            }
-
-            // Add moderator
-            await moderatorService.addModerator(roomId, targetUser.id);
-
-            // Broadcast announcement (public, visible to all)
-            io.to(`room:${roomId}`).emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: `${targetUsername} Has Been Moderator in Chatroom ${room.name}`,
-              messageType: 'modPromotion',
-              type: 'cmd',
-              timestamp: new Date().toISOString()
-            });
-
-            console.log(`👑 ${username} made ${targetUsername} a moderator in room ${roomId}`);
-          } catch (error) {
-            console.error('Error adding moderator:', error);
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: 'Failed to add moderator.',
-              messageType: 'error',
-              type: 'error',
-              timestamp: new Date().toISOString(),
-              isPrivate: true
-            });
-          }
-
-          return;
-        }
-
-        // Handle /unmod <username> command - Remove moderator
-        if (cmdKey === 'unmod') {
-          const targetUsername = parts[1]?.toLowerCase();
-
-          if (!targetUsername) {
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: 'Usage: /unmod <username>',
-              messageType: 'error',
-              type: 'error',
-              timestamp: new Date().toISOString(),
-              isPrivate: true
-            });
-            return;
-          }
-
-          try {
-            // Check if room exists
-            const roomServiceInstance = require('../services/roomService');
-            const room = await roomServiceInstance.getRoomById(roomId);
-            if (!room) {
-              socket.emit('chat:message', {
-                id: generateMessageId(),
-                roomId,
-                message: 'Room not found.',
-                messageType: 'error',
-                type: 'error',
-                timestamp: new Date().toISOString(),
-                isPrivate: true
-              });
-              return;
-            }
-
-            // Check if sender is room owner
-            if (room.owner_id !== userId) {
-              socket.emit('chat:message', {
-                id: generateMessageId(),
-                roomId,
-                message: 'Only room owner can remove moderators.',
-                messageType: 'error',
-                type: 'error',
-                timestamp: new Date().toISOString(),
-                isPrivate: true
-              });
-              return;
-            }
-
-            // Get target user
-            const userServiceInstance = require('../services/userService');
-            const targetUser = await userServiceInstance.getUserByUsername(targetUsername);
-            if (!targetUser) {
-              socket.emit('chat:message', {
-                id: generateMessageId(),
-                roomId,
-                message: `User ${targetUsername} not found.`,
-                messageType: 'error',
-                type: 'error',
-                timestamp: new Date().toISOString(),
-                isPrivate: true
-              });
-              return;
-            }
-
-            // Check if is moderator
-            const modServiceInstance = require('../services/moderatorService');
-            const isMod = await modServiceInstance.isModerator(roomId, targetUser.id);
-            if (!isMod) {
-              socket.emit('chat:message', {
-                id: generateMessageId(),
-                roomId,
-                message: `${targetUsername} is not a moderator.`,
-                messageType: 'error',
-                type: 'error',
-                timestamp: new Date().toISOString(),
-                isPrivate: true
-              });
-              return;
-            }
-
-            // Remove moderator
-            await modServiceInstance.removeModerator(roomId, targetUser.id);
-
-            // Broadcast announcement (public, visible to all)
-            io.to(`room:${roomId}`).emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: `${targetUsername} Has No Longer Moderator in Chatroom ${room.name}`,
-              messageType: 'modRemoval',
-              type: 'cmd',
-              timestamp: new Date().toISOString()
-            });
-
-            console.log(`👑 ${username} removed ${targetUsername} as moderator from room ${roomId}`);
-          } catch (error) {
-            console.error('Error removing moderator:', error);
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: 'Failed to remove moderator.',
-              messageType: 'error',
-              type: 'error',
-              timestamp: new Date().toISOString(),
-              isPrivate: true
-            });
-          }
-
-          return;
-        }
-
-        // Handle /c <code> command for Free Credit Claim (Voucher)
-        if (cmdKey === 'c') {
-          const code = parts[1] || null;
-          
-          if (!code || !/^\d{6,7}$/.test(code)) {
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: '❌ Invalid code format. Use: /c <code>',
-              messageType: 'cmdClaim',
-              type: 'notice',
-              timestamp: new Date().toISOString()
-            });
-            return;
-          }
-          
-          const result = await voucherService.claimVoucher(userId, code);
-          
-          if (result.success) {
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: `🎁 Claim Success! You received IDR ${result.amount.toLocaleString()}. Next claim in 30 minutes.`,
-              messageType: 'cmdClaim',
-              type: 'notice',
-              timestamp: new Date().toISOString()
-            });
-            
-            socket.emit('user:balance:update', {
-              credits: result.newBalance
-            });
-          } else if (result.type === 'cooldown') {
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: `⏳ Please wait ${result.remainingMinutes} minutes before next claim.`,
-              messageType: 'cmdClaim',
-              type: 'notice',
-              timestamp: new Date().toISOString()
-            });
-          } else if (result.type === 'already_claimed') {
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: '❌ You already claimed this voucher.',
-              messageType: 'cmdClaim',
-              type: 'notice',
-              timestamp: new Date().toISOString()
-            });
-          } else if (result.type === 'expired') {
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: '❌ No active voucher or voucher has expired.',
-              messageType: 'cmdClaim',
-              type: 'notice',
-              timestamp: new Date().toISOString()
-            });
-          } else {
-            socket.emit('chat:message', {
-              id: generateMessageId(),
-              roomId,
-              message: '❌ Invalid or expired code.',
-              messageType: 'cmdClaim',
-              type: 'notice',
-              timestamp: new Date().toISOString()
-            });
-          }
-          
-          return;
-        }
-
-        // Handle /unban command - Admin only
-        if (cmdKey === 'unban') {
           const userService = require('../services/userService');
-          const { getRedisClient } = require('../redis');
-          
-          // Check if sender is admin
           const isAdmin = await userService.isAdmin(userId);
-          if (!isAdmin) {
-            socket.emit('system:message', {
-              roomId,
-              message: '❌ Only admins can use /unban command.',
-              timestamp: new Date().toISOString(),
-              type: 'error'
-            });
-            return;
-          }
-
-          const targetUsername = parts[1];
-          if (!targetUsername) {
-            socket.emit('system:message', {
-              roomId,
-              message: `Usage: /unban <username>`,
-              timestamp: new Date().toISOString(),
-              type: 'warning'
-            });
-            return;
-          }
-
-          const targetUser = await userService.getUserByUsername(targetUsername);
-          if (!targetUser) {
-            socket.emit('system:message', {
-              roomId,
-              message: `❌ User ${targetUsername} not found.`,
-              timestamp: new Date().toISOString(),
-              type: 'error'
-            });
-            return;
-          }
-
-          const redis = getRedisClient();
-          const banKey = `admin:global:banned:${targetUser.id}`;
-          await redis.del(banKey);
-
-          // Send notification to all users
-          io.to(`room:${roomId}`).emit('chat:message', {
-            id: generateMessageId(),
+          
+          socket.emit('room:kick', {
             roomId,
-            username: 'System',
-            message: `✅ ${targetUsername} has been unbanned from all rooms by ${username}.`,
-            timestamp: new Date().toISOString(),
-            type: 'system',
-            messageType: 'unban',
-            isSystem: true
+            targetUsername,
+            kickerUserId: userId,
+            kickerUsername: username,
+            isAdmin
           });
-
-          console.log(`🔓 Admin ${username} unbanned ${targetUsername}`);
-          return;
-        }
-
-        // Handle /suspend command - Admin only
-        if (cmdKey === 'suspend') {
-          const userService = require('../services/userService');
-          
-          // Check if sender is admin
-          const isAdmin = await userService.isAdmin(userId);
-          if (!isAdmin) {
-            socket.emit('system:message', {
-              roomId,
-              message: '❌ Only admins can use /suspend command.',
-              timestamp: new Date().toISOString(),
-              type: 'error'
-            });
-            return;
-          }
-
-          const targetUsername = parts[1];
-          if (!targetUsername) {
-            socket.emit('system:message', {
-              roomId,
-              message: `Usage: /suspend <username>`,
-              timestamp: new Date().toISOString(),
-              type: 'warning'
-            });
-            return;
-          }
-
-          const targetUser = await userService.getUserByUsername(targetUsername);
-          if (!targetUser) {
-            socket.emit('system:message', {
-              roomId,
-              message: `❌ User ${targetUsername} not found.`,
-              timestamp: new Date().toISOString(),
-              type: 'error'
-            });
-            return;
-          }
-
-          // Don't allow suspending another admin
-          const targetIsAdmin = await userService.isAdmin(targetUser.id);
-          if (targetIsAdmin) {
-            socket.emit('system:message', {
-              roomId,
-              message: `❌ Cannot suspend an admin user.`,
-              timestamp: new Date().toISOString(),
-              type: 'error'
-            });
-            return;
-          }
-
-          // Suspend user in database
-          await userService.suspendUser(targetUser.id, username);
-
-          // If user is online, force disconnect
-          const { getUserSocket } = require('../utils/presence');
-          const targetSocketId = await getUserSocket(targetUser.id);
-          
-          if (targetSocketId) {
-            const targetSocket = io.sockets.sockets.get(targetSocketId);
-            if (targetSocket) {
-              targetSocket.emit('force:logout', {
-                reason: 'suspended',
-                message: 'Your account has been suspended by admin.',
-                suspendedBy: username,
-                timestamp: new Date().toISOString()
-              });
-              
-              // Disconnect after short delay
-              setTimeout(() => {
-                targetSocket.disconnect(true);
-              }, 500);
-            }
-          }
-
-          // Send private confirmation to admin
-          socket.emit('system:message', {
-            roomId,
-            message: `✅ ${targetUsername} has been suspended. They will be logged out immediately.`,
-            timestamp: new Date().toISOString(),
-            type: 'success',
-            isPrivate: true
-          });
-
-          console.log(`🚫 Admin ${username} suspended user ${targetUsername}`);
-          return;
-        }
-
-        // Handle /unsuspend command - Admin only
-        if (cmdKey === 'unsuspend') {
-          const userService = require('../services/userService');
-          
-          // Check if sender is admin
-          const isAdmin = await userService.isAdmin(userId);
-          if (!isAdmin) {
-            socket.emit('system:message', {
-              roomId,
-              message: '❌ Only admins can use /unsuspend command.',
-              timestamp: new Date().toISOString(),
-              type: 'error'
-            });
-            return;
-          }
-
-          const targetUsername = parts[1];
-          if (!targetUsername) {
-            socket.emit('system:message', {
-              roomId,
-              message: `Usage: /unsuspend <username>`,
-              timestamp: new Date().toISOString(),
-              type: 'warning'
-            });
-            return;
-          }
-
-          const targetUser = await userService.getUserByUsername(targetUsername);
-          if (!targetUser) {
-            socket.emit('system:message', {
-              roomId,
-              message: `❌ User ${targetUsername} not found.`,
-              timestamp: new Date().toISOString(),
-              type: 'error'
-            });
-            return;
-          }
-
-          // Unsuspend user
-          await userService.unsuspendUser(targetUser.id);
-
-          socket.emit('system:message', {
-            roomId,
-            message: `✅ ${targetUsername} has been unsuspended. They can now log in.`,
-            timestamp: new Date().toISOString(),
-            type: 'success',
-            isPrivate: true
-          });
-
-          console.log(`✅ Admin ${username} unsuspended user ${targetUsername}`);
-          return;
-        }
-
-        // Handle /bump command - Admin only - Remove user from room temporarily
-        if (cmdKey === 'bump') {
-          const userService = require('../services/userService');
-          const { getRedisClient } = require('../redis');
-          const { getUserSocket } = require('../utils/presence');
-          
-          // Check if sender is admin
-          const isAdmin = await userService.isAdmin(userId);
-          if (!isAdmin) {
-            socket.emit('system:message', {
-              roomId,
-              message: '❌ Only admins can use /bump command.',
-              timestamp: new Date().toISOString(),
-              type: 'error'
-            });
-            return;
-          }
-
-          const targetUsername = parts[1];
-          if (!targetUsername) {
-            socket.emit('system:message', {
-              roomId,
-              message: `Usage: /bump <username>`,
-              timestamp: new Date().toISOString(),
-              type: 'warning'
-            });
-            return;
-          }
-
-          const targetUser = await userService.getUserByUsername(targetUsername);
-          if (!targetUser) {
-            socket.emit('system:message', {
-              roomId,
-              message: `❌ User ${targetUsername} not found.`,
-              timestamp: new Date().toISOString(),
-              type: 'error'
-            });
-            return;
-          }
-
-          // Don't allow bumping another admin
-          const targetIsAdmin = await userService.isAdmin(targetUser.id);
-          if (targetIsAdmin) {
-            socket.emit('system:message', {
-              roomId,
-              message: `❌ Cannot bump an admin user.`,
-              timestamp: new Date().toISOString(),
-              type: 'error'
-            });
-            return;
-          }
-
-          // Set bump cooldown in Redis (10 seconds)
-          const redis = getRedisClient();
-          const bumpKey = `room:bump:${roomId}:${targetUser.id}`;
-          await redis.set(bumpKey, '1');
-          await redis.expire(bumpKey, 10);
-
-          // Get target user's socket and remove from room
-          const targetSocketId = await getUserSocket(targetUser.id);
-          
-          if (targetSocketId) {
-            const targetSocket = io.sockets.sockets.get(targetSocketId);
-            if (targetSocket) {
-              // Remove from room
-              targetSocket.leave(`room:${roomId}`);
-              
-              // Send popup notification to target user
-              targetSocket.emit('room:bumped', {
-                roomId,
-                message: 'You have been removed by the administrator.',
-                bumpedBy: username,
-                timestamp: new Date().toISOString()
-              });
-
-              // Update presence
-              const { removeUserFromRoom } = require('../utils/presence');
-              const { removeUserRoom } = require('../utils/redisUtils');
-              await removeUserFromRoom(roomId, targetUser.id, targetUsername);
-              await removeUserRoom(targetUsername, roomId);
-
-              // Notify room about user leaving
-              const { getRoomUserCount } = require('../utils/presence');
-              const roomService = require('../services/roomService');
-              const userCount = await getRoomUserCount(roomId);
-              const room = await roomService.getRoomById(roomId);
-
-              io.to(`room:${roomId}`).emit('room:user:left', {
-                roomId,
-                username: targetUsername,
-                userCount
-              });
-
-              io.emit('rooms:updateCount', {
-                roomId,
-                userCount,
-                maxUsers: room?.max_users || 25
-              });
-            }
-          }
-
-          // Send confirmation to admin
-          socket.emit('system:message', {
-            roomId,
-            message: `✅ ${targetUsername} has been bumped from the room. They can rejoin in 10 seconds.`,
-            timestamp: new Date().toISOString(),
-            type: 'success',
-            isPrivate: true
-          });
-
-          console.log(`🚪 Admin ${username} bumped user ${targetUsername} from room ${roomId}`);
-          return;
-        }
-
-        // Handle /ip command - Admin only
-        if (cmdKey === 'ip') {
-          const userService = require('../services/userService');
-          const { getRedisClient } = require('../redis');
-          
-          // Check if sender is admin or super admin
-          const userObj = await userService.getUserById(userId);
-          if (!userObj || (userObj.role !== 'admin' && userObj.role !== 'super_admin')) {
-            socket.emit('system:message', {
-              roomId,
-              message: '❌ Only admins can use /ip command.',
-              timestamp: new Date().toISOString(),
-              type: 'error'
-            });
-            return;
-          }
-
-          const targetUsername = parts[1];
-          if (!targetUsername) {
-            socket.emit('system:message', {
-              roomId,
-              message: `Usage: /ip <username>`,
-              timestamp: new Date().toISOString(),
-              type: 'warning'
-            });
-            return;
-          }
-
-          // Rate limit check
-          const redis = getRedisClient();
-          const rateLimitKey = `rl:ipcmd:${userId}`;
-          const isRateLimited = await redis.exists(rateLimitKey);
-          
-          if (isRateLimited) {
-            socket.emit('chat:message', {
-              id: `ip-rl-${Date.now()}`,
-              roomId,
-              username: 'System',
-              message: 'Rate limit exceeded. Please wait 5s.',
-              timestamp: new Date().toISOString(),
-              type: 'system',
-              messageType: 'system',
-              isPrivate: true
-            });
-            return;
-          }
-          await redis.setEx(rateLimitKey, 5, '1');
-
-          const targetUser = await userService.getUserByUsername(targetUsername);
-          if (!targetUser) {
-            socket.emit('system:message', {
-              roomId,
-              message: `❌ User ${targetUsername} not found.`,
-              timestamp: new Date().toISOString(),
-              type: 'error'
-            });
-            return;
-          }
-
-          const ip = await redis.get(`user:${targetUser.id}:ip`);
-          if (!ip) {
-            socket.emit('chat:message', {
-              id: `ip-err-${Date.now()}`,
-              roomId,
-              username: 'System',
-              message: `IP not found for ${targetUsername}`,
-              timestamp: new Date().toISOString(),
-              type: 'system',
-              messageType: 'system',
-              isPrivate: true
-            });
-            return;
-          }
-
-          const sharedUserIds = await redis.sMembers(`ip:${ip}:users`);
-          const roomService = require('../services/roomService');
-          const room = await roomService.getRoomById(roomId);
-          const roomTag = room?.name || 'Indonesia';
-          
-          let responseMessage = '';
-
-          if (sharedUserIds.length <= 1) {
-            responseMessage = `${roomTag}: ${targetUsername} -.${ip}`;
-          } else {
-            const sharedUsernames = await Promise.all(
-              sharedUserIds.map(async (id) => {
-                const u = await userService.getUserById(id);
-                return u ? u.username : null;
-              })
-            );
-            const filteredUsernames = sharedUsernames.filter(n => n !== null);
-            const userIpPairs = filteredUsernames.map(name => `${name} -.${ip}`).join(', ');
-            responseMessage = `${roomTag}: ${userIpPairs}`;
-          }
-
-          socket.emit('chat:message', {
-            id: `ip-res-${Date.now()}`,
-            roomId,
-            username: 'System',
-            message: responseMessage,
-            timestamp: new Date().toISOString(),
-            type: 'system',
-            messageType: 'system',
-            isPrivate: true
-          });
-          return;
-        }
-
-        // Handle /clear command - Admin only - Clear kick count for user to prevent global ban
-        if (cmdKey === 'clear') {
-          const userService = require('../services/userService');
-          const { clearUserKickCount } = require('../utils/adminKick');
-          
-          // Check if sender is admin
-          const isAdmin = await userService.isAdmin(userId);
-          if (!isAdmin) {
-            socket.emit('system:message', {
-              roomId,
-              message: '❌ Only admins can use /clear command.',
-              timestamp: new Date().toISOString(),
-              type: 'error'
-            });
-            return;
-          }
-
-          const targetUsername = parts[1];
-          if (!targetUsername) {
-            socket.emit('system:message', {
-              roomId,
-              message: `Usage: /clear <username> - Clears kick count to prevent global ban`,
-              timestamp: new Date().toISOString(),
-              type: 'warning'
-            });
-            return;
-          }
-
-          const targetUser = await userService.getUserByUsername(targetUsername);
-          if (!targetUser) {
-            socket.emit('system:message', {
-              roomId,
-              message: `❌ User ${targetUsername} not found.`,
-              timestamp: new Date().toISOString(),
-              type: 'error'
-            });
-            return;
-          }
-
-          // Clear user's kick count
-          await clearUserKickCount(targetUser.id);
-
-          // Send confirmation system message
-          io.to(`room:${roomId}`).emit('chat:message', {
-            id: generateMessageId(),
-            roomId,
-            username: 'System',
-            message: `✅ ${targetUsername}'s kick count cleared by ${username} (prevented global ban).`,
-            timestamp: new Date().toISOString(),
-            type: 'system',
-            messageType: 'clear',
-            isSystem: true
-          });
-
-          console.log(`✅ Admin ${username} cleared kick count for ${targetUsername}`);
           return;
         }
 
         // Handle other MIG33 commands
-        const target = parts[1] || null;
         const cmd = MIG33_CMD[cmdKey];
         if (cmd) {
-          // If command requires target but none provided, show hint
+          const target = parts[1];
           if (cmd.requiresTarget && !target) {
             socket.emit('system:message', {
               roomId,
@@ -1554,22 +192,15 @@ module.exports = (io, socket) => {
             return;
           }
 
-          const text = cmd.requiresTarget 
-            ? cmd.message(username, target)
-            : cmd.message(username);
-
-          const formatted = `** ${text} **`;
-
-          const systemMsg = {
+          const text = cmd.requiresTarget ? cmd.message(username, target) : cmd.message(username);
+          io.to(`room:${roomId}`).emit('chat:message', {
             id: generateMessageId(),
             roomId,
-            message: formatted,
+            message: `** ${text} **`,
             messageType: 'cmd',
             type: 'cmd',
             timestamp: new Date().toISOString()
-          };
-
-          io.to(`room:${roomId}`).emit('chat:message', systemMsg);
+          });
           return;
         }
       }
@@ -1584,20 +215,7 @@ module.exports = (io, socket) => {
         timestamp: new Date().toISOString()
       };
 
-      // Broadcast to room
       io.to(`room:${roomId}`).emit('chat:message', messageData);
-      socket.emit('chat:message', messageData);
-
-      // Notify all room members of chatlist update
-      try {
-        const roomUsers = await require('../utils/redisPresence').getRoomUsers(roomId);
-        roomUsers.forEach(user => {
-          io.to(`user:${user}`).emit('chatlist:update', { roomId });
-        });
-      } catch (err) {
-        console.error('Error notifying chatlist update:', err.message);
-      }
-
       await addXp(userId, XP_REWARDS.SEND_MESSAGE, 'send_message', io);
 
     } catch (error) {
@@ -1609,24 +227,8 @@ module.exports = (io, socket) => {
   const getMessages = async (data) => {
     try {
       const { roomId, limit = 50, offset = 0 } = data;
-
-      console.log('📥 Get messages request:', { roomId, limit, offset });
-
-      if (!roomId) {
-        socket.emit('error', { message: 'Room ID required' });
-        return;
-      }
-
       const messages = await messageService.getMessages(roomId, limit, offset);
-
-      console.log('📤 Sending messages:', messages.length);
-
-      socket.emit('chat:messages', {
-        roomId,
-        messages,
-        hasMore: messages.length === limit
-      });
-
+      socket.emit('chat:messages', { roomId, messages, hasMore: messages.length === limit });
     } catch (error) {
       console.error('Error getting messages:', error);
       socket.emit('error', { message: 'Failed to get messages' });
@@ -1635,15 +237,9 @@ module.exports = (io, socket) => {
 
   const deleteMessage = async (data) => {
     try {
-      const { messageId, roomId, adminId } = data;
-
+      const { messageId, roomId } = data;
       await messageService.deleteMessage(messageId);
-
-      io.to(`room:${roomId}`).emit('chat:message:deleted', {
-        messageId,
-        roomId
-      });
-
+      io.to(`room:${roomId}`).emit('chat:message:deleted', { messageId, roomId });
     } catch (error) {
       console.error('Error deleting message:', error);
       socket.emit('error', { message: 'Failed to delete message' });
