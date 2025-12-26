@@ -29,6 +29,8 @@ function authMiddleware(req, res, next) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'migx-secret-key-2024');
     
     // 🔐 STEP 11: Validate device_id (device binding - prevent token theft)
+    // DISABLED FOR DEVELOPMENT
+    /*
     if (!clientDeviceId) {
       logger.security('DEVICE_BINDING_FAILED: Device ID missing', { 
         userId: decoded.id || decoded.userId,
@@ -50,9 +52,10 @@ function authMiddleware(req, res, next) {
         error: 'Session expired. Please login again.' 
       });
     }
+    */
 
     req.user = decoded;
-    logger.info('AUTH_SUCCESS: Device binding verified', { 
+    logger.info('AUTH_SUCCESS: Authentication verified', { 
       userId: decoded.id || decoded.userId,
       endpoint: req.path 
     });
