@@ -10,25 +10,28 @@ module.exports = (io, socket) => {
     try {
       const { fromUserId, toUserId, toUsername, amount, message } = data;
 
-      // 📋 Validation checks with explicit logging
-      if (!fromUserId || !toUserId || !amount) {
-        console.warn(`[TRANSFER] Missing fields: fromUserId=${fromUserId}, toUserId=${toUserId}, amount=${amount}`);
+      // 🔒 STEP 1: Strict validation - reject early if invalid
+      // Missing fields check
+      if (!fromUserId || !toUserId || amount === undefined || amount === null) {
+        console.warn(`[TRANSFER] ❌ Missing required fields: fromUserId=${fromUserId}, toUserId=${toUserId}, amount=${amount}`);
         socket.emit('credit:transfer:error', { message: 'Missing required fields' });
         return;
       }
 
-      // Note: PIN is validated on frontend in AsyncStorage, not in backend
-      // Backend focuses on authorization via Socket.IO authentication
-
-      if (amount <= 0) {
-        console.warn(`[TRANSFER] Invalid amount: ${amount}`);
-        socket.emit('credit:transfer:error', { message: 'Amount must be positive' });
+      // Type conversion to ensure numeric comparison
+      const numAmount = Number(amount);
+      
+      // Amount must be positive integer
+      if (!Number.isInteger(numAmount) || numAmount <= 0) {
+        console.warn(`[TRANSFER] ❌ Invalid amount: ${amount} (not a positive integer)`);
+        socket.emit('credit:transfer:error', { message: 'Amount must be a positive integer' });
         return;
       }
 
-      const validation = await creditService.validateTransfer(fromUserId, toUserId, amount);
+      // 🔐 STEP 2: Server-side validation (amount, self-transfer, rate limit, balance)
+      const validation = await creditService.validateTransfer(fromUserId, toUserId, numAmount);
       if (!validation.valid) {
-        console.warn(`[TRANSFER] Validation failed: ${validation.error}`);
+        console.warn(`[TRANSFER] ❌ Validation failed: ${validation.error}`);
         socket.emit('credit:transfer:error', { message: validation.error });
         return;
       }
@@ -44,22 +47,24 @@ module.exports = (io, socket) => {
         recipientUsername = recipient.username;
       }
 
-      console.log(`[TRANSFER] Processing: ${fromUserId} → ${toUserId} (${amount} credits)`);
+      console.log(`[TRANSFER] 🔄 Processing: ${fromUserId} → ${toUserId} (${numAmount} credits)`);
 
+      // 💳 STEP 3: Execute database transaction
       const result = await creditService.transferCredits(
         fromUserId,
         toUserId,
-        amount,
+        numAmount,
         message || 'Credit transfer'
       );
 
+      // All database failures MUST emit error
       if (!result.success) {
-        console.error(`[TRANSFER] Failed: ${result.error}`);
+        console.error(`[TRANSFER] ❌ Transaction failed: ${result.error}`);
         socket.emit('credit:transfer:error', { message: result.error });
         return;
       }
 
-      console.log(`[TRANSFER] Success: ${fromUserId} → ${toUserId} (${amount} credits)`);
+      console.log(`[TRANSFER] ✅ Success: ${fromUserId} → ${toUserId} (${numAmount} credits)`);
 
       await addXp(fromUserId, XP_REWARDS.TRANSFER_CREDIT, 'transfer_credit', io);
 

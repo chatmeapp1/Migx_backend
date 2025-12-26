@@ -211,23 +211,37 @@ const getTransferHistory = async (userId, limit = 50) => {
 };
 
 const validateTransfer = async (fromUserId, toUserId, amount) => {
-  if (fromUserId === toUserId) {
+  // Transfer limits
+  const MIN_AMOUNT = 1000;
+  const MAX_AMOUNT = 1000000;
+  
+  // Self-transfer check (prevent user from sending to themselves)
+  if (String(fromUserId) === String(toUserId)) {
     return { valid: false, error: 'Cannot transfer to yourself' };
   }
   
+  // Amount must be positive
   if (amount <= 0) {
     return { valid: false, error: 'Amount must be positive' };
   }
 
-  if (amount < 1000) {
-    return { valid: false, error: 'Minimum transfer amount is 1,000' };
+  // Minimum amount check
+  if (amount < MIN_AMOUNT) {
+    return { valid: false, error: `Minimum transfer is ${MIN_AMOUNT} credits` };
   }
   
+  // Maximum amount check (prevent large transfers)
+  if (amount > MAX_AMOUNT) {
+    return { valid: false, error: `Maximum transfer is ${MAX_AMOUNT} credits per transaction` };
+  }
+  
+  // Rate limiting check (prevent spam transfers)
   const rateCheck = await checkTransferLimit(fromUserId);
   if (!rateCheck.allowed) {
     return { valid: false, error: rateCheck.message };
   }
   
+  // Sufficient balance check
   const balance = await getBalance(fromUserId);
   if (balance < amount) {
     return { valid: false, error: 'Insufficient credits' };

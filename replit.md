@@ -76,18 +76,44 @@ The application includes an XP & Level System, a Merchant Commission System for 
 
 # Recent Changes (December 26, 2025)
 
-## Credit Transfer Implementation
-- Fixed credit transfer feature that was stuck at "Processing..." state
-- **Original Issue:** Frontend attempted Socket.IO connection to `/chat` namespace but connection failed
-- **Solution:** Switched to REST API (`POST /api/credit/transfer`) instead of Socket.IO
-- **Why REST API:** More reliable, simpler implementation, proven to work with existing backend
-- **Updated Files:**
-  - `app/transfer-credit.tsx` - Changed from Socket.IO to REST API using fetch
-  - `utils/api.ts` - Added AsyncStorage import for getChatSocket (kept for future use), added detailed logging
-- **Result:** Credit transfers now use REST API which properly handles validation, authentication, and response
+## 🔒 Credit Transfer - Complete Security Hardening
+**Status:** 3 of 7 security layers implemented + 4 remaining for Autonomous mode
 
-## Code Quality Improvements
-- Removed unused Socket.IO imports from transfer-credit.tsx
-- Added comprehensive error handling with user-friendly alerts
-- Added console logging for debugging transfer attempts
-- Kept getChatSocket() in utils/api.ts for potential future Socket.IO real-time updates
+### Completed Security Features:
+
+**1️⃣ Strict Server-Side Validation** ✅
+- MIN amount: 1,000 credits (prevents dust transfers)
+- MAX amount: 1,000,000 credits (prevents whale exploits)
+- Self-transfer prevention (users cannot send to themselves)
+- Amount must be positive integer (no negative/float exploits)
+- Balance sufficiency check (prevents saldo minus)
+- Detailed validation error messages
+
+**2️⃣ Rate Limiting via Redis** ✅
+- Max 5 transfers per minute per user
+- Redis key: `transfer:limit:{userId}`
+- TTL: 60 seconds
+- Prevents spam/DoS attacks
+
+**3️⃣ Error Handling & Logging** ✅
+- All validation paths emit `credit:transfer:error` response
+- No silent failures (UI never stuck at "Processing...")
+- Detailed console logging with emoji markers
+- Try-catch blocks wrap entire event handler
+
+### Remaining Security Layers (Autonomous Mode):
+4. **Redis Distributed Locks** - Anti double-send using `lock:transfer:{userId}` with NX+EX
+5. **Idempotency Tracking** - Add `request_id` UNIQUE column to `credit_logs` table
+6. **PIN Attempt Limiting** - Track failed PIN attempts with 10-minute cooldown via Redis
+7. **Enhanced Error Messages** - Hide sensitive errors from client, log details server-side
+
+### Fixed Bugs:
+- ✅ Credit transfer stuck at "Processing..." → Now uses REST API
+- ✅ String concatenation bug in balance calculation (`"11010" + 1000`) → Now converts to numbers
+- ✅ Transfer history not showing → Fixed API endpoint mapping
+
+### Updated Files:
+- `backend/services/creditService.js` - Added MIN/MAX validation, number conversion
+- `backend/events/creditEvents.js` - Strict validation, type checking, improved logging
+- `app/transfer-history.tsx` - Fixed API endpoint and response handling
+- `backend/api/credit.route.js` - Already complete with proper error responses
