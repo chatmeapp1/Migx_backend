@@ -68,7 +68,8 @@ export default function UserManagementScreen() {
       }
 
       const parsedData = JSON.parse(userData);
-      const token = parsedData?.token;
+      const token = ...
+      const deviceId = await AsyncStorage.getItem('device_id');
 
       if (!token) {
         Alert.alert('Error', 'Session expired. Please log in again.');
@@ -79,6 +80,7 @@ export default function UserManagementScreen() {
       const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
         headers: {
           'Authorization': `Bearer ${token}`,
+          'x-device-id': deviceId || '',
         },
       });
 
@@ -120,7 +122,8 @@ export default function UserManagementScreen() {
       }
 
       const parsedData = JSON.parse(userData);
-      const token = parsedData?.token;
+      const token = ...
+      const deviceId = await AsyncStorage.getItem('device_id');
 
       if (!token) {
         Alert.alert('Error', 'Session expired. Please log in again.');
@@ -132,6 +135,7 @@ export default function UserManagementScreen() {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'x-device-id': deviceId || '',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ role: selectedRole }),
@@ -174,7 +178,8 @@ export default function UserManagementScreen() {
       }
 
       const parsedData = JSON.parse(userData);
-      const token = parsedData?.token;
+      const token = ...
+      const deviceId = await AsyncStorage.getItem('device_id');
 
       if (!token) {
         Alert.alert('Error', 'Session expired. Please log in again.');
@@ -186,6 +191,7 @@ export default function UserManagementScreen() {
       const getUserResponse = await fetch(`${API_BASE_URL}/api/admin/users`, {
         headers: {
           'Authorization': `Bearer ${token}`,
+          'x-device-id': deviceId || '',
         },
       });
 
@@ -208,6 +214,7 @@ export default function UserManagementScreen() {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'x-device-id': deviceId || '',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ newPassword }),
@@ -250,7 +257,8 @@ export default function UserManagementScreen() {
       }
 
       const parsedData = JSON.parse(userData);
-      const token = parsedData?.token;
+      const token = ...
+      const deviceId = await AsyncStorage.getItem('device_id');
 
       if (!token) {
         Alert.alert('Error', 'Session expired. Please log in again.');
@@ -262,6 +270,7 @@ export default function UserManagementScreen() {
       const getUserResponse = await fetch(`${API_BASE_URL}/api/admin/users`, {
         headers: {
           'Authorization': `Bearer ${token}`,
+          'x-device-id': deviceId || '',
         },
       });
 
@@ -284,6 +293,7 @@ export default function UserManagementScreen() {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'x-device-id': deviceId || '',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ newEmail }),
@@ -325,7 +335,8 @@ export default function UserManagementScreen() {
       }
 
       const parsedData = JSON.parse(userData);
-      const token = parsedData?.token;
+      const token = ...
+      const deviceId = await AsyncStorage.getItem('device_id');
 
       if (!token) {
         Alert.alert('Error', 'Session expired. Please log in again.');
@@ -337,6 +348,7 @@ export default function UserManagementScreen() {
       const getUserResponse = await fetch(`${API_BASE_URL}/api/admin/users`, {
         headers: {
           'Authorization': `Bearer ${token}`,
+          'x-device-id': deviceId || '',
         },
       });
 
@@ -359,6 +371,7 @@ export default function UserManagementScreen() {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'x-device-id': deviceId || '',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ newPin }),

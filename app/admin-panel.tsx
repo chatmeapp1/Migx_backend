@@ -87,7 +87,8 @@ export default function AdminPanelScreen() {
       }
 
       const parsedData = JSON.parse(userData);
-      const token = parsedData?.token;
+      const token = ...
+      const deviceId = await AsyncStorage.getItem('device_id');
 
       if (!token) {
         Alert.alert('Error', 'Session expired. Please log in again.');
@@ -98,6 +99,7 @@ export default function AdminPanelScreen() {
       const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
         headers: {
           'Authorization': `Bearer ${token}`,
+          'x-device-id': deviceId || '',
         },
       });
       
@@ -122,7 +124,8 @@ export default function AdminPanelScreen() {
       }
 
       const parsedData = JSON.parse(userData);
-      const token = parsedData?.token;
+      const token = ...
+      const deviceId = await AsyncStorage.getItem('device_id');
 
       if (!token) {
         Alert.alert('Error', 'Session expired. Please log in again.');
@@ -133,6 +136,7 @@ export default function AdminPanelScreen() {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'x-device-id': deviceId || '',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ role: newRole }),
@@ -169,7 +173,8 @@ export default function AdminPanelScreen() {
               }
 
               const parsedData = JSON.parse(userData);
-              const token = parsedData?.token;
+              const token = ...
+      const deviceId = await AsyncStorage.getItem('device_id');
 
               if (!token) {
                 Alert.alert('Error', 'Session expired. Please log in again.');
@@ -180,6 +185,7 @@ export default function AdminPanelScreen() {
                 method: 'PUT',
                 headers: {
                   'Authorization': `Bearer ${token}`,
+          'x-device-id': deviceId || '',
                 },
               });
               
@@ -230,7 +236,8 @@ export default function AdminPanelScreen() {
       }
 
       const parsedData = JSON.parse(userData);
-      const token = parsedData?.token;
+      const token = ...
+      const deviceId = await AsyncStorage.getItem('device_id');
 
       if (!token) {
         Alert.alert('Error', 'Session expired. Please log in again.');
@@ -253,6 +260,7 @@ export default function AdminPanelScreen() {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'x-device-id': deviceId || '',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
@@ -295,7 +303,8 @@ export default function AdminPanelScreen() {
               }
 
               const parsedData = JSON.parse(userData);
-              const token = parsedData?.token;
+              const token = ...
+      const deviceId = await AsyncStorage.getItem('device_id');
 
               if (!token) {
                 Alert.alert('Error', 'Session expired. Please log in again.');
@@ -306,6 +315,7 @@ export default function AdminPanelScreen() {
                 method: 'DELETE',
                 headers: {
                   'Authorization': `Bearer ${token}`,
+          'x-device-id': deviceId || '',
                 },
               });
 
@@ -368,7 +378,8 @@ export default function AdminPanelScreen() {
       }
 
       const parsedData = JSON.parse(userData);
-      const token = parsedData?.token;
+      const token = ...
+      const deviceId = await AsyncStorage.getItem('device_id');
 
       if (!token) {
         Alert.alert('Error', 'Session expired. Please log in again.');
@@ -380,6 +391,7 @@ export default function AdminPanelScreen() {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'x-device-id': deviceId || '',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -433,7 +445,8 @@ export default function AdminPanelScreen() {
       }
 
       const parsedData = JSON.parse(userData);
-      const token = parsedData?.token;
+      const token = ...
+      const deviceId = await AsyncStorage.getItem('device_id');
 
       if (!token) {
         Alert.alert('Error', 'Session expired. Please log in again.');
@@ -445,6 +458,7 @@ export default function AdminPanelScreen() {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'x-device-id': deviceId || '',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({

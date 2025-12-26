@@ -124,11 +124,15 @@ export default function TransferCreditScreen() {
       console.log('📤 Sending transfer via REST API', { username, amountNum, pin: '****' });
       
       const token = await AsyncStorage.getItem('auth_token');
+      const deviceId = await AsyncStorage.getItem('device_id');
+      
+      // 🔐 STEP 11: Send device_id for device binding validation
       const response = await fetch(`${API_ENDPOINTS.CREDIT.TRANSFER}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
+          'x-device-id': deviceId || '',
         },
         body: JSON.stringify({
           fromUserId: userData.id,

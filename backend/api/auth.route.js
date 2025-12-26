@@ -88,6 +88,10 @@ router.post('/login', async (req, res, next) => {
 
     console.log('LOGIN SUCCESS:', username);
 
+    // 🔐 STEP 11: Generate device_id for device binding (prevent token theft)
+    const deviceId = crypto.randomBytes(12).toString('hex');
+    console.log(`🔐 Device ID generated: ${deviceId.substring(0, 8)}... for user ${user.id}`);
+
     // 🔐 STEP 8: Generate JWT tokens with SHORT expiry (anti token reuse)
     // Access token: 15 minutes (short-lived, used for API requests)
     const accessToken = jwt.sign(
@@ -95,7 +99,8 @@ router.post('/login', async (req, res, next) => {
         id: user.id,
         userId: user.id,
         username: user.username,
-        type: 'access'
+        type: 'access',
+        deviceId: deviceId
       },
       process.env.JWT_SECRET || 'migx-secret-key-2024',
       { expiresIn: '15m' }
@@ -107,7 +112,8 @@ router.post('/login', async (req, res, next) => {
         id: user.id,
         userId: user.id,
         username: user.username,
-        type: 'refresh'
+        type: 'refresh',
+        deviceId: deviceId
       },
       process.env.JWT_SECRET || 'migx-secret-key-2024',
       { expiresIn: '7d' }
@@ -119,6 +125,7 @@ router.post('/login', async (req, res, next) => {
       success: true,
       accessToken: accessToken,
       refreshToken: refreshToken,
+      deviceId: deviceId,
       tokenType: 'Bearer',
       expiresIn: 900, // 15 minutes in seconds
       user: {

@@ -51,6 +51,7 @@ export default function EditRoomScreen() {
 
       const parsedData = JSON.parse(userData);
       const token = parsedData?.token;
+      const deviceId = await AsyncStorage.getItem('device_id');
 
       if (!token) {
         Alert.alert('Error', 'Session expired. Please log in again.');
@@ -61,6 +62,7 @@ export default function EditRoomScreen() {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'x-device-id': deviceId || '',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({

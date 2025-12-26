@@ -4,9 +4,11 @@ const db = require('../db/db');
 
 function authMiddleware(req, res, next) {
   const authHeader = req.headers['authorization'];
+  const clientDeviceId = req.headers['x-device-id'];
   
   console.log('🔐 Auth Middleware - Headers:', {
     authorization: authHeader ? `${authHeader.substring(0, 20)}...` : 'missing',
+    deviceId: clientDeviceId ? `${clientDeviceId.substring(0, 8)}...` : 'missing',
     contentType: req.headers['content-type']
   });
   
@@ -30,8 +32,27 @@ function authMiddleware(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'migx-secret-key-2024');
+    
+    // 🔐 STEP 11: Validate device_id (device binding - prevent token theft)
+    if (!clientDeviceId) {
+      console.log('❌ Device ID missing from request');
+      return res.status(401).json({ 
+        success: false,
+        error: 'Session expired. Please login again.' 
+      });
+    }
+
+    if (decoded.deviceId !== clientDeviceId) {
+      console.log(`❌ Device mismatch - Token: ${decoded.deviceId?.substring(0, 8)}... vs Request: ${clientDeviceId.substring(0, 8)}...`);
+      console.log(`🚨 SUSPICIOUS: Token from different device - User: ${decoded.id || decoded.userId}`);
+      return res.status(401).json({ 
+        success: false,
+        error: 'Session expired. Please login again.' 
+      });
+    }
+
     req.user = decoded;
-    console.log('✅ Token verified for user:', decoded.id || decoded.userId);
+    console.log('✅ Token verified + device bound for user:', decoded.id || decoded.userId);
     next();
   } catch (err) {
     console.log('❌ Token verification failed:', err.message);

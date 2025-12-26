@@ -88,7 +88,8 @@ export default function EditProfileScreen() {
         hasToken: !!userData.token
       });
 
-      const token = userData.token;
+      const token = ...
+      const deviceId = await AsyncStorage.getItem('device_id');
       
       if (!token) {
         console.log('❌ No token found in user_data');
@@ -117,6 +118,7 @@ export default function EditProfileScreen() {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'x-device-id': deviceId || '',
         },
         body: formData,
       });
@@ -208,7 +210,8 @@ export default function EditProfileScreen() {
         hasToken: !!userData.token
       });
 
-      const token = userData.token;
+      const token = ...
+      const deviceId = await AsyncStorage.getItem('device_id');
       
       if (!token) {
         console.log('❌ No token found in user_data');
@@ -242,6 +245,7 @@ export default function EditProfileScreen() {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
+          'x-device-id': deviceId || '',
         },
         body: formData,
       });

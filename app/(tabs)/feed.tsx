@@ -120,9 +120,13 @@ export default function FeedScreen() {
       const userData = userDataStr ? JSON.parse(userDataStr) : null;
       const token = userData?.token;
 
+      const deviceId = await AsyncStorage.getItem('device_id');
+      
+      // 🔐 STEP 11: Include device_id for device binding validation
       const response = await fetch(`${API_ENDPOINTS.FEED.LIST}?page=${pageNum}&limit=10`, {
         headers: {
           'Authorization': `Bearer ${token}`,
+          'x-device-id': deviceId || '',
         },
       });
       const data = await response.json();

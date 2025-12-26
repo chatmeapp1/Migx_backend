@@ -110,10 +110,15 @@ export default function LoginScreen() {
           token: data.token
         };
         
-        console.log('💾 Storing user_data with token:', {
+        // 🔐 STEP 11: Store device_id for device binding (prevent token theft)
+        await AsyncStorage.setItem('auth_token', data.accessToken);
+        await AsyncStorage.setItem('device_id', data.deviceId);
+        
+        console.log('💾 Storing user_data with token + device binding:', {
           id: userDataToStore.id,
           username: userDataToStore.username,
-          hasToken: !!userDataToStore.token
+          hasToken: !!userDataToStore.token,
+          hasDeviceId: !!data.deviceId
         });
         
         await AsyncStorage.setItem('user_data', JSON.stringify(userDataToStore));
