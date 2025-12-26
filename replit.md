@@ -165,3 +165,66 @@ The application includes an XP & Level System, a Merchant Commission System for 
 - All existing users updated to use default PIN
 - Users can change PIN in settings (future feature)
 - PIN stored in database, required for credit transfers
+
+# Security Hardening - Phase 2 (December 26, 2025)
+
+## 🔐 8️⃣ JWT Token Expiry Management (Anti Token Reuse)
+**Status:** ✅ IMPLEMENTED & PRODUCTION-READY
+
+### Implementation:
+- **Access Token:** 15 minutes (short-lived, used for API requests)
+- **Refresh Token:** 7 days (longer-lived, used to get new access tokens)
+- **Token Type Field:** Each token includes `type: 'access'` or `'refresh'` to prevent mixing
+
+### Endpoints:
+- `POST /api/auth/login` - Returns both accessToken + refreshToken
+- `POST /api/auth/refresh` - Use refreshToken to get new 15-min accessToken
+
+### Security Benefits:
+✅ **Anti-Postman attacks:** Token valid only 15 min - time window for token reuse is minimal
+✅ **Leak mitigation:** If access token leaked, attacker has ~15 min window before it expires
+✅ **Separate refresh flow:** App can silently refresh using refresh token without user relogin
+✅ **Token type validation:** Server rejects access tokens used as refresh tokens and vice versa
+
+### Client Implementation:
+- Store both tokens from login
+- Use accessToken for all API requests with `Authorization: Bearer <accessToken>`
+- When accessToken expires (get 401), use refreshToken to get new accessToken via `/api/auth/refresh`
+- Only require user login again if refreshToken expires (7 days)
+
+## 🔐 9️⃣ Server-Side Amount Authority (Anti Manipulation)
+**Status:** ✅ IMPLEMENTED & PRODUCTION-READY
+
+### Implementation:
+- **Server-side limits:** MIN = 1,000 credits, MAX = 1,000,000 credits
+- **Normalization:** All amounts passed through `parseInt(amount, 10)` to convert to integers
+- **Rejection:** Amounts outside bounds are REJECTED (not clamped)
+- **Fraud logging:** Attempts to send >MAX amount logged with 🚨 FRAUD ALERT
+
+### Security Benefits:
+✅ **Client cannot manipulate amounts:** Server enforces limits regardless of client-sent value
+✅ **Prevents billion-credit transfers:** Even if client sends `999999999999`, server rejects it
+✅ **String to integer conversion:** Prevents JavaScript string manipulation (`"1000" + "1000" = "10001000"`)
+✅ **Audit trail:** All fraud attempts logged for security investigation
+
+### Validation Flow:
+1. Extract amount from request body
+2. Parse to integer using `parseInt(amount, 10)`
+3. Check if within [1000, 1000000] range
+4. If outside range: Return 400 error + log fraud alert
+5. If inside range: Proceed with transfer using normalized amount
+
+### Updated Files:
+- `backend/api/auth.route.js` - JWT expiry + refresh endpoint
+- `backend/api/credit.route.js` - Server-side amount authority
+
+## Combined Security Summary (9 Layers Total)
+✅ Layer 1: Strict server-side validation (MIN/MAX amounts)
+✅ Layer 2: Redis rate limiting (5 transfers/min)
+✅ Layer 3: Error handling & logging
+✅ Layer 4: Distributed locks (5-sec TTL)
+✅ Layer 5: Idempotency tracking (request_id UNIQUE)
+✅ Layer 6: PIN attempt limiting (3 max → 10-min cooldown)
+✅ Layer 7: Enhanced error message sanitization
+✅ Layer 8: JWT expiry (15-min access + 7-day refresh)
+✅ Layer 9: Server-side amount authority (no client manipulation)

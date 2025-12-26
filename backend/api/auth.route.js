@@ -88,22 +88,39 @@ router.post('/login', async (req, res, next) => {
 
     console.log('LOGIN SUCCESS:', username);
 
-    // Generate JWT token
-    const token = jwt.sign(
+    // 🔐 STEP 8: Generate JWT tokens with SHORT expiry (anti token reuse)
+    // Access token: 15 minutes (short-lived, used for API requests)
+    const accessToken = jwt.sign(
       { 
         id: user.id,
         userId: user.id,
-        username: user.username 
+        username: user.username,
+        type: 'access'
       },
       process.env.JWT_SECRET || 'migx-secret-key-2024',
-      { expiresIn: '30d' }
+      { expiresIn: '15m' }
     );
 
-    console.log('✅ JWT token generated for user:', user.id);
+    // Refresh token: 7 days (longer-lived, used to get new access tokens)
+    const refreshToken = jwt.sign(
+      { 
+        id: user.id,
+        userId: user.id,
+        username: user.username,
+        type: 'refresh'
+      },
+      process.env.JWT_SECRET || 'migx-secret-key-2024',
+      { expiresIn: '7d' }
+    );
+
+    console.log('✅ JWT tokens generated - Access (15m) + Refresh (7d) for user:', user.id);
 
     res.status(200).json({
       success: true,
-      token: token,
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      tokenType: 'Bearer',
+      expiresIn: 900, // 15 minutes in seconds
       user: {
         id: user.id,
         username: user.username,
@@ -132,6 +149,61 @@ router.post('/login', async (req, res, next) => {
       success: false, 
       error: 'Login failed',
       message: error.message
+    });
+  }
+});
+
+// 🔐 STEP 8: Refresh token endpoint (get new access token without logging in again)
+router.post('/refresh', async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(400).json({ success: false, error: 'Refresh token required' });
+    }
+
+    // Verify refresh token
+    let decoded;
+    try {
+      decoded = jwt.verify(
+        refreshToken,
+        process.env.JWT_SECRET || 'migx-secret-key-2024'
+      );
+    } catch (error) {
+      return res.status(401).json({ success: false, error: 'Invalid or expired refresh token' });
+    }
+
+    // Verify it's actually a refresh token
+    if (decoded.type !== 'refresh') {
+      return res.status(401).json({ success: false, error: 'Invalid token type' });
+    }
+
+    // Generate new access token
+    const newAccessToken = jwt.sign(
+      { 
+        id: decoded.id,
+        userId: decoded.id,
+        username: decoded.username,
+        type: 'access'
+      },
+      process.env.JWT_SECRET || 'migx-secret-key-2024',
+      { expiresIn: '15m' }
+    );
+
+    console.log('✅ Access token refreshed for user:', decoded.id);
+
+    res.status(200).json({
+      success: true,
+      accessToken: newAccessToken,
+      tokenType: 'Bearer',
+      expiresIn: 900 // 15 minutes in seconds
+    });
+
+  } catch (error) {
+    console.error('REFRESH ERROR:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: 'Token refresh failed'
     });
   }
 });

@@ -11,9 +11,28 @@ router.post('/transfer', async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
     
-    // Validate amount is a positive integer
-    if (!Number.isInteger(amount) || amount <= 0) {
+    // 🔐 STEP 8: Server-side amount authority (don't trust client amount)
+    // Normalize and clamp amount to valid range
+    let normalizedAmount = parseInt(amount, 10);
+    
+    // Check if amount is a valid number
+    if (isNaN(normalizedAmount) || normalizedAmount <= 0) {
       return res.status(400).json({ error: 'Amount must be a positive integer' });
+    }
+    
+    // Define server-side limits (source of truth - client cannot override)
+    const MIN_AMOUNT = 1000;
+    const MAX_AMOUNT = 1000000;
+    
+    // Clamp amount to valid range (strict server-side authority)
+    if (normalizedAmount < MIN_AMOUNT) {
+      return res.status(400).json({ error: `Minimum transfer is ${MIN_AMOUNT} credits` });
+    }
+    
+    if (normalizedAmount > MAX_AMOUNT) {
+      // NEVER allow more than MAX - reject instead of clamping
+      console.warn(`🚨 FRAUD ALERT: User ${fromUserId} attempted transfer of ${normalizedAmount} credits (exceeds MAX of ${MAX_AMOUNT})`);
+      return res.status(400).json({ error: `Maximum transfer is ${MAX_AMOUNT} credits per transaction` });
     }
     
     // 🔐 STEP 6: Validate PIN before transfer
@@ -28,39 +47,41 @@ router.post('/transfer', async (req, res) => {
       return res.status(statusCode).json({ error: pinValidation.error, cooldown: pinValidation.cooldown });
     }
     
-    const validation = await creditService.validateTransfer(fromUserId, toUserId, amount);
+    // Use normalized amount for validation
+    const validation = await creditService.validateTransfer(fromUserId, toUserId, normalizedAmount);
     if (!validation.valid) {
       // 🔐 STEP 7: Log detailed error server-side but return generic message to client
       console.warn(`⚠️ Transfer validation failed for user ${fromUserId}: ${validation.error}`);
       return res.status(400).json({ error: validation.error });
     }
     
-    const result = await creditService.transferCredits(fromUserId, toUserId, amount, message);
+    // Use normalized amount throughout transfer process
+    const result = await creditService.transferCredits(fromUserId, toUserId, normalizedAmount, message);
     
     if (!result.success) {
       // 🔐 STEP 7: Sanitize error details from client, log server-side
       const sanitizedError = creditService.sanitizeErrorForClient('TRANSFER_ERROR', result.error, fromUserId, {
         toUserId,
-        amount,
+        amount: normalizedAmount,
         reason: result.error
       });
       return res.status(400).json({ error: sanitizedError });
     }
     
-    console.log(`✅ Transfer completed: ${fromUserId} → ${toUserId} (${amount} credits)`);
+    console.log(`✅ Transfer completed: ${fromUserId} → ${toUserId} (${normalizedAmount} credits)`);
     res.json({
       success: true,
       transactionId: result.transactionId,
       from: result.from,
       to: result.to,
-      amount
+      amount: normalizedAmount
     });
     
   } catch (error) {
     // 🔐 STEP 7: Log detailed error server-side, return generic message to client
     const sanitizedError = creditService.sanitizeErrorForClient('UNKNOWN_ERROR', error, fromUserId, {
       toUserId,
-      amount,
+      amount: normalizedAmount,
       endpoint: '/api/credit/transfer'
     });
     console.error('❌ Transfer endpoint error:', { userId: fromUserId, error: error.message });
