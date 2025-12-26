@@ -268,6 +268,9 @@ module.exports = (io, socket) => {
           try {
             const userService = require('../services/userService');
             const roomService = require('../services/roomService');
+            const { getRedisClient } = require('../redis');
+            const redis = getRedisClient();
+            
             const targetUser = await userService.getUserByUsername(targetUsername);
 
             if (!targetUser) {
@@ -287,36 +290,35 @@ module.exports = (io, socket) => {
             const country = targetUser.country || 'Unknown';
             const level = targetUser.level || 1;
 
-            // Get user's rooms from database
+            // 🔐 Check if user is CURRENTLY ONLINE (from Redis presence)
+            const userPresence = await redis.get(`user:${targetUser.id}:presence`);
             let userRoomNames = [];
             
-            try {
-              // Query rooms where user has sent messages
-              const query = `
-                SELECT DISTINCT r.name 
-                FROM rooms r 
-                JOIN messages m ON r.id = m.room_id 
-                WHERE m.user_id = $1 
-                LIMIT 5
-              `;
-              const result = await require('../db').default.raw(query, [targetUser.id]);
-              if (result.rows && result.rows.length > 0) {
-                userRoomNames = result.rows.map(r => r.name);
+            // Only show "Chatting in" if user is ONLINE and has a current room
+            if (userPresence) {
+              try {
+                const presence = JSON.parse(userPresence);
+                const currentRoomId = presence.roomId;
+                
+                // Only add room if user is actually IN THAT ROOM (not just visited)
+                if (currentRoomId) {
+                  const currentRoom = await roomService.getRoomById(currentRoomId);
+                  if (currentRoom) {
+                    userRoomNames = [currentRoom.name];
+                  }
+                }
+              } catch (e) {
+                console.log('Could not parse user presence:', e.message);
               }
-            } catch (e) {
-              console.log('Could not fetch user rooms:', e.message);
             }
 
-            // Always add current room to the list
-            const currentRoom = await roomService.getRoomById(roomId);
-            if (currentRoom && !userRoomNames.includes(currentRoom.name)) {
-              userRoomNames.unshift(currentRoom.name); // Add to beginning
-            }
-
+            // Build response message
             const roomsText = userRoomNames.length > 0 ? userRoomNames.join(', ') : '';
+            const onlineStatus = userPresence ? '(Online)' : '(Offline)';
+            
             const whoisMsg = roomsText 
-              ? `** Username ${targetUsername}, Level ${level}, Gender ${gender}, Country ${country}, Chatting in, ${roomsText} **`
-              : `** Username ${targetUsername}, Level ${level}, Gender ${gender}, Country ${country} **`;
+              ? `** Username ${targetUsername}, Level ${level}, Gender ${gender}, Country ${country}, Chatting in, ${roomsText} ${onlineStatus} **`
+              : `** Username ${targetUsername}, Level ${level}, Gender ${gender}, Country ${country} ${onlineStatus} **`;
 
             io.to(`room:${roomId}`).emit('chat:message', {
               id: generateMessageId(),
