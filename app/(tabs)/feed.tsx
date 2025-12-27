@@ -423,14 +423,20 @@ export default function FeedScreen() {
     // Get avatar URI
     const getAvatarUri = (avatar?: string) => {
       if (!avatar) return null;
+      if (typeof avatar !== 'string') return null;
       if (avatar.startsWith('http')) return avatar;
-      if (avatar.startsWith('/uploads')) return `${API_ENDPOINTS.BASE}${avatar}`;
-      // Check if it's a Cloudinary URL or similar from the backend
-      return avatar;
+      
+      // Fallback for relative paths if avatarUrl from backend is missing
+      const apiBase = API_ENDPOINTS.BASE || 'https://9834f2c5-8b8e-4e08-93e2-d200b9f9bcf8-00-10j5uhgzffsw5.sisko.replit.dev';
+      const baseUrl = apiBase.replace(/\/$/, '');
+      const cleanPath = avatar.startsWith('/') ? avatar : `/${avatar}`;
+      return `${baseUrl}${cleanPath}`;
     };
 
     const avatarUri = item.avatarUrl || getAvatarUri(item.avatar_url || (item as any).avatar);
-    console.log(`[Feed] Post by ${item.username}, avatarUri: ${avatarUri}`);
+    // Use a default avatar if URI is still empty or invalid
+    const finalAvatarUri = avatarUri && typeof avatarUri === 'string' && avatarUri !== 'null' && avatarUri !== 'undefined' && avatarUri.startsWith('http') ? avatarUri : 'https://via.placeholder.com/40';
+    console.log(`[Feed Debug] Post by ${item.username}, avatarUri: ${finalAvatarUri}`);
 
     // Get level config
     const getLevelConfig = (level: number) => {
@@ -473,18 +479,12 @@ export default function FeedScreen() {
     <View style={[styles.postCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
       <View style={styles.postHeader}>
         <View style={styles.avatarContainer}>
-          {avatarUri ? (
-            <Image
-              source={{ uri: avatarUri }}
-              style={styles.avatar}
-              onLoad={() => console.log(`[Feed] Avatar loaded: ${avatarUri}`)}
-              onError={(e) => console.error(`[Feed] Avatar load error: ${avatarUri}`, e.nativeEvent.error)}
-            />
-          ) : (
-            <View style={[styles.avatar, { backgroundColor: '#4A90E2', justifyContent: 'center', alignItems: 'center' }]}>
-              <Text style={{ fontSize: 20 }}>👤</Text>
-            </View>
-          )}
+          <Image
+            source={{ uri: finalAvatarUri }}
+            style={styles.avatar}
+            onLoad={() => console.log(`[Feed Debug] Avatar loaded: ${finalAvatarUri}`)}
+            onError={(e) => console.error(`[Feed Debug] Avatar load error: ${finalAvatarUri}`, e.nativeEvent.error)}
+          />
         </View>
         <View style={styles.postHeaderText}>
           <View style={styles.usernameRow}>

@@ -65,7 +65,21 @@ const normalizeFeedItem = async (feedData, feedId, redis) => {
     const commentsData = await redis.get(commentsKey);
     const commentsArray = commentsData ? JSON.parse(commentsData) : [];
 
-    const baseUrl = process.env.BASE_URL || `https://${process.env.REPLIT_DEV_DOMAIN}`;
+    const baseUrl = (process.env.BASE_URL || `https://${process.env.REPLIT_DEV_DOMAIN}`).replace(/\/$/, '');
+    
+    // Normalize avatar URL - ensure it is absolute and has no double slashes
+    let avatarUrl = 'https://via.placeholder.com/40';
+    if (user?.avatar) {
+      if (user.avatar.startsWith('http')) {
+        avatarUrl = user.avatar;
+      } else {
+        const cleanPath = user.avatar.startsWith('/') ? user.avatar : `/${user.avatar}`;
+        avatarUrl = `${baseUrl}${cleanPath}`;
+      }
+    }
+    
+    // Log for debugging
+    console.log(`[Feed Debug] User: ${feed.username}, Avatar Path: ${user?.avatar}, Final URL: ${avatarUrl}`);
     
     return {
       id: feed.id ?? feedId ?? '',
@@ -78,9 +92,9 @@ const normalizeFeedItem = async (feedData, feedId, redis) => {
       comments_count: commentsArray.length ?? 0,
       is_liked: false,
       created_at: feed.created_at ?? feed.createdAt ?? new Date().toISOString(),
-      avatarUrl: user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `${baseUrl}${user.avatar.startsWith('/') ? '' : '/'}${user.avatar}`) : 'https://via.placeholder.com/40',
-      avatar_url: user?.avatar || feed.avatar_url || 'https://via.placeholder.com/40',
-      avatar: user?.avatar || feed.avatar_url || 'https://via.placeholder.com/40',
+      avatarUrl: avatarUrl,
+      avatar_url: avatarUrl,
+      avatar: avatarUrl,
       userId: feed.userId ?? feed.user_id,
       user_id: feed.userId ?? feed.user_id,
       level: level,
