@@ -75,12 +75,18 @@ export function EditProfileHeader({
       ? `${API_BASE_URL}${avatarImage}` 
       : null;
 
+  const bgUri = backgroundImage?.startsWith('http')
+    ? backgroundImage
+    : backgroundImage
+      ? `${API_BASE_URL}${backgroundImage}`
+      : null;
+
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Background Image Section */}
       <View style={styles.backgroundContainer}>
-        {backgroundImage ? (
-          <Image source={{ uri: backgroundImage }} style={styles.backgroundImage} />
+        {bgUri ? (
+          <Image source={{ uri: bgUri }} style={styles.backgroundImage} />
         ) : (
           <View style={[styles.backgroundPlaceholder, { backgroundColor: '#1B5E20' }]} />
         )}
