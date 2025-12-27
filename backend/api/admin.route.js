@@ -131,8 +131,8 @@ router.patch('/users/:id/unban', superAdminMiddleware, async (req, res) => {
   }
 });
 
-// Update user role
-router.patch('/users/:id/role', superAdminMiddleware, async (req, res) => {
+// Update user role handler
+const updateUserRoleHandler = async (req, res) => {
   try {
     const { role } = req.body;
     const validRoles = ['user', 'mentor', 'merchant', 'admin', 'customer_service', 'super_admin'];
@@ -150,6 +150,10 @@ router.patch('/users/:id/role', superAdminMiddleware, async (req, res) => {
     console.error('Error updating user role:', error);
     res.status(500).json({ message: 'Error updating user role' });
   }
-});
+};
+
+// Update user role (support both PATCH and PUT)
+router.patch('/users/:id/role', superAdminMiddleware, updateUserRoleHandler);
+router.put('/users/:id/role', superAdminMiddleware, updateUserRoleHandler);
 
 module.exports = router;
