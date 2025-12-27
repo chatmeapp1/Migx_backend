@@ -77,26 +77,38 @@ router.get('/users', superAdminMiddleware, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const role = req.query.role;
-    const limit = 20;
+    const limit = 50;
     const offset = (page - 1) * limit;
 
     let query = 'SELECT * FROM users';
+    let countQuery = 'SELECT COUNT(*) FROM users';
     const params = [];
+    const countParams = [];
 
     if (role) {
       query += ' WHERE role = $1';
+      countQuery += ' WHERE role = $1';
       params.push(role);
-      params.push(limit);
-      params.push(offset);
-    } else {
-      params.push(limit);
-      params.push(offset);
+      countParams.push(role);
     }
 
-    query += ` ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`;
+    query += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(limit);
+    params.push(offset);
 
     const users = await db.query(query, params);
-    res.json({ users: users.rows });
+    const totalCountResult = await db.query(countQuery, countParams);
+    const totalUsers = parseInt(totalCountResult.rows[0].count);
+
+    res.json({ 
+      users: users.rows,
+      pagination: {
+        total: totalUsers,
+        page,
+        limit,
+        totalPages: Math.ceil(totalUsers / limit)
+      }
+    });
   } catch (error) {
     console.error('Error fetching users:', error);
     res.status(500).json({ message: 'Error fetching users' });

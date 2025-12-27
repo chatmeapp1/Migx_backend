@@ -32,8 +32,8 @@ export default function AdminPanelScreen() {
   
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<any[]>([]);
+  const [pagination, setPagination] = useState<any>({ page: 1, totalPages: 1 });
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTab, setSelectedTab] = useState<'users' | 'rooms' | 'announcements'>('users');
   
   const [menuVisible, setMenuVisible] = useState(false);
   const [addCoinModalVisible, setAddCoinModalVisible] = useState(false);
@@ -69,13 +69,13 @@ export default function AdminPanelScreen() {
       }
     };
     loadToken();
-    fetchUsers();
+    fetchUsers(pagination.page);
     if (selectedTab === 'rooms') {
       fetchRooms();
     }
-  }, [selectedTab]);
+  }, [selectedTab, pagination.page]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (page = 1) => {
     try {
       const token = await AsyncStorage.getItem('auth_token');
       const deviceId = await AsyncStorage.getItem('device_id');
@@ -86,7 +86,7 @@ export default function AdminPanelScreen() {
         return;
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/users?page=${page}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'x-device-id': deviceId || '',
@@ -96,11 +96,26 @@ export default function AdminPanelScreen() {
       if (response.ok) {
         const data = await response.json();
         setUsers(data.users || []);
+        if (data.pagination) {
+          setPagination(data.pagination);
+        }
       }
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (pagination.page < pagination.totalPages) {
+      setPagination({ ...pagination, page: pagination.page + 1 });
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (pagination.page > 1) {
+      setPagination({ ...pagination, page: pagination.page - 1 });
     }
   };
 
@@ -554,16 +569,37 @@ export default function AdminPanelScreen() {
       </View>
 
       {selectedTab === 'users' && (
-        <UsersTab
-          theme={theme}
-          loading={loading}
-          users={users}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          onChangeRole={handleShowRoleMenu}
-          onBanUser={handleBanUser}
-          getRoleBadgeColor={getRoleBadgeColor}
-        />
+        <>
+          <UsersTab
+            theme={theme}
+            loading={loading}
+            users={users}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            onChangeRole={handleShowRoleMenu}
+            onBanUser={handleBanUser}
+            getRoleBadgeColor={getRoleBadgeColor}
+          />
+          <View style={styles.paginationContainer}>
+            <TouchableOpacity 
+              style={[styles.pageButton, pagination.page <= 1 && styles.disabledButton]} 
+              onPress={handlePrevPage}
+              disabled={pagination.page <= 1}
+            >
+              <Text style={styles.pageButtonText}>Prev</Text>
+            </TouchableOpacity>
+            <Text style={styles.pageInfoText}>
+              Page {pagination.page} of {pagination.totalPages}
+            </Text>
+            <TouchableOpacity 
+              style={[styles.pageButton, pagination.page >= pagination.totalPages && styles.disabledButton]} 
+              onPress={handleNextPage}
+              disabled={pagination.page >= pagination.totalPages}
+            >
+              <Text style={styles.pageButtonText}>Next</Text>
+            </TouchableOpacity>
+          </View>
+        </>
       )}
 
       {selectedTab === 'rooms' && (
@@ -652,5 +688,30 @@ const styles = StyleSheet.create({
   },
   comingSoonText: {
     fontSize: 16,
+  },
+  paginationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 12,
+    gap: 16,
+    backgroundColor: '#0a5229',
+  },
+  pageButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#27AE60',
+    borderRadius: 8,
+  },
+  disabledButton: {
+    backgroundColor: '#7f8c8d',
+  },
+  pageButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  pageInfoText: {
+    color: '#fff',
+    fontSize: 14,
   },
 });
