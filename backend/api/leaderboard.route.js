@@ -34,7 +34,7 @@ router.get('/top-level', async (req, res) => {
 // Get top gift senders
 router.get('/top-gift-sender', async (req, res) => {
   try {
-    const { limit = 10 } = req.query;
+    const { limit = 5 } = req.query;
 
     const result = await query(
       `SELECT u.id, u.username, u.avatar, u.gender, u.role, u.country,
@@ -46,6 +46,7 @@ router.get('/top-gift-sender', async (req, res) => {
        LEFT JOIN user_levels ul ON u.id = ul.user_id
        WHERE u.is_active = true
        GROUP BY u.id, u.username, u.avatar, u.gender, u.role, u.country, ul.level
+       HAVING COUNT(ug.id) > 0
        ORDER BY total_gifts_sent DESC, total_cost DESC
        LIMIT $1`,
       [parseInt(limit)]
@@ -66,7 +67,7 @@ router.get('/top-gift-sender', async (req, res) => {
 // Get top gift receivers
 router.get('/top-gift-receiver', async (req, res) => {
   try {
-    const { limit = 10 } = req.query;
+    const { limit = 5 } = req.query;
 
     const result = await query(
       `SELECT u.id, u.username, u.avatar, u.gender, u.role, u.country,
@@ -78,6 +79,7 @@ router.get('/top-gift-receiver', async (req, res) => {
        LEFT JOIN user_levels ul ON u.id = ul.user_id
        WHERE u.is_active = true
        GROUP BY u.id, u.username, u.avatar, u.gender, u.role, u.country, ul.level
+       HAVING COUNT(ug.id) > 0
        ORDER BY total_gifts_received DESC, total_value DESC
        LIMIT $1`,
       [parseInt(limit)]
@@ -98,7 +100,7 @@ router.get('/top-gift-receiver', async (req, res) => {
 // Get top footprint (most active in rooms/messages)
 router.get('/top-footprint', async (req, res) => {
   try {
-    const { limit = 10 } = req.query;
+    const { limit = 5 } = req.query;
 
     const result = await query(
       `SELECT u.id, u.username, u.avatar, u.gender, u.role, u.country,
@@ -110,6 +112,7 @@ router.get('/top-footprint', async (req, res) => {
        LEFT JOIN user_levels ul ON u.id = ul.user_id
        WHERE u.is_active = true
        GROUP BY u.id, u.username, u.avatar, u.gender, u.role, u.country, ul.level
+       HAVING COUNT(DISTINCT m.id) > 0
        ORDER BY total_messages DESC, rooms_visited DESC
        LIMIT $1`,
       [parseInt(limit)]
@@ -227,9 +230,10 @@ router.get('/all', async (req, res) => {
          LEFT JOIN user_levels ul ON u.id = ul.user_id
          WHERE u.is_active = true
          GROUP BY u.id, u.username, u.avatar, u.gender, u.role, u.country, ul.level
+         HAVING COUNT(ug.id) > 0
          ORDER BY total_gifts_sent DESC, total_cost DESC
-         LIMIT $1`,
-        [limitInt]
+         LIMIT 5`,
+        []
       ),
       query(
         `SELECT u.id, u.username, u.avatar, u.gender, u.role, u.country,
@@ -241,9 +245,10 @@ router.get('/all', async (req, res) => {
          LEFT JOIN user_levels ul ON u.id = ul.user_id
          WHERE u.is_active = true
          GROUP BY u.id, u.username, u.avatar, u.gender, u.role, u.country, ul.level
+         HAVING COUNT(ug.id) > 0
          ORDER BY total_gifts_received DESC, total_value DESC
-         LIMIT $1`,
-        [limitInt]
+         LIMIT 5`,
+        []
       ),
       query(
         `SELECT u.id, u.username, u.avatar, u.gender, u.role, u.country,
@@ -255,9 +260,10 @@ router.get('/all', async (req, res) => {
          LEFT JOIN user_levels ul ON u.id = ul.user_id
          WHERE u.is_active = true
          GROUP BY u.id, u.username, u.avatar, u.gender, u.role, u.country, ul.level
+         HAVING COUNT(DISTINCT m.id) > 0
          ORDER BY total_messages DESC, rooms_visited DESC
-         LIMIT $1`,
-        [limitInt]
+         LIMIT 5`,
+        []
       ),
       query(
         `SELECT u.id, u.username, u.avatar, u.gender, u.role, u.country,
