@@ -57,6 +57,11 @@ export const adminApi = {
       method: 'PATCH',
       body: JSON.stringify({ role }),
     }),
+  changeUserPassword: (id, password) =>
+    apiCall(`/api/admin/users/${id}/password`, {
+      method: 'PATCH',
+      body: JSON.stringify({ password }),
+    }),
   banUser: (id) =>
     apiCall(`/api/admin/users/${id}/ban`, { method: 'PATCH' }),
   unbanUser: (id) =>

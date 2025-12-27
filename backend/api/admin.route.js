@@ -156,4 +156,30 @@ const updateUserRoleHandler = async (req, res) => {
 router.patch('/users/:id/role', superAdminMiddleware, updateUserRoleHandler);
 router.put('/users/:id/role', superAdminMiddleware, updateUserRoleHandler);
 
+// Change user password (admin)
+const bcrypt = require('bcryptjs');
+const changePasswordHandler = async (req, res) => {
+  try {
+    const { password } = req.body;
+    
+    if (!password || password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    await db.query(
+      'UPDATE users SET password = $1, password_hash = $1 WHERE id = $2',
+      [hashedPassword, req.params.id]
+    );
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('Error changing user password:', error);
+    res.status(500).json({ message: 'Error changing password' });
+  }
+};
+
+router.patch('/users/:id/password', superAdminMiddleware, changePasswordHandler);
+router.put('/users/:id/password', superAdminMiddleware, changePasswordHandler);
+
 module.exports = router;

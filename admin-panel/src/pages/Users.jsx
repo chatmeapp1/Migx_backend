@@ -77,6 +77,27 @@ export function Users() {
     }
   };
 
+  const handleChangePassword = async (id, username) => {
+    const newPassword = window.prompt(`Enter new password for ${username}:\n(minimum 6 characters)`);
+    
+    if (!newPassword) return;
+    
+    if (newPassword.length < 6) {
+      alert('Password must be at least 6 characters');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await adminApi.changeUserPassword(id, newPassword);
+      alert(`Password changed successfully for ${username}`);
+    } catch (err) {
+      alert('Error changing password: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) return <div className="page">Loading...</div>;
   if (error) return <div className="page error">Error: {error}</div>;
 
@@ -124,13 +145,13 @@ export function Users() {
                 <td>{user.role || 'user'}</td>
                 <td>{user.is_suspended ? '🔴 Suspended' : '🟢 Active'}</td>
                 <td>{new Date(user.created_at).toLocaleDateString()}</td>
-                <td style={{ display: 'flex', gap: '8px' }}>
+                <td style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   <button
                     className="btn-primary"
                     onClick={() => handleAddCoins(user.username)}
                     style={{ padding: '6px 10px', fontSize: '12px' }}
                   >
-                    💰 Add Coins
+                    💰 Coins
                   </button>
                   <button
                     className="btn-primary"
@@ -138,6 +159,13 @@ export function Users() {
                     style={{ padding: '6px 10px', fontSize: '12px', background: '#9B59B6' }}
                   >
                     Role
+                  </button>
+                  <button
+                    className="btn-primary"
+                    onClick={() => handleChangePassword(user.id, user.username)}
+                    style={{ padding: '6px 10px', fontSize: '12px', background: '#3498DB' }}
+                  >
+                    🔑 Pass
                   </button>
                   <button
                     className="btn-delete"
