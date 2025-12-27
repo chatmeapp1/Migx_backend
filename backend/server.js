@@ -251,6 +251,7 @@ app.use('/api/viewprofile', viewProfileRouter);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/rooms', roomInfoRoutes);
 app.use('/api/chatroom', chatroomRoutes);
+app.use('/api/rooms', chatroomRoutes); // Add this line to handle /api/rooms/:roomId/min-level
 app.use('/api/messages', messageRoutes);
 app.use('/api/credit', creditRoutes);
 app.use('/api/merchant', merchantRoutes);
