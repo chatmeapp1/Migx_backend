@@ -14,6 +14,9 @@ interface Message {
   isPresence?: boolean;
   userType?: 'creator' | 'admin' | 'normal' | 'mentor' | 'merchant';
   messageType?: string;
+  hasTopMerchantBadge?: boolean;
+  hasTopLikeReward?: boolean;
+  topLikeRewardExpiry?: string;
 }
 
 interface ChatRoomContentProps {
@@ -46,6 +49,9 @@ export function ChatRoomContent({ messages, bottomPadding = 70 }: ChatRoomConten
           userType={item.userType}
           isOwnMessage={item.isOwnMessage}
           messageType={item.messageType}
+          hasTopMerchantBadge={item.hasTopMerchantBadge}
+          hasTopLikeReward={item.hasTopLikeReward}
+          topLikeRewardExpiry={item.topLikeRewardExpiry}
         />
       )}
       contentContainerStyle={[styles.container, { paddingBottom: bottomPadding }]}
