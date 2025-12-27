@@ -226,7 +226,6 @@ const isMerchant = async (userId) => {
 
 const updateUserStatus = async (userId, status) => {
   try {
-    await setUserStatus(userId, status);
     await query(
       `UPDATE users SET status = $1, updated_at = CURRENT_TIMESTAMP
        WHERE id = $2`,
