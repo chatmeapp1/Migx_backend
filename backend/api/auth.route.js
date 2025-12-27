@@ -8,6 +8,7 @@ const crypto = require('crypto');
 const { sendOtpEmail, sendActivationEmail, sendPasswordChangeOtp } = require('../utils/emailService');
 const streakService = require('../services/streakService');
 const logger = require('../utils/logger');
+const sessionService = require('../services/sessionService');
 
 // Username validation regex (MIG33 rules)
 const usernameRegex = /^[a-z][a-z0-9._]{5,11}$/;
@@ -96,33 +97,50 @@ router.post('/login', async (req, res, next) => {
       console.error('Error updating streak:', err);
     }
 
-    // 🔐 STEP 8: Generate JWT tokens with SHORT expiry (anti token reuse)
-    // Access token: 15 minutes (short-lived, used for API requests)
+    // 🔐 SID-based JWT - Create sessions in Redis
+    const deviceId = req.headers['x-device-id'] || null;
+    
+    // Create access session
+    const { sid: accessSid } = await sessionService.createSession(user.id, {
+      username: user.username,
+      role: user.role,
+      email: user.email,
+      deviceId: deviceId,
+      ip: clientIp
+    }, 'access');
+
+    // Create refresh session
+    const { sid: refreshSid } = await sessionService.createSession(user.id, {
+      username: user.username,
+      role: user.role,
+      email: user.email,
+      deviceId: deviceId,
+      ip: clientIp
+    }, 'refresh');
+
+    // 🔐 JWT payload now only contains SID (minimal & secure)
     const accessToken = jwt.sign(
       { 
-        id: user.id,
-        userId: user.id,
-        username: user.username,
+        sid: accessSid,
         type: 'access'
       },
       process.env.JWT_SECRET || 'migx-secret-key-2024',
-      { expiresIn: '15m' }
+      { expiresIn: '24h' }
     );
 
     const refreshToken = jwt.sign(
       { 
-        id: user.id,
-        userId: user.id,
-        username: user.username,
+        sid: refreshSid,
         type: 'refresh'
       },
       process.env.JWT_SECRET || 'migx-secret-key-2024',
       { expiresIn: '7d' }
     );
 
-    logger.info('TOKENS_GENERATED: Access + Refresh tokens created', { 
+    logger.info('SID_TOKENS_GENERATED: Access + Refresh sessions created', { 
       userId: user.id, 
       username: user.username,
+      accessSid: accessSid.substring(0, 8) + '...',
       endpoint: '/api/auth/login' 
     });
 
@@ -163,7 +181,7 @@ router.post('/login', async (req, res, next) => {
   }
 });
 
-// 🔐 STEP 8: Refresh token endpoint (get new access token without logging in again)
+// 🔐 SID-based refresh token endpoint
 router.post('/refresh', async (req, res) => {
   try {
     const { refreshToken } = req.body;
@@ -172,7 +190,7 @@ router.post('/refresh', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Refresh token required' });
     }
 
-    // Verify refresh token
+    // Verify refresh token JWT
     let decoded;
     try {
       decoded = jwt.verify(
@@ -188,25 +206,46 @@ router.post('/refresh', async (req, res) => {
       return res.status(401).json({ success: false, error: 'Invalid token type' });
     }
 
-    // Generate new access token
+    // Lookup refresh session from Redis
+    const refreshSession = await sessionService.getSession(decoded.sid);
+    if (!refreshSession) {
+      return res.status(401).json({ success: false, error: 'Session expired. Please login again.' });
+    }
+
+    // Verify session type matches
+    if (refreshSession.type !== 'refresh') {
+      return res.status(401).json({ success: false, error: 'Invalid session type' });
+    }
+
+    // Create new access session
+    const clientIp = req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : req.ip || 'N/A';
+    const deviceId = req.headers['x-device-id'] || refreshSession.deviceId;
+
+    const { sid: newAccessSid } = await sessionService.createSession(refreshSession.userId, {
+      username: refreshSession.username,
+      role: refreshSession.role,
+      email: refreshSession.email,
+      deviceId: deviceId,
+      ip: clientIp
+    }, 'access');
+
+    // Generate new access token with SID
     const newAccessToken = jwt.sign(
       { 
-        id: decoded.id,
-        userId: decoded.id,
-        username: decoded.username,
+        sid: newAccessSid,
         type: 'access'
       },
       process.env.JWT_SECRET || 'migx-secret-key-2024',
-      { expiresIn: '15m' }
+      { expiresIn: '24h' }
     );
 
-    console.log('✅ Access token refreshed for user:', decoded.id);
+    console.log('✅ Access token refreshed for user:', refreshSession.userId);
 
     res.status(200).json({
       success: true,
       accessToken: newAccessToken,
       tokenType: 'Bearer',
-      expiresIn: 900 // 15 minutes in seconds
+      expiresIn: 86400 // 24 hours in seconds
     });
 
   } catch (error) {
