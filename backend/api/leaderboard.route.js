@@ -10,11 +10,11 @@ router.get('/top-level', async (req, res) => {
 
     const result = await query(
       `SELECT u.id, u.username, u.avatar, u.gender, u.role, u.country, u.username_color,
-              ul.level, ul.xp
+              COALESCE(ul.level, 1) as level, COALESCE(ul.xp, 0) as xp
        FROM users u
        LEFT JOIN user_levels ul ON u.id = ul.user_id
        WHERE u.is_active = true
-       ORDER BY ul.level DESC, ul.xp DESC
+       ORDER BY level DESC, xp DESC
        LIMIT $1`,
       [Math.min(parseInt(limit), 5)]
     );
@@ -209,11 +209,11 @@ router.get('/all', async (req, res) => {
     const [topLevel, topGiftSender, topGiftReceiver, topFootprint, topGamer, topGet] = await Promise.all([
       query(
         `SELECT u.id, u.username, u.avatar, u.gender, u.role, u.country, u.username_color,
-                ul.level, ul.xp
+                COALESCE(ul.level, 1) as level, COALESCE(ul.xp, 0) as xp
          FROM users u
          LEFT JOIN user_levels ul ON u.id = ul.user_id
          WHERE u.is_active = true
-         ORDER BY ul.level DESC, ul.xp DESC
+         ORDER BY level DESC, xp DESC
          LIMIT 5`,
         []
       ),
