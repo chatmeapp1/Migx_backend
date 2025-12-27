@@ -77,11 +77,13 @@ const normalizeFeedItem = async (feedData, feedId, redis) => {
       is_liked: false,
       created_at: feed.created_at ?? feed.createdAt ?? new Date().toISOString(),
       avatar_url: user?.avatar || feed.avatar_url || 'https://via.placeholder.com/40',
+      avatar: user?.avatar || feed.avatar_url || 'https://via.placeholder.com/40',
       userId: feed.userId ?? feed.user_id,
       user_id: feed.userId ?? feed.user_id,
       level: level,
       role: user?.role || feed.role || 'user',
-      username_color: user?.username_color || feed.username_color || null
+      username_color: user?.username_color || feed.username_color || null,
+      usernameColor: user?.username_color || feed.username_color || null
     };
   } catch (e) {
     console.error(`❌ Error normalizing feed item:`, e.message);

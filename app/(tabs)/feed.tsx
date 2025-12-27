@@ -429,6 +429,7 @@ export default function FeedScreen() {
     };
 
     const avatarUri = getAvatarUri(item.avatar_url || (item as any).avatar);
+    console.log(`[Feed] Post by ${item.username}, avatarUri: ${avatarUri}`);
 
     // Get level config
     const getLevelConfig = (level: number) => {
@@ -470,16 +471,20 @@ export default function FeedScreen() {
     return (
     <View style={[styles.postCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
       <View style={styles.postHeader}>
-        {avatarUri ? (
-          <Image
-            source={{ uri: avatarUri }}
-            style={styles.avatar}
-          />
-        ) : (
-          <View style={[styles.avatar, { backgroundColor: '#4A90E2', justifyContent: 'center', alignItems: 'center' }]}>
-            <Text style={{ fontSize: 20 }}>👤</Text>
-          </View>
-        )}
+        <View style={styles.avatarContainer}>
+          {avatarUri ? (
+            <Image
+              source={{ uri: avatarUri }}
+              style={styles.avatar}
+              onLoad={() => console.log(`[Feed] Avatar loaded: ${avatarUri}`)}
+              onError={(e) => console.error(`[Feed] Avatar load error: ${avatarUri}`, e.nativeEvent.error)}
+            />
+          ) : (
+            <View style={[styles.avatar, { backgroundColor: '#4A90E2', justifyContent: 'center', alignItems: 'center' }]}>
+              <Text style={{ fontSize: 20 }}>👤</Text>
+            </View>
+          )}
+        </View>
         <View style={styles.postHeaderText}>
           <View style={styles.usernameRow}>
             <Text style={[styles.username, { color: usernameColor() }]}>{item.username}</Text>
@@ -760,14 +765,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  avatar: {
+  avatarContainer: {
     width: 40,
     height: 40,
     borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(0,0,0,0.1)',
+  },
+  avatar: {
+    width: '100%',
+    height: '100%',
   },
   postHeaderText: {
     marginLeft: 10,
     flex: 1,
+    justifyContent: 'center',
   },
   usernameRow: {
     flexDirection: 'row',
