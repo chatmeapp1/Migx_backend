@@ -291,10 +291,9 @@ CREATE TABLE IF NOT EXISTS feed_comments (
 -- Abuse Reports table
 CREATE TABLE IF NOT EXISTS abuse_reports (
   id BIGSERIAL PRIMARY KEY,
-  reporter_username VARCHAR(50) NOT NULL,
-  target_username VARCHAR(50) NOT NULL,
+  reporter VARCHAR(50) DEFAULT 'anonymous',
+  target VARCHAR(50) NOT NULL,
   room_id BIGINT REFERENCES rooms(id) ON DELETE CASCADE,
-  message_id VARCHAR(100),
   message_text TEXT,
   reason VARCHAR(50) NOT NULL CHECK (reason IN ('spam', 'harassment', 'porn', 'scam')),
   status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'reviewed', 'actioned')),
