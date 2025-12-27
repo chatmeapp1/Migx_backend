@@ -6,7 +6,7 @@ const { query } = require('../db/db');
 // Get top level users
 router.get('/top-level', async (req, res) => {
   try {
-    const { limit = 10 } = req.query;
+    const { limit = 5 } = req.query;
 
     const result = await query(
       `SELECT u.id, u.username, u.avatar, u.gender, u.role, u.country, u.username_color,
@@ -16,7 +16,7 @@ router.get('/top-level', async (req, res) => {
        WHERE u.is_active = true
        ORDER BY ul.level DESC, ul.xp DESC
        LIMIT $1`,
-      [Math.min(parseInt(limit), 10)]
+      [Math.min(parseInt(limit), 5)]
     );
 
     res.json({
@@ -214,7 +214,7 @@ router.get('/all', async (req, res) => {
          LEFT JOIN user_levels ul ON u.id = ul.user_id
          WHERE u.is_active = true
          ORDER BY ul.level DESC, ul.xp DESC
-         LIMIT 10`,
+         LIMIT 5`,
         []
       ),
       query(

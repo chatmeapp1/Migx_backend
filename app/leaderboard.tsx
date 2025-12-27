@@ -167,7 +167,7 @@ export default function LeaderboardPage() {
   const CATEGORIES: LeaderboardCategory[] = [
     {
       id: 'top_level',
-      title: 'TOP LEVEL (10)',
+      title: 'TOP LEVEL (5)',
       icon: <TrophyIcon size={22} color="#fff" />,
       backgroundColor: '#082919',
       textColor: '#fff',
@@ -175,7 +175,7 @@ export default function LeaderboardPage() {
     },
     {
       id: 'top_gift_sender',
-      title: 'TOP GIFT SENDER',
+      title: 'TOP GIFT SENDER (5)',
       icon: <GiftIcon size={22} color="#fff" />,
       backgroundColor: '#082919',
       textColor: '#fff',
@@ -183,7 +183,7 @@ export default function LeaderboardPage() {
     },
     {
       id: 'top_gift_receiver',
-      title: 'TOP GIFT RECEIVER',
+      title: 'TOP GIFT RECEIVER (5)',
       icon: <GiftIcon size={22} color="#fff" />,
       backgroundColor: '#082919',
       textColor: '#fff',
@@ -191,7 +191,7 @@ export default function LeaderboardPage() {
     },
     {
       id: 'top_footprint',
-      title: 'TOP FOOTPRINT',
+      title: 'TOP FOOTPRINT (5)',
       icon: <FootprintIcon size={22} color="#fff" />,
       backgroundColor: '#082919',
       textColor: '#fff',
@@ -199,7 +199,7 @@ export default function LeaderboardPage() {
     },
     {
       id: 'top_gamer',
-      title: 'TOP GAMER (WEEKLY)',
+      title: 'TOP GAMER (WEEKLY) (5)',
       icon: <GamepadIcon size={22} color="#fff" />,
       backgroundColor: '#082919',
       textColor: '#fff',
@@ -207,7 +207,7 @@ export default function LeaderboardPage() {
     },
     {
       id: 'top_get',
-      title: 'TOP GET (WEEKLY)',
+      title: 'TOP GET (WEEKLY) (5)',
       icon: <DiamondIcon size={22} color="#fff" />,
       backgroundColor: '#082919',
       textColor: '#fff',
