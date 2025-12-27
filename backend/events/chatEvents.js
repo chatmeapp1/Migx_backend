@@ -188,13 +188,20 @@ module.exports = (io, socket) => {
             // Check if user is online and in a room
             const { getRedisClient } = require('../redis');
             const redis = getRedisClient();
-            const currentRoomId = await redis.get(`user:${targetUser.id}:room`);
+            
+            // Get all rooms the user is currently in (using the set we maintain)
+            const userRooms = await redis.smembers(`user:${targetUser.id}:rooms`);
             
             let chatStatus = '*';
-            if (currentRoomId) {
+            if (userRooms && userRooms.length > 0) {
               const roomService = require('../services/roomService');
-              const room = await roomService.getRoomById(currentRoomId);
-              chatStatus = room ? room.name : currentRoomId;
+              // Sort to get the most relevant or just the first one for the status
+              const roomPromises = userRooms.map(id => roomService.getRoomById(id));
+              const rooms = await Promise.all(roomPromises);
+              const validRooms = rooms.filter(r => r).map(r => r.name);
+              if (validRooms.length > 0) {
+                chatStatus = validRooms.join(', ');
+              }
             }
 
             const response = `** Username: ${targetUser.username}, Level ${levelData.level}, Gender: ${gender}, Country: ${country}, Chatting in, ${chatStatus} **`;
