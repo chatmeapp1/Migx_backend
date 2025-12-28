@@ -17,12 +17,8 @@ export function Announcements() {
     try {
       setLoading(true);
       setError(null);
-      // Mock data for now - would connect to real API
-      const mockData = [
-        { id: 1, title: 'Welcome', content: 'Welcome to MigX', created_at: new Date().toISOString() },
-        { id: 2, title: 'Update', content: 'New features available', created_at: new Date().toISOString() }
-      ];
-      setAnnouncements(mockData);
+      const response = await adminApi.get('/announcements');
+      setAnnouncements(response.data.announcements || []);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -39,16 +35,15 @@ export function Announcements() {
 
     setIsSubmitting(true);
     try {
-      // Would call API endpoint
-      const newAnnouncement = {
-        id: announcements.length + 1,
+      const adminData = JSON.parse(localStorage.getItem('admin_user'));
+      await adminApi.post('/announcements/create', {
         title,
         content,
-        created_at: new Date().toISOString()
-      };
-      setAnnouncements([newAnnouncement, ...announcements]);
+        adminId: adminData?.id
+      });
       setTitle('');
       setContent('');
+      loadAnnouncements();
       alert('Announcement created successfully');
     } catch (err) {
       alert('Error creating announcement: ' + err.message);

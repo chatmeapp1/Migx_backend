@@ -1,4 +1,4 @@
-import { StyleSheet, View, ScrollView, RefreshControl } from 'react-native';
+import { StyleSheet, View, ScrollView, RefreshControl, Alert } from 'react-native';
 import { useThemeCustom } from '@/theme/provider';
 import { Header } from '@/components/home/Header';
 import { ContactList } from '@/components/home/ContactList';
@@ -6,11 +6,37 @@ import { SwipeableScreen } from '@/components/navigation/SwipeableScreen';
 import { UserProfileSection } from '@/components/home/UserProfileSection';
 import { useState, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_ENDPOINTS } from '@/utils/api';
 
 export default function HomeScreen() {
   const { theme } = useThemeCustom();
   const [refreshing, setRefreshing] = useState(false);
   const contactListRef = useRef<any>(null);
+
+  useEffect(() => {
+    checkAnnouncements();
+  }, []);
+
+  const checkAnnouncements = async () => {
+    try {
+      const lastAlertId = await AsyncStorage.getItem('last_announcement_id');
+      const response = await fetch(`${API_ENDPOINTS.BASE_URL}/api/announcements/active`);
+      const data = await response.json();
+
+      if (data.announcement && data.announcement.id.toString() !== lastAlertId) {
+        Alert.alert(
+          data.announcement.title || 'Pemberitahuan',
+          data.announcement.content,
+          [{ 
+            text: 'OK', 
+            onPress: () => AsyncStorage.setItem('last_announcement_id', data.announcement.id.toString()) 
+          }]
+        );
+      }
+    } catch (error) {
+      console.error('Error checking announcements:', error);
+    }
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);

@@ -3,6 +3,32 @@ const express = require('express');
 const router = express.Router();
 const { query } = require('../db/db');
 
+// Get active announcement for login alert
+router.get('/active', async (req, res) => {
+  try {
+    const result = await query(
+      `SELECT id, title, content 
+       FROM announcements 
+       WHERE is_active = true 
+       ORDER BY created_at DESC 
+       LIMIT 1`,
+      []
+    );
+
+    if (result.rows.length === 0) {
+      return res.json({ announcement: null });
+    }
+
+    res.json({
+      announcement: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Get active announcement error:', error);
+    res.status(500).json({ error: 'Failed to get active announcement' });
+  }
+});
+
 // Get all announcements
 router.get('/', async (req, res) => {
   try {
