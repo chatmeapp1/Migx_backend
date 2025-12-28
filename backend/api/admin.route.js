@@ -89,6 +89,48 @@ router.get('/rooms', superAdminMiddleware, async (req, res) => {
   }
 });
 
+// Create user account (admin)
+router.post('/create-account', superAdminMiddleware, async (req, res) => {
+  try {
+    const { username, email, password, role } = req.body;
+    
+    if (!username || !email || !password) {
+      return res.status(400).json({ error: 'Username, email and password are required' });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    // Check if user exists
+    const existingUser = await db.query(
+      'SELECT id FROM users WHERE LOWER(username) = LOWER($1) OR LOWER(email) = LOWER($2)',
+      [username, email]
+    );
+
+    if (existingUser.rows.length > 0) {
+      return res.status(400).json({ error: 'Username or email already in use' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const result = await db.query(
+      `INSERT INTO users (username, email, password, password_hash, role, created_at, updated_at) 
+       VALUES ($1, $2, $3, $3, $4, NOW(), NOW()) RETURNING id, username, email, role`,
+      [username, email, hashedPassword, role || 'user']
+    );
+
+    res.status(201).json({ 
+      success: true, 
+      message: 'Account created successfully', 
+      user: result.rows[0] 
+    });
+  } catch (error) {
+    console.error('Error creating user account:', error);
+    res.status(500).json({ error: 'Failed to create user account' });
+  }
+});
+
 // Update report status
 router.patch('/reports/:id/status', superAdminMiddleware, async (req, res) => {
   try {
