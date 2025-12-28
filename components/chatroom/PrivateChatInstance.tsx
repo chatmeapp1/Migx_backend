@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useEffect, useState } from 'react';
-import { View, StyleSheet, Dimensions, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, StyleSheet, Dimensions, StatusBar } from 'react-native';
 import { useRoomMessagesData } from '@/stores/useRoomTabsStore';
 import { ChatRoomContent } from './ChatRoomContent';
 import { PrivateChatHeader } from './PrivateChatHeader';
@@ -57,11 +57,7 @@ export const PrivateChatInstance = React.memo(function PrivateChatInstance({
   }, []);
 
   return (
-    <KeyboardAvoidingView 
-      style={[styles.container, { backgroundColor: theme.background }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-    >
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <StatusBar barStyle="light-content" backgroundColor="#0a5229" />
       
       {/* Header */}
@@ -72,7 +68,7 @@ export const PrivateChatInstance = React.memo(function PrivateChatInstance({
         onMenuPress={() => {}}
       />
 
-      {/* Messages */}
+      {/* Messages - flex: 1 to take remaining space */}
       <View style={styles.messagesContainer}>
         <ChatRoomContent 
           messages={messages} 
@@ -80,29 +76,25 @@ export const PrivateChatInstance = React.memo(function PrivateChatInstance({
         />
       </View>
 
-      {/* Input - Always visible, positioned above emoji picker */}
-      <View style={{ paddingBottom: emojiVisible ? 0 : insets.bottom }}>
-        <PrivateChatInput
-          ref={inputRef}
-          onSend={handleSendMessage}
-          onEmojiPress={handleEmojiPress}
-          emojiPickerVisible={emojiVisible}
-          emojiPickerHeight={emojiVisible ? EMOJI_PICKER_HEIGHT : 0}
-        />
-      </View>
+      {/* Input - At the bottom */}
+      <PrivateChatInput
+        ref={inputRef}
+        onSend={handleSendMessage}
+        onEmojiPress={handleEmojiPress}
+        emojiPickerVisible={emojiVisible}
+        emojiPickerHeight={emojiVisible ? EMOJI_PICKER_HEIGHT : 0}
+      />
 
       {/* Emoji Picker - Below input, inline mode */}
       {emojiVisible && (
-        <View style={{ paddingBottom: insets.bottom }}>
-          <EmojiPicker 
-            visible={emojiVisible}
-            onClose={() => setEmojiVisible(false)}
-            onEmojiSelect={handleEmojiSelect}
-            inline={true}
-          />
-        </View>
+        <EmojiPicker 
+          visible={emojiVisible}
+          onClose={() => setEmojiVisible(false)}
+          onEmojiSelect={handleEmojiSelect}
+          inline={true}
+        />
       )}
-    </KeyboardAvoidingView>
+    </View>
   );
 });
 
