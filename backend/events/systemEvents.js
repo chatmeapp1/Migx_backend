@@ -295,4 +295,5 @@ module.exports = (io, socket) => {
   // socket.on('user:status:update', updateStatus);
   // socket.on('user:level:get', getUserLevelData); // This event was not defined in original code
   socket.on('disconnect', handleDisconnect);
+  socket.on('logout', handleDisconnect);
 };

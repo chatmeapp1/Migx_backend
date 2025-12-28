@@ -19,11 +19,14 @@ import { SwipeableScreen } from '@/components/navigation/SwipeableScreen';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoomTabsStore } from '@/stores/useRoomTabsStore';
 
+import { useSocket } from '@/hooks/useSocket';
+
 export default function ProfileScreen() {
   const { theme } = useThemeCustom();
   const [userData, setUserData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const clearAllRooms = useRoomTabsStore(state => state.clearAllRooms);
+  const { socket } = useSocket();
 
   useEffect(() => {
     loadUserData();
@@ -56,6 +59,12 @@ export default function ProfileScreen() {
         style: 'destructive',
         onPress: async () => {
           try {
+            // Emit logout event to backend for cleanup
+            if (socket) {
+              socket.emit('logout');
+              socket.disconnect();
+            }
+
             // Clear ALL session data except saved credentials
             const allKeys = await AsyncStorage.getAllKeys();
             const sessionKeys = allKeys.filter(key => 
