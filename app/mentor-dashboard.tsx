@@ -1,14 +1,15 @@
-import { StyleSheet, View, SafeAreaView, ScrollView, Alert, Text, TouchableOpacity, TextInput, FlatList } from 'react-native';
+import { StyleSheet, View, SafeAreaView, Alert, Text, TouchableOpacity, TextInput, FlatList } from 'react-native';
 import { router } from 'expo-router';
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useThemeCustom } from '@/theme/provider';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
-import { API_CONFIG } from '@/config/api';
+
+const BASE_URL = 'https://d1a7ddfc-5415-44f9-92c0-a278e94f8f08-00-1i8qhqy6zm7hx.sisko.replit.dev';
 
 export default function MentorDashboard() {
-  const { theme, isDark } = useThemeCustom();
+  const { theme } = useThemeCustom();
   const [merchants, setMerchants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -23,7 +24,7 @@ export default function MentorDashboard() {
     try {
       setLoading(true);
       const token = await AsyncStorage.getItem('auth_token');
-      const response = await axios.get(`${API_CONFIG.BASE_URL}/api/mentor/merchants`, {
+      const response = await axios.get(`${BASE_URL}/api/mentor/merchants`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (response.data.success) {
@@ -41,7 +42,7 @@ export default function MentorDashboard() {
     try {
       setSubmitting(true);
       const token = await AsyncStorage.getItem('auth_token');
-      const response = await axios.post(`${API_CONFIG.BASE_URL}/api/mentor/add-merchant`, 
+      const response = await axios.post(`${BASE_URL}/api/mentor/add-merchant`, 
         { username: newMerchantUsername },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -64,7 +65,7 @@ export default function MentorDashboard() {
     <View style={[styles.merchantItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
       <View>
         <Text style={[styles.merchantName, { color: theme.text }]}>{item.username}</Text>
-        <Text style={[styles.expiryText, { color: theme.textSecondary }]}>
+        <Text style={[styles.expiryText, { color: theme.secondary }]}>
           Expires: {new Date(item.merchant_expired_at).toLocaleDateString()}
         </Text>
       </View>
@@ -93,7 +94,7 @@ export default function MentorDashboard() {
             <TextInput
               style={[styles.input, { color: theme.text, borderColor: theme.border, backgroundColor: theme.background }]}
               placeholder="Enter Username"
-              placeholderTextColor={theme.textSecondary}
+              placeholderTextColor={theme.secondary}
               value={newMerchantUsername}
               onChangeText={setNewMerchantUsername}
               autoCapitalize="none"
@@ -109,14 +110,14 @@ export default function MentorDashboard() {
         )}
 
         <View style={styles.content}>
-          <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Your Merchants</Text>
+          <Text style={[styles.sectionTitle, { color: theme.secondary }]}>Your Merchants</Text>
           <FlatList
             data={merchants}
             renderItem={renderMerchantItem}
             keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={styles.list}
             ListEmptyComponent={
-              <Text style={[styles.emptyText, { color: theme.textSecondary }]}>No merchants added yet.</Text>
+              <Text style={[styles.emptyText, { color: theme.secondary }]}>No merchants added yet.</Text>
             }
           />
         </View>

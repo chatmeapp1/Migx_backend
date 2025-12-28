@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db');
+const { query } = require('../db/db');
 const auth = require('../middleware/auth');
 
 // Get mentor's merchants
@@ -10,7 +10,7 @@ router.get('/merchants', auth, async (req, res) => {
       return res.status(403).json({ success: false, error: 'Access denied' });
     }
 
-    const result = await pool.query(
+    const result = await query(
       'SELECT id, username, merchant_expired_at FROM users WHERE mentor_id = $1 AND role = \'merchant\'',
       [req.user.id]
     );
@@ -31,7 +31,7 @@ router.post('/add-merchant', auth, async (req, res) => {
     }
 
     // Find user by username
-    const userRes = await pool.query('SELECT id, role FROM users WHERE username = $1', [username]);
+    const userRes = await query('SELECT id, role FROM users WHERE username = $1', [username]);
     if (userRes.rows.length === 0) {
       return res.status(404).json({ success: false, error: 'User not found' });
     }
@@ -40,7 +40,7 @@ router.post('/add-merchant', auth, async (req, res) => {
     const expiryDate = new Date();
     expiryDate.setMonth(expiryDate.getMonth() + 1);
 
-    await pool.query(
+    await query(
       'UPDATE users SET role = \'merchant\', mentor_id = $1, merchant_expired_at = $2 WHERE id = $3',
       [req.user.id, expiryDate, targetUser.id]
     );

@@ -1,4 +1,4 @@
-const pool = require('../db');
+const { query } = require('../db/db');
 
 /**
  * Service to handle mentor-merchant management and auto-demotion
@@ -13,7 +13,7 @@ const mentorService = {
       console.log('Running merchant status check...');
       
       // 1. Find all active merchants
-      const merchants = await pool.query(
+      const merchants = await query(
         "SELECT id, username, mentor_id, merchant_expired_at FROM users WHERE role = 'merchant' AND mentor_id IS NOT NULL"
       );
 
@@ -32,7 +32,7 @@ const mentorService = {
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-        const paymentRes = await pool.query(
+        const paymentRes = await query(
           `SELECT SUM(amount) as total 
            FROM mentor_payments 
            WHERE merchant_id = $1 AND mentor_id = $2 AND payment_date > $3`,
@@ -51,15 +51,15 @@ const mentorService = {
 
   async demoteMerchant(userId, reason) {
     console.log(`Demoting user ${userId} to regular user. Reason: ${reason}`);
-    await pool.query(
+    await query(
       "UPDATE users SET role = 'user', mentor_id = NULL, merchant_expired_at = NULL WHERE id = $1",
       [userId]
     );
     
     // Log demotion in audit_logs if available
-    await pool.query(
-      "INSERT INTO audit_logs (action, target_id, details) VALUES ($1, $2, $3)",
-      ['MERCHANT_DEMOTION', userId, reason]
+    await query(
+      "INSERT INTO audit_logs (request_id, from_user_id, from_username, to_user_id, to_username, amount, status, error_reason) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+      ['DEMOTE_' + Date.now(), 0, 'SYSTEM', userId, 'merchant', 0, 'completed', reason]
     ).catch(err => console.log('Audit log failed (expected if table differs):', err.message));
   }
 };

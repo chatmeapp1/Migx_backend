@@ -98,6 +98,14 @@ const transferCredits = async (fromUserId, toUserId, amount, description = null,
         [fromUserId, sender.username, amount, currentMonth]
       );
     }
+
+    // ➕ Mentor Payment Tracking: Record payment if sender is mentor and receiver is their merchant
+    if (sender.role === 'mentor' && recipient.role === 'merchant' && recipient.mentor_id === parseInt(fromUserId)) {
+      await client.query(
+        'INSERT INTO mentor_payments (mentor_id, merchant_id, amount) VALUES ($1, $2, $3)',
+        [fromUserId, toUserId, amount]
+      );
+    }
     
     // 🔐 STEP 10: Update audit log to "completed" on success (immutable after this)
     if (requestId) {
