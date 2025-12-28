@@ -77,10 +77,11 @@ export const PrivateChatInput = forwardRef<PrivateChatInputRef, PrivateChatInput
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={[styles.inputContainer, { backgroundColor: theme.card }]}>
         <TouchableOpacity 
+          style={styles.iconButton}
           onPress={onEmojiPress}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <EmojiIcon size={20} color={theme.secondary} />
+          <EmojiIcon size={22} color={theme.secondary} />
         </TouchableOpacity>
 
         <TextInput
@@ -102,6 +103,7 @@ export const PrivateChatInput = forwardRef<PrivateChatInputRef, PrivateChatInput
         />
 
         <TouchableOpacity 
+          style={styles.sendButton}
           onPress={handleSend}
           disabled={!message.trim()}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -116,23 +118,36 @@ export const PrivateChatInput = forwardRef<PrivateChatInputRef, PrivateChatInput
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: '#333',
   },
   inputContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderRadius: 24,
-    gap: 10,
+    gap: 12,
+  },
+  iconButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 28,
+    height: 28,
+  },
+  sendButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 28,
+    height: 28,
+    marginRight: 2,
   },
   input: {
     flex: 1,
     fontSize: 15,
-    paddingVertical: 8,
-    paddingHorizontal: 0,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
     maxHeight: 100,
   },
 });
