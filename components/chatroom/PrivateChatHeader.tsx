@@ -1,27 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { BackIcon } from '@/components/ui/SvgIcons';
 import { useThemeCustom } from '@/theme/provider';
 import { getLevelConfig } from '@/utils/levelMapping';
 import Svg, { Circle, Path } from 'react-native-svg';
 import API_BASE_URL from '@/utils/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface PrivateChatHeaderProps {
   username: string;
   targetUserId?: string;
   onBack?: () => void;
-  onFollowPress?: () => void;
   onMenuPress?: () => void;
 }
-
-const FollowIcon = ({ size = 24, color = '#fff' }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <Circle cx="12" cy="8" r="3" stroke={color} strokeWidth="2" />
-    <Path d="M20 21v-2a4 4 0 0 0-4-4h-8a4 4 0 0 0-4 4v2" stroke={color} strokeWidth="2" strokeLinecap="round" />
-    <Path d="M16 11h6M19 8v6" stroke={color} strokeWidth="2" strokeLinecap="round" />
-  </Svg>
-);
 
 const ThreeDotsIcon = ({ color = '#fff', size = 24 }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -42,7 +34,6 @@ export function PrivateChatHeader({
   username, 
   targetUserId,
   onBack, 
-  onFollowPress,
   onMenuPress 
 }: PrivateChatHeaderProps) {
   const router = useRouter();
@@ -50,6 +41,7 @@ export function PrivateChatHeader({
   const [userLevel, setUserLevel] = useState(1);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState(username);
+  const [followLoading, setFollowLoading] = useState(false);
 
   useEffect(() => {
     fetchUserData();
@@ -58,34 +50,60 @@ export function PrivateChatHeader({
   const fetchUserData = async () => {
     try {
       let response;
-      
-      // If we have targetUserId, fetch by ID for more reliable results
       if (targetUserId) {
         response = await fetch(`${API_BASE_URL}/api/users/${targetUserId}`);
       } else {
-        // Fallback to username lookup
         response = await fetch(`${API_BASE_URL}/api/users/username/${username}`);
       }
       
       const data = await response.json();
       
       if (data) {
-        if (data.level) {
-          setUserLevel(data.level);
-        }
+        if (data.level) setUserLevel(data.level);
         if (data.avatar) {
-          // Handle avatar URL
           const avatarUrl = data.avatar.startsWith('http') 
             ? data.avatar 
             : `${API_BASE_URL}${data.avatar.startsWith('/') ? '' : '/'}${data.avatar}`;
           setUserAvatar(avatarUrl);
         }
-        if (data.username) {
-          setDisplayName(data.username);
-        }
+        if (data.username) setDisplayName(data.username);
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
+    }
+  };
+
+  const handleFollowPress = async () => {
+    if (followLoading) return;
+    try {
+      setFollowLoading(true);
+      const userDataStr = await AsyncStorage.getItem('user_data');
+      if (!userDataStr) {
+        Alert.alert('Error', 'Please login first');
+        return;
+      }
+      const currentUser = JSON.parse(userDataStr);
+
+      const response = await fetch(`${API_BASE_URL}/api/profile/follow`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          followerId: currentUser.id,
+          followingId: targetUserId || displayName,
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        Alert.alert('Success', `You are following ${displayName}`);
+      } else {
+        Alert.alert('Error', data.error || 'Failed to follow user');
+      }
+    } catch (error) {
+      console.error('Follow error:', error);
+      Alert.alert('Error', 'Failed to follow user');
+    } finally {
+      setFollowLoading(false);
     }
   };
 
@@ -95,7 +113,6 @@ export function PrivateChatHeader({
   return (
     <View style={[styles.container, { backgroundColor: '#0a5229' }]}>
       <View style={styles.header}>
-        {/* Left Side */}
         <View style={styles.leftSection}>
           <TouchableOpacity 
             onPress={onBack ? onBack : () => router.back()}
@@ -107,11 +124,7 @@ export function PrivateChatHeader({
           
           <View style={styles.avatarContainer}>
             {userAvatar ? (
-              <Image 
-                source={{ uri: userAvatar }} 
-                style={styles.avatarImage}
-                onError={() => setUserAvatar(null)}
-              />
+              <Image source={{ uri: userAvatar }} style={styles.avatarImage} onError={() => setUserAvatar(null)} />
             ) : (
               <View style={styles.avatarPlaceholder}>
                 <Text style={styles.avatarText}>👤</Text>
@@ -128,11 +141,11 @@ export function PrivateChatHeader({
           </View>
         </View>
 
-        {/* Right Side */}
         <View style={styles.rightSection}>
           <TouchableOpacity 
-            onPress={onFollowPress}
+            onPress={handleFollowPress}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            disabled={followLoading}
           >
             <AddIcon size={24} color="#FFFFFF" />
           </TouchableOpacity>
