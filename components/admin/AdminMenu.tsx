@@ -9,10 +9,11 @@ interface AdminMenuProps {
   onCreateAccount: () => void;
   onTransactionHistory: () => void;
   onReportAbuse: () => void;
+  onSetAlert: () => void;
   onClose: () => void;
 }
 
-export function AdminMenu({ insets, onAddCoin, onCreateAccount, onTransactionHistory, onReportAbuse, onClose }: AdminMenuProps) {
+export function AdminMenu({ insets, onAddCoin, onCreateAccount, onTransactionHistory, onReportAbuse, onSetAlert, onClose }: AdminMenuProps) {
   const router = useRouter();
 
   const handleUserManagement = () => {
@@ -73,6 +74,16 @@ export function AdminMenu({ insets, onAddCoin, onCreateAccount, onTransactionHis
         >
           <Ionicons name="alert-outline" size={20} color="#EF4444" />
           <Text style={styles.menuItemText}>Abuse Reports</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => {
+            onClose();
+            onSetAlert();
+          }}
+        >
+          <Ionicons name="megaphone-outline" size={20} color="#F59E0B" />
+          <Text style={styles.menuItemText}>Set Alert</Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>

@@ -23,6 +23,7 @@ import { CreateRoomModal } from '@/components/admin/CreateRoomModal';
 import { TransactionHistoryModal } from '@/components/admin/TransactionHistoryModal';
 import { ReportAbuseListModal } from '@/components/admin/ReportAbuseListModal';
 import { AnnouncementsTab } from '@/components/admin/AnnouncementsTab';
+import { SetAlertModal } from '@/components/admin/SetAlertModal';
 
 const HEADER_COLOR = '#0a5229';
 
@@ -42,6 +43,7 @@ export default function AdminPanelScreen() {
   const [createAccountModalVisible, setCreateAccountModalVisible] = useState(false);
   const [transactionHistoryVisible, setTransactionHistoryVisible] = useState(false);
   const [reportAbuseModalVisible, setReportAbuseModalVisible] = useState(false);
+  const [setAlertModalVisible, setSetAlertModalVisible] = useState(false);
   const [adminToken, setAdminToken] = useState('');
   const [currentAdminId, setCurrentAdminId] = useState<number | undefined>(undefined);
   
@@ -521,6 +523,7 @@ export default function AdminPanelScreen() {
             onCreateAccount={() => setCreateAccountModalVisible(true)}
             onTransactionHistory={() => setTransactionHistoryVisible(true)}
             onReportAbuse={() => setReportAbuseModalVisible(true)}
+            onSetAlert={() => setSetAlertModalVisible(true)}
             onClose={() => setMenuVisible(false)}
           />
         </Modal>
@@ -582,6 +585,11 @@ export default function AdminPanelScreen() {
         visible={reportAbuseModalVisible}
         onClose={() => setReportAbuseModalVisible(false)}
         token={adminToken}
+      />
+
+      <SetAlertModal
+        visible={setAlertModalVisible}
+        onClose={() => setSetAlertModalVisible(false)}
       />
 
       <View style={styles.tabContainer}>
