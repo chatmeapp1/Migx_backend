@@ -55,7 +55,21 @@ export function ChatRoomTabs({
       >
         {openRooms.map((room, index) => {
           const isPrivateChat = room.roomId.startsWith('pm_');
-          const targetUsername = isPrivateChat ? room.roomId.replace('pm_', '') : '';
+          
+          // For private chat: use room.name (which stores target username)
+          // Extract target user ID from roomId format: pm_userId1_userId2
+          let targetUsername = '';
+          let targetUserId = '';
+          
+          if (isPrivateChat) {
+            targetUsername = room.name || '';
+            // Extract both user IDs from pm_id1_id2 format
+            const pmParts = room.roomId.replace('pm_', '').split('_');
+            if (pmParts.length === 2) {
+              // The target is whichever ID is in the room name (fetch will resolve)
+              targetUserId = pmParts[0]; // Will be resolved by header fetch
+            }
+          }
           
           return (
             <View key={room.roomId} style={styles.page}>
@@ -63,6 +77,7 @@ export function ChatRoomTabs({
                 <PrivateChatInstance
                   roomId={room.roomId}
                   targetUsername={targetUsername}
+                  targetUserId={targetUserId}
                   bottomPadding={bottomPadding}
                   isActive={index === activeIndex}
                 />

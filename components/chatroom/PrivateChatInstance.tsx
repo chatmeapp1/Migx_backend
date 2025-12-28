@@ -14,6 +14,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 interface PrivateChatInstanceProps {
   roomId: string;
   targetUsername: string;
+  targetUserId?: string;
   bottomPadding: number;
   isActive: boolean;
 }
@@ -21,6 +22,7 @@ interface PrivateChatInstanceProps {
 export const PrivateChatInstance = React.memo(function PrivateChatInstance({
   roomId,
   targetUsername,
+  targetUserId,
   bottomPadding,
   isActive,
 }: PrivateChatInstanceProps) {
@@ -61,6 +63,7 @@ export const PrivateChatInstance = React.memo(function PrivateChatInstance({
       {/* Header */}
       <PrivateChatHeader 
         username={targetUsername}
+        targetUserId={targetUserId}
         onFollowPress={() => {}}
         onMenuPress={() => {}}
       />

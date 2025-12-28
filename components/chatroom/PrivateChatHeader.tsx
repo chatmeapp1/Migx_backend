@@ -9,6 +9,7 @@ import API_BASE_URL from '@/utils/api';
 
 interface PrivateChatHeaderProps {
   username: string;
+  targetUserId?: string;
   onBack?: () => void;
   onFollowPress?: () => void;
   onMenuPress?: () => void;
@@ -39,6 +40,7 @@ const AddIcon = ({ size = 24, color = '#fff' }: { size?: number; color?: string 
 
 export function PrivateChatHeader({ 
   username, 
+  targetUserId,
   onBack, 
   onFollowPress,
   onMenuPress 
@@ -46,21 +48,41 @@ export function PrivateChatHeader({
   const router = useRouter();
   const { theme } = useThemeCustom();
   const [userLevel, setUserLevel] = useState(1);
-  const [userAvatar, setUserAvatar] = useState('👤');
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState(username);
 
   useEffect(() => {
     fetchUserData();
-  }, [username]);
+  }, [username, targetUserId]);
 
   const fetchUserData = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/users/username/${username}`);
-      const data = await response.json();
-      if (data && data.level) {
-        setUserLevel(data.level);
+      let response;
+      
+      // If we have targetUserId, fetch by ID for more reliable results
+      if (targetUserId) {
+        response = await fetch(`${API_BASE_URL}/api/users/${targetUserId}`);
+      } else {
+        // Fallback to username lookup
+        response = await fetch(`${API_BASE_URL}/api/users/username/${username}`);
       }
-      if (data && data.avatar) {
-        setUserAvatar(data.avatar);
+      
+      const data = await response.json();
+      
+      if (data) {
+        if (data.level) {
+          setUserLevel(data.level);
+        }
+        if (data.avatar) {
+          // Handle avatar URL
+          const avatarUrl = data.avatar.startsWith('http') 
+            ? data.avatar 
+            : `${API_BASE_URL}${data.avatar.startsWith('/') ? '' : '/'}${data.avatar}`;
+          setUserAvatar(avatarUrl);
+        }
+        if (data.username) {
+          setDisplayName(data.username);
+        }
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -68,7 +90,7 @@ export function PrivateChatHeader({
   };
 
   const levelConfig = getLevelConfig(userLevel);
-  const avatarUri = typeof levelConfig.icon === 'number' ? levelConfig.icon : require('@/assets/ic_level/ic_eggwhite.png');
+  const levelIconSource = typeof levelConfig.icon === 'number' ? levelConfig.icon : require('@/assets/ic_level/ic_eggwhite.png');
 
   return (
     <View style={[styles.container, { backgroundColor: '#0a5229' }]}>
@@ -83,15 +105,25 @@ export function PrivateChatHeader({
             <BackIcon color="#FFFFFF" size={24} />
           </TouchableOpacity>
           
-          <View style={styles.userInfo}>
-            <Text style={styles.avatarText}>{userAvatar}</Text>
+          <View style={styles.avatarContainer}>
+            {userAvatar ? (
+              <Image 
+                source={{ uri: userAvatar }} 
+                style={styles.avatarImage}
+                onError={() => setUserAvatar(null)}
+              />
+            ) : (
+              <View style={styles.avatarPlaceholder}>
+                <Text style={styles.avatarText}>👤</Text>
+              </View>
+            )}
           </View>
           
           <View style={styles.userDetails}>
-            <Text style={styles.username} numberOfLines={1}>{username}</Text>
+            <Text style={styles.username} numberOfLines={1}>{displayName}</Text>
             <View style={styles.levelBadge}>
-              <Image source={avatarUri} style={styles.levelIcon} />
-              <Text style={styles.levelLabel}>{levelConfig.label}</Text>
+              <Image source={levelIconSource} style={styles.levelIcon} />
+              <Text style={styles.levelNumber}>[{userLevel}]</Text>
             </View>
           </View>
         </View>
@@ -139,14 +171,25 @@ const styles = StyleSheet.create({
     padding: 8,
     marginRight: 8,
   },
-  userInfo: {
+  avatarContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  avatarPlaceholder: {
     width: 40,
     height: 40,
     borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
   },
   avatarText: {
     fontSize: 20,
@@ -169,10 +212,10 @@ const styles = StyleSheet.create({
     height: 16,
     marginRight: 4,
   },
-  levelLabel: {
-    fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontWeight: '500',
+  levelNumber: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   rightSection: {
     flexDirection: 'row',
