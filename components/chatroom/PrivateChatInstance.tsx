@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useEffect, useState } from 'react';
-import { View, StyleSheet, Dimensions, StatusBar } from 'react-native';
+import { View, StyleSheet, Dimensions, StatusBar, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRoomMessagesData } from '@/stores/useRoomTabsStore';
 import { ChatRoomContent } from './ChatRoomContent';
 import { PrivateChatHeader } from './PrivateChatHeader';
@@ -57,7 +57,11 @@ export const PrivateChatInstance = React.memo(function PrivateChatInstance({
   }, []);
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
+    <KeyboardAvoidingView 
+      style={[styles.container, { backgroundColor: theme.background }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+    >
       <StatusBar barStyle="light-content" backgroundColor="#0a5229" />
       
       {/* Header */}
@@ -76,15 +80,8 @@ export const PrivateChatInstance = React.memo(function PrivateChatInstance({
         />
       </View>
 
-      {/* Emoji Picker */}
-      <EmojiPicker 
-        visible={emojiVisible}
-        onClose={() => setEmojiVisible(false)}
-        onEmojiSelect={handleEmojiSelect}
-      />
-
-      {/* Input */}
-      <View style={{ paddingBottom: insets.bottom }}>
+      {/* Input - Always visible, positioned above emoji picker */}
+      <View style={{ paddingBottom: emojiVisible ? 0 : insets.bottom }}>
         <PrivateChatInput
           ref={inputRef}
           onSend={handleSendMessage}
@@ -93,7 +90,19 @@ export const PrivateChatInstance = React.memo(function PrivateChatInstance({
           emojiPickerHeight={emojiVisible ? EMOJI_PICKER_HEIGHT : 0}
         />
       </View>
-    </View>
+
+      {/* Emoji Picker - Below input, inline mode */}
+      {emojiVisible && (
+        <View style={{ paddingBottom: insets.bottom }}>
+          <EmojiPicker 
+            visible={emojiVisible}
+            onClose={() => setEmojiVisible(false)}
+            onEmojiSelect={handleEmojiSelect}
+            inline={true}
+          />
+        </View>
+      )}
+    </KeyboardAvoidingView>
   );
 });
 

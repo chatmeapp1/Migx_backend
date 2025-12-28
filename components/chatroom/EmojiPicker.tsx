@@ -8,22 +8,25 @@ interface EmojiPickerProps {
   onClose: () => void;
   onEmojiSelect: (emojiCode: string) => void;
   bottomOffset?: number;
+  inline?: boolean;
 }
 
 const PICKER_HEIGHT = 400;
 const INPUT_HEIGHT = 55;
 
-export function EmojiPicker({ visible, onClose, onEmojiSelect, bottomOffset = 0 }: EmojiPickerProps) {
+export function EmojiPicker({ visible, onClose, onEmojiSelect, bottomOffset = 0, inline = false }: EmojiPickerProps) {
   const { theme } = useThemeCustom();
   const translateY = useRef(new Animated.Value(PICKER_HEIGHT)).current;
 
   useEffect(() => {
-    Animated.timing(translateY, {
-      toValue: visible ? 0 : PICKER_HEIGHT,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
-  }, [visible, translateY]);
+    if (!inline) {
+      Animated.timing(translateY, {
+        toValue: visible ? 0 : PICKER_HEIGHT,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [visible, translateY, inline]);
 
   const handleEmojiPress = (emojiCode: string) => {
     onEmojiSelect(emojiCode);
@@ -31,6 +34,44 @@ export function EmojiPicker({ visible, onClose, onEmojiSelect, bottomOffset = 0 
 
   if (!visible) {
     return null;
+  }
+
+  // Inline mode - no absolute positioning, just a regular view
+  if (inline) {
+    return (
+      <View style={[styles.inlineContainer, { backgroundColor: theme.card }]}>
+        <View style={[styles.header, { borderBottomColor: theme.border }]}>
+          <Text style={[styles.title, { color: theme.text }]}>Emoticons</Text>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <Text style={[styles.closeText, { color: theme.secondary }]}>✕</Text>
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView 
+          style={styles.scrollView}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.emojiGrid}>
+            {emojiList.map((emoji, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[styles.emojiButton, { backgroundColor: theme.background }]}
+                onPress={() => handleEmojiPress(emoji.code)}
+                activeOpacity={0.7}
+                hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+              >
+                <Image
+                  source={emoji.image}
+                  style={styles.emojiImage}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
+      </View>
+    );
   }
 
   return (
@@ -41,7 +82,7 @@ export function EmojiPicker({ visible, onClose, onEmojiSelect, bottomOffset = 0 
           backgroundColor: theme.card,
           transform: [{ translateY }],
           bottom: 0,
-          zIndex: 5, // Lower zIndex so it stays behind the input but in front of content
+          zIndex: 5,
         }
       ]}
     >
@@ -89,7 +130,12 @@ const styles = StyleSheet.create({
     height: PICKER_HEIGHT,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
-    zIndex: 10, // Higher zIndex than input
+    zIndex: 10,
+  },
+  inlineContainer: {
+    height: 280,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
   },
   header: {
     flexDirection: 'row',
