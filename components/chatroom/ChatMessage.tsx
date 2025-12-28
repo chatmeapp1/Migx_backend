@@ -164,7 +164,7 @@ export const ChatMessage = React.memo(({
       </Text>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   messageContainer: {
