@@ -55,8 +55,6 @@ animation: "none",
 <Stack.Screen name="transfer-history" />
 <Stack.Screen name="official-comment" />
 <Stack.Screen name="edit-profile" />
-<Stack.Screen name="settings" />
-<Stack.Screen name="gift-store" />
 <Stack.Screen name="leaderboard" />
 <Stack.Screen name="people" />
 <Stack.Screen name="+not-found" />

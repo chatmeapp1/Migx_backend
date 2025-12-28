@@ -109,9 +109,9 @@ export default function ProfileScreen() {
     console.log('Merchant Dashboard pressed');
   };
 
-  const handleSettings = () => {
-    console.log('Settings pressed');
-    router.push('/settings');
+  const handleSecurity = () => {
+    console.log('Security pressed');
+    router.push('/security');
   };
 
   return (
@@ -160,7 +160,7 @@ export default function ProfileScreen() {
               <ProfileMenuItem 
                 icon={<SettingsIcon size={24} />}
                 title="Security"
-                onPress={handleSettings}
+                onPress={handleSecurity}
               />
 
               <ModeToggle />
