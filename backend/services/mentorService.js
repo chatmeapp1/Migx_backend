@@ -40,8 +40,8 @@ const mentorService = {
         );
 
         const totalPaid = parseInt(paymentRes.rows[0].total || '0');
-        if (totalPaid < 1000000) {
-          await this.demoteMerchant(merchant.id, `Insufficient monthly payment (${totalPaid}/1,000,000)`);
+        if (totalPaid < 1600000) {
+          await this.demoteMerchant(merchant.id, `Insufficient monthly payment (${totalPaid}/1,600,000)`);
         }
       }
     } catch (error) {
