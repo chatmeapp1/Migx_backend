@@ -22,6 +22,7 @@ import { RoomsTab } from '@/components/admin/RoomsTab';
 import { CreateRoomModal } from '@/components/admin/CreateRoomModal';
 import { TransactionHistoryModal } from '@/components/admin/TransactionHistoryModal';
 import { ReportAbuseListModal } from '@/components/admin/ReportAbuseListModal';
+import { AnnouncementsTab } from '@/components/admin/AnnouncementsTab';
 
 const HEADER_COLOR = '#0a5229';
 
@@ -672,11 +673,10 @@ export default function AdminPanelScreen() {
       )}
 
       {selectedTab === 'announcements' && (
-        <View style={styles.comingSoon}>
-          <Text style={[styles.comingSoonText, { color: theme.secondary }]}>
-            Announcements Management Coming Soon
-          </Text>
-        </View>
+        <AnnouncementsTab 
+          theme={theme}
+          adminId={users.find(u => u.role === 'super_admin' || u.role === 'admin')?.id}
+        />
       )}
     </View>
   );
