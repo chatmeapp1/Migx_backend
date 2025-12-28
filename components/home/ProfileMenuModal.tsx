@@ -6,7 +6,7 @@ import { useThemeCustom } from '@/theme/provider';
 import { router, usePathname } from 'expo-router';
 import { 
   AccountIcon, 
-  CommentIcon, 
+  CommentIcon as OfficialCommentIcon, 
   GiftIcon, 
   PeopleIcon, 
   LeaderboardIcon, 
@@ -90,7 +90,7 @@ export function ProfileMenuModal({ visible, onClose, userData }: ProfileMenuModa
 
   const handleSettings = () => {
     onClose();
-    router.push('/settings');
+    router.push('/security');
   };
 
   const handleAdminPanel = () => {
@@ -151,16 +151,9 @@ export function ProfileMenuModal({ visible, onClose, userData }: ProfileMenuModa
             />
 
             <MenuItem 
-              icon={<CommentIcon size={24} />}
+              icon={<OfficialCommentIcon size={24} />}
               title="Official Comment"
               onPress={handleOfficialComment}
-              theme={theme}
-            />
-
-            <MenuItem 
-              icon={<GiftIcon size={24} />}
-              title="Gift Store"
-              onPress={handleGiftStore}
               theme={theme}
             />
 
@@ -181,7 +174,7 @@ export function ProfileMenuModal({ visible, onClose, userData }: ProfileMenuModa
 
             <MenuItem 
               icon={<SettingsIcon size={24} />}
-              title="Settings"
+              title="Security"
               onPress={handleSettings}
               theme={theme}
             />
