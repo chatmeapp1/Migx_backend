@@ -33,6 +33,13 @@ The PostgreSQL database includes tables for `users`, `rooms`, `messages`, `priva
 
 Redis manages online user presence, banned user lists, flood control, global rate limiting, and caching, acting as the source of truth for online/offline status.
 
+### Chatlist Architecture (Real-time, Redis-only)
+- **Storage:** `user:rooms:${username}` → SET { JSON room data }
+- **Format:** Each entry is JSON: `{ id, roomId, name, roomName, joinedAt }`
+- **API:** `GET /api/chat/list/:username` reads ONLY from Redis, NO database queries
+- **Join/Leave:** `addUserRoom()` and `removeUserRoom()` maintain the SET
+- **Last Message:** `room:lastmsg:${roomId}` → JSON string with message, username, timestamp (24h TTL)
+
 ### Real-time Communication (Socket.IO)
 
 The `/chat` namespace handles real-time events for room interactions, chat and private messages, credit transfers, and game interactions. Private messages are exclusively handled via Socket.IO.
