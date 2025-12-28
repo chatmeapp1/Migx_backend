@@ -141,8 +141,19 @@ export default function ChatRoomScreen() {
 
     console.log('🔌 [Chatroom] Checking socket initialization for:', currentUsername);
     
-    // If socket exists but username doesn't match, disconnect and recreate
+    // Check if store already has a connected socket with matching username
     const currentSocket = useRoomTabsStore.getState().socket;
+    
+    // If socket exists with matching username and is connected, reuse it
+    if (currentSocket?.connected && (currentSocket as any).auth?.username === currentUsername) {
+      console.log('🔌 [Chatroom] Reusing existing socket for:', currentUsername);
+      socketInitialized.current = true;
+      setIsConnected(true);
+      (window as any).__GLOBAL_SOCKET__ = currentSocket;
+      return;
+    }
+    
+    // If socket exists but username doesn't match, disconnect and recreate
     if (currentSocket && (currentSocket as any).auth?.username !== currentUsername) {
       console.log('🔌 [Chatroom] Socket username mismatch, disconnecting old socket');
       currentSocket.disconnect();
