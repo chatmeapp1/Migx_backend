@@ -19,6 +19,7 @@ export function ChatRoomTabs({
   const openRooms = useOpenRooms();
   const activeIndex = useActiveIndex();
   const setActiveIndex = useRoomTabsStore(state => state.setActiveIndex);
+  const currentUserId = useRoomTabsStore(state => state.currentUserId);
   
   const pagerRef = useRef<PagerView>(null);
   const lastSyncedIndex = useRef(activeIndex);
@@ -66,8 +67,8 @@ export function ChatRoomTabs({
             // Extract both user IDs from pm_id1_id2 format
             const pmParts = room.roomId.replace('pm_', '').split('_');
             if (pmParts.length === 2) {
-              // The target is whichever ID is in the room name (fetch will resolve)
-              targetUserId = pmParts[0]; // Will be resolved by header fetch
+              // Find the ID that is NOT the current user (the other person in the chat)
+              targetUserId = pmParts.find(id => id !== currentUserId) ?? pmParts[0];
             }
           }
           
