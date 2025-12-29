@@ -38,16 +38,11 @@ export function useRoomSocket({ roomId, onRoomJoined, onUsersUpdated }: UseRoomS
     const targetRoomId = data.roomId || roomIdRef.current;
     if (targetRoomId !== roomIdRef.current) return;
     
-    // Skip echo of own messages (already added via optimistic update)
-    // Only skip for regular chat messages, not commands or system messages
+    // Don't skip echo - let the store handle deduplication by message ID
+    // This ensures message appears even if optimistic update failed (e.g., after long background)
     const isOwnMessage = data.username === currentUsername;
-    const isRegularChat = data.messageType === 'chat' || !data.messageType;
-    if (isOwnMessage && isRegularChat) {
-      console.log("MESSAGE ECHO SKIP (optimistic)", targetRoomId, data.message);
-      return;
-    }
     
-    console.log("MESSAGE RECEIVE", targetRoomId, data.message);
+    console.log("MESSAGE RECEIVE", targetRoomId, data.message, "own:", isOwnMessage);
     
     const cmdTypes = ['cmd', 'cmdMe', 'cmdRoll', 'cmdGift', 'cmdGoal', 'cmdGo'];
     const isCommandMessage = cmdTypes.includes(data.messageType) || cmdTypes.includes(data.type);
@@ -201,12 +196,15 @@ export function useRoomSocket({ roomId, onRoomJoined, onUsersUpdated }: UseRoomS
     if (!socket || !message.trim() || !currentUserId) return;
     
     const trimmedMessage = message.trim();
-    console.log("MESSAGE SEND", roomId, trimmedMessage);
+    
+    // Generate consistent ID for both optimistic update and server echo
+    const clientMsgId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    console.log("MESSAGE SEND", roomId, trimmedMessage, "id:", clientMsgId);
     
     // Optimistic update: Add message locally immediately for responsive UI
-    // This ensures sender sees their message even if WiFi blocks echo
+    // Server will use same clientMsgId, store will dedupe if both arrive
     const optimisticMessage: Message = {
-      id: `local-${Date.now()}-${Math.random()}`,
+      id: clientMsgId,
       username: currentUsername || '',
       message: trimmedMessage,
       isOwnMessage: true,
@@ -219,6 +217,7 @@ export function useRoomSocket({ roomId, onRoomJoined, onUsersUpdated }: UseRoomS
       userId: currentUserId,
       username: currentUsername,
       message: trimmedMessage,
+      clientMsgId, // Send to server for echo
     });
   }, [socket, currentUserId, currentUsername, roomId, addMessage]);
 

@@ -9,7 +9,7 @@ const voucherService = require('../services/voucherService');
 module.exports = (io, socket) => {
   const sendMessage = async (data) => {
     try {
-      const { roomId, userId, username, message } = data;
+      const { roomId, userId, username, message, clientMsgId } = data;
 
       if (!roomId || !userId || !username || !message) {
         socket.emit('error', { message: 'Missing required fields' });
@@ -289,7 +289,7 @@ module.exports = (io, socket) => {
       else if (senderRole === 'customer_service' || senderRole === 'cs') userType = 'customer_service';
 
       const messageData = {
-        id: generateMessageId(),
+        id: clientMsgId || generateMessageId(), // Use client ID for deduplication
         roomId,
         userId,
         username,
