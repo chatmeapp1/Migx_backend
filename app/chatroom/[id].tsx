@@ -269,17 +269,46 @@ export default function ChatRoomScreen() {
     return () => backHandler.remove();
   }, [router]);
 
+  // Track app state for background handling
+  const appStateRef = useRef(AppState.currentState);
+  
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextAppState) => {
-      if (nextAppState === 'active') {
+      const prevState = appStateRef.current;
+      appStateRef.current = nextAppState;
+      
+      console.log(`📱 AppState: ${prevState} → ${nextAppState}`);
+      
+      // App coming back to foreground
+      if (nextAppState === 'active' && (prevState === 'background' || prevState === 'inactive')) {
+        console.log('📱 App returned to foreground');
+        
+        // Reconnect socket if disconnected
         if (socket && !socket.connected) {
+          console.log('🔌 Reconnecting socket...');
           socket.connect();
         }
+        
+        // Rejoin all open rooms after reconnection
+        if (socket?.connected) {
+          const openRoomIds = useRoomTabsStore.getState().openRoomIds;
+          openRoomIds.forEach((rid) => {
+            console.log('🔄 Rejoining room after background:', rid);
+            socket.emit('room:join', {
+              roomId: rid,
+              userId: currentUserId,
+              username: currentUsername,
+              silent: true  // Don't show "has entered" message
+            });
+          });
+        }
       }
+      // App going to background - DO NOT disconnect, keep connection alive
+      // The server has extended pingTimeout (5 minutes) to handle this
     });
 
     return () => subscription.remove();
-  }, [socket]);
+  }, [socket, currentUserId, currentUsername]);
 
   const handleSendMessage = useCallback((message: string) => {
     if (!socket || !message.trim() || !currentUserId) return;

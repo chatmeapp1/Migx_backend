@@ -42,9 +42,9 @@ const disconnectTimers = new Map();
 module.exports = (io, socket) => {
   const joinRoom = async (data) => {
     try {
-      const { roomId, userId, username } = data;
+      const { roomId, userId, username, silent = false } = data;
 
-      console.log(`👤 User joining room:`, { roomId, userId, username });
+      console.log(`👤 User joining room:`, { roomId, userId, username, silent });
 
       // Clear any pending disconnect timer for this user
       const timerKey = `${userId}-${roomId}`;
@@ -258,30 +258,33 @@ module.exports = (io, socket) => {
         }, 200);
 
         // MIG33-style enter message to all users in room (presence event - not saved to Redis)
-        setTimeout(async () => {
-          const userLevelData = await getUserLevel(userId);
-          const userLevel = userLevelData?.level || 1;
-          const enterMsg = `${username} [${userLevel}] has entered`;
-          const enterMessage = {
-            id: `presence-enter-${Date.now()}-${Math.random()}`,
+        // Skip this for silent rejoins (e.g., coming back from background)
+        if (!silent) {
+          setTimeout(async () => {
+            const userLevelData = await getUserLevel(userId);
+            const userLevel = userLevelData?.level || 1;
+            const enterMsg = `${username} [${userLevel}] has entered`;
+            const enterMessage = {
+              id: `presence-enter-${Date.now()}-${Math.random()}`,
+              roomId,
+              username: room.name,
+              message: enterMsg,
+              timestamp: new Date().toISOString(),
+              type: 'presence',
+              messageType: 'presence'
+            };
+
+            // Broadcast to ALL users including the joining user
+            io.to(`room:${roomId}`).emit('chat:message', enterMessage);
+            // Note: Presence events are NOT saved to Redis - they are realtime only
+          }, 300);
+
+          io.to(`room:${roomId}`).emit('room:user:joined', {
             roomId,
-            username: room.name,
-            message: enterMsg,
-            timestamp: new Date().toISOString(),
-            type: 'presence',
-            messageType: 'presence'
-          };
-
-          // Broadcast to ALL users including the joining user
-          io.to(`room:${roomId}`).emit('chat:message', enterMessage);
-          // Note: Presence events are NOT saved to Redis - they are realtime only
-        }, 300);
-
-        io.to(`room:${roomId}`).emit('room:user:joined', {
-          roomId,
-          user: userWithPresence,
-          users: usersWithPresence
-        });
+            user: userWithPresence,
+            users: usersWithPresence
+          });
+        }
       } else {
         console.log(`✅ User ${username} already in room ${roomId}, skipping duplicate join messages`);
       }

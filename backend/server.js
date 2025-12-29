@@ -50,8 +50,10 @@ const io = new Server(server, {
     credentials: true
   },
   transports: ['polling', 'websocket'],
-  pingTimeout: 60000,
-  pingInterval: 25000
+  pingTimeout: 300000,  // 5 minutes - allow longer background periods
+  pingInterval: 25000,
+  allowUpgrades: true,
+  upgradeTimeout: 30000
 });
 
 app.use(cors());
