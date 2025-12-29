@@ -9,6 +9,7 @@ const path = require('path'); // Import path module
 const { connectRedis } = require('./redis');
 const { initDatabase } = require('./db/db');
 const { startPresenceCleanup } = require('./jobs/presenceCleanup');
+const { setSession, setPresence } = require('./utils/redisUtils');
 
 const authRoutes = require('./api/auth.route');
 const userRoutes = require('./api/user.route');
@@ -431,6 +432,14 @@ chatNamespace.on('connection', (socket) => {
   }
   
   console.log(`✅ Client connected: ${socket.id} | User: ${username} (ID: ${userId})`);
+
+  // Store socket session in Redis for PM delivery
+  setSession(username, socket.id).catch(err => {
+    console.warn(`⚠️ Could not set session for ${username}:`, err.message);
+  });
+  setPresence(username, 'online').catch(err => {
+    console.warn(`⚠️ Could not set presence for ${username}:`, err.message);
+  });
 
   roomEvents(io.of('/chat'), socket);
   chatEvents(io.of('/chat'), socket);
