@@ -440,7 +440,9 @@ module.exports = (io, socket) => {
 
       // MIG33-style left message (presence event - not saved to Redis)
       const room = await roomService.getRoomById(roomId);
-      const leftMsg = `${username} [${userCount}] has left`;
+      const userLevelData = await getUserLevel(presenceUserId);
+      const userLevel = userLevelData?.level || 1;
+      const leftMsg = `${username} [${userLevel}] has left`;
       const leftMessage = {
         id: `presence-left-${Date.now()}-${Math.random()}`,
         roomId,
@@ -1220,8 +1222,12 @@ module.exports = (io, socket) => {
 
               const room = await roomService.getRoomById(currentRoomId);
               const userCount = await getRoomUserCount(currentRoomId);
+              
+              // Get user level for leave message
+              const userLevelData = await getUserLevel(userId !== 'unknown' ? userId : null);
+              const userLevel = userLevelData?.level || 1;
 
-              const leftMsg = `${username} [${userCount}] has left`;
+              const leftMsg = `${username} [${userLevel}] has left`;
               const leftMessage = {
                 id: `presence-left-${Date.now()}-${Math.random()}`,
                 roomId: currentRoomId,
