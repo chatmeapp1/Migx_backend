@@ -661,6 +661,17 @@ const decrementRoomActive = async (roomId) => {
   }
 };
 
+const clearUserRooms = async (username) => {
+  try {
+    const redis = getRedisClient();
+    await redis.del(`user:rooms:${username}`);
+    return true;
+  } catch (error) {
+    console.error('Error clearing user rooms:', error);
+    return false;
+  }
+};
+
 module.exports = {
   setPresence,
   getPresence,
@@ -711,6 +722,7 @@ module.exports = {
   removeRoomParticipant,
   getUserCurrentRoom,
   getRoomParticipantCount,
+  clearUserRooms,
   DEFAULT_TTL,
   ONLINE_PRESENCE_TTL
 };

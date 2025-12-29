@@ -11,7 +11,8 @@ const {
   setSession,
   getSession,
   removeSession,
-  getRoomMembers // Assuming this is also a Redis operation for speed
+  getRoomMembers,
+  clearUserRooms
 } = require('../utils/redisUtils');
 
 module.exports = (io, socket) => {
@@ -247,6 +248,9 @@ module.exports = (io, socket) => {
         // Remove presence and session from Redis
         await removePresence(username);
         await removeSession(username);
+        
+        // Clear user's chatlist from Redis
+        await clearUserRooms(username);
 
         const rooms = await getUserRooms(userId); // Assuming getUserRooms can take userId
         for (const roomId of rooms) {
