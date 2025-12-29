@@ -182,13 +182,14 @@ export default function ChatRoomScreen() {
           username: currentUsername,
           userId: currentUserId
         },
-        transports: ['websocket'],
+        transports: ['websocket', 'polling'],
         reconnection: true,
         reconnectionDelay: 1000,
         reconnectionAttempts: Infinity,
         timeout: 10000,
         forceNew: false,
         autoConnect: true,
+        upgrade: true,
       });
 
       newSocket.on('connect', () => {

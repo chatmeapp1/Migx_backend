@@ -38,6 +38,15 @@ export function useRoomSocket({ roomId, onRoomJoined, onUsersUpdated }: UseRoomS
     const targetRoomId = data.roomId || roomIdRef.current;
     if (targetRoomId !== roomIdRef.current) return;
     
+    // Skip echo of own messages (already added via optimistic update)
+    // Only skip for regular chat messages, not commands or system messages
+    const isOwnMessage = data.username === currentUsername;
+    const isRegularChat = data.messageType === 'chat' || !data.messageType;
+    if (isOwnMessage && isRegularChat) {
+      console.log("MESSAGE ECHO SKIP (optimistic)", targetRoomId, data.message);
+      return;
+    }
+    
     console.log("MESSAGE RECEIVE", targetRoomId, data.message);
     
     const cmdTypes = ['cmd', 'cmdMe', 'cmdRoll', 'cmdGift', 'cmdGoal', 'cmdGo'];
@@ -49,7 +58,7 @@ export function useRoomSocket({ roomId, onRoomJoined, onUsersUpdated }: UseRoomS
       username: data.username,
       usernameColor: data.usernameColor,
       message: data.message,
-      isOwnMessage: data.username === currentUsername,
+      isOwnMessage: isOwnMessage,
       isSystem: (data.messageType === 'system' || data.type === 'system') && !isPresenceMessage,
       isNotice: data.messageType === 'notice',
       isCmd: isCommandMessage,
@@ -191,14 +200,27 @@ export function useRoomSocket({ roomId, onRoomJoined, onUsersUpdated }: UseRoomS
   const sendMessage = useCallback((message: string) => {
     if (!socket || !message.trim() || !currentUserId) return;
     
-    console.log("MESSAGE SEND", roomId, message.trim());
+    const trimmedMessage = message.trim();
+    console.log("MESSAGE SEND", roomId, trimmedMessage);
+    
+    // Optimistic update: Add message locally immediately for responsive UI
+    // This ensures sender sees their message even if WiFi blocks echo
+    const optimisticMessage: Message = {
+      id: `local-${Date.now()}-${Math.random()}`,
+      username: currentUsername || '',
+      message: trimmedMessage,
+      isOwnMessage: true,
+      timestamp: new Date().toISOString(),
+    };
+    addMessage(roomId, optimisticMessage);
+    
     socket.emit('chat:message', {
       roomId,
       userId: currentUserId,
       username: currentUsername,
-      message: message.trim(),
+      message: trimmedMessage,
     });
-  }, [socket, currentUserId, currentUsername, roomId]);
+  }, [socket, currentUserId, currentUsername, roomId, addMessage]);
 
   const leaveRoom = useCallback(() => {
     if (!socket) return;
