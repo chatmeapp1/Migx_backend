@@ -115,14 +115,14 @@ router.post('/create-account', superAdminMiddleware, async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const result = await db.query(
-      `INSERT INTO users (username, email, password, password_hash, role, created_at, updated_at) 
-       VALUES ($1, $2, $3, $3, $4, NOW(), NOW()) RETURNING id, username, email, role`,
+      `INSERT INTO users (username, email, password, password_hash, role, is_active, activated_at, created_at, updated_at) 
+       VALUES ($1, $2, $3, $3, $4, true, NOW(), NOW(), NOW()) RETURNING id, username, email, role`,
       [username, email, hashedPassword, role || 'user']
     );
 
     res.status(201).json({ 
       success: true, 
-      message: 'Account created successfully', 
+      message: 'Account created and activated successfully', 
       user: result.rows[0] 
     });
   } catch (error) {
