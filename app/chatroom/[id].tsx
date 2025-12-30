@@ -88,8 +88,19 @@ export default function ChatRoomScreen() {
           shouldDuckAndroid: true,
         });
 
+        // Get the sound source and validate it before loading
+        const soundSource = require('@/assets/sound/privatechat.mp3');
+        
+        // Check if the source is valid before attempting to load
+        if (!soundSource) {
+          console.warn('⚠️ Private chat sound source is null/undefined, skipping audio load');
+          // Create a no-op function so callers don't error
+          (window as any).__PLAY_PRIVATE_SOUND__ = async () => {};
+          return;
+        }
+
         const { sound } = await Audio.Sound.createAsync(
-          require('@/assets/sound/privatechat.mp3'),
+          soundSource,
           { shouldPlay: false }
         );
         soundRef.current = sound;
@@ -108,6 +119,8 @@ export default function ChatRoomScreen() {
         console.log('✅ Private chat sound loaded successfully');
       } catch (e) {
         console.error('Error loading private chat sound:', e);
+        // Create a no-op function to prevent errors when sound fails to load
+        (window as any).__PLAY_PRIVATE_SOUND__ = async () => {};
       }
     }
     loadSound();
