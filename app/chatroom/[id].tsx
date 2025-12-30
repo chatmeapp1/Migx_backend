@@ -82,19 +82,30 @@ export default function ChatRoomScreen() {
   useEffect(() => {
     async function loadSound() {
       try {
+        await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: false,
+          shouldDuckAndroid: true,
+        });
+
         const { sound } = await Audio.Sound.createAsync(
-          require('@/assets/sound/privatechat.mp3')
+          { uri: require('@/assets/sound/privatechat.mp3') },
+          { shouldPlay: false }
         );
         soundRef.current = sound;
+        
         (window as any).__PLAY_PRIVATE_SOUND__ = async () => {
           try {
             if (soundRef.current) {
-              await soundRef.current.replayAsync();
+              await soundRef.current.setPositionAsync(0);
+              await soundRef.current.playAsync();
             }
           } catch (e) {
             console.error('Error playing private chat sound:', e);
           }
         };
+        
+        console.log('✅ Private chat sound loaded successfully');
       } catch (e) {
         console.error('Error loading private chat sound:', e);
       }
@@ -102,7 +113,7 @@ export default function ChatRoomScreen() {
     loadSound();
     return () => {
       if (soundRef.current) {
-        soundRef.current.unloadAsync();
+        soundRef.current.unloadAsync().catch(console.error);
       }
       delete (window as any).__PLAY_PRIVATE_SOUND__;
     };
