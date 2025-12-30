@@ -9,6 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useThemeCustom } from '@/theme/provider';
+import { UserProfileIcon, BlockIcon, GiftIcon, TrashIcon, CloseXIcon } from '@/components/ui/SvgIcons';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -36,11 +37,11 @@ export function PrivateChatMenuModal({
   const { theme } = useThemeCustom();
 
   const menuItems = [
-    { label: 'View Profile', onPress: onViewProfile, icon: '👤' },
-    { label: 'Block User', onPress: onBlockUser, icon: '🚫', danger: true },
-    { label: 'Send Gift', onPress: onSendGift, icon: '🎁' },
-    { label: 'Clear Chat', onPress: onClearChat, icon: '🗑️' },
-    { label: 'Close Chat', onPress: onCloseChat, icon: '✕' },
+    { label: 'View Profile', onPress: onViewProfile, Icon: UserProfileIcon, color: theme.text },
+    { label: 'Block User', onPress: onBlockUser, Icon: BlockIcon, color: '#FF4444', danger: true },
+    { label: 'Send Gift', onPress: onSendGift, Icon: GiftIcon, color: theme.text },
+    { label: 'Clear Chat', onPress: onClearChat, Icon: TrashIcon, color: theme.text },
+    { label: 'Close Chat', onPress: onCloseChat, Icon: CloseXIcon, color: theme.text },
   ];
 
   return (
@@ -56,7 +57,7 @@ export function PrivateChatMenuModal({
             <View style={[styles.menuContainer, { backgroundColor: theme.card }]}>
               {username && (
                 <View style={styles.header}>
-                  <Text style={[styles.headerText, { color: theme.text }]}>
+                  <Text style={styles.headerText}>
                     {username}
                   </Text>
                 </View>
@@ -75,7 +76,9 @@ export function PrivateChatMenuModal({
                   }}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.menuIcon}>{item.icon}</Text>
+                  <View style={styles.iconContainer}>
+                    <item.Icon color={item.color} size={20} />
+                  </View>
                   <Text
                     style={[
                       styles.menuText,
@@ -98,12 +101,13 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'flex-end',
+    paddingTop: 100,
+    paddingRight: 12,
   },
   menuContainer: {
-    width: SCREEN_WIDTH * 0.75,
-    maxWidth: 300,
+    width: SCREEN_WIDTH * 0.55,
+    maxWidth: 220,
     borderRadius: 12,
     overflow: 'hidden',
     elevation: 5,
@@ -113,13 +117,13 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   header: {
-    padding: 16,
+    padding: 14,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.1)',
     backgroundColor: '#0a5229',
   },
   headerText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
     textAlign: 'center',
     color: '#FFFFFF',
@@ -127,14 +131,15 @@ const styles = StyleSheet.create({
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
   },
-  menuIcon: {
-    fontSize: 18,
-    marginRight: 12,
+  iconContainer: {
+    width: 28,
+    alignItems: 'center',
+    marginRight: 10,
   },
   menuText: {
-    fontSize: 16,
+    fontSize: 15,
   },
 });

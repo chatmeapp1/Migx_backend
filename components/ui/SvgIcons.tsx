@@ -178,3 +178,67 @@ export const MenuDotsIcon = ({ color = '#000', size = 24 }: IconProps) => (
     <Circle cx="12" cy="19" r="2" fill={color} />
   </Svg>
 );
+
+export const UserProfileIcon = ({ color = '#000', size = 24 }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="8" r="4" stroke={color} strokeWidth="2" />
+    <Path
+      d="M4 20C4 16.686 7.582 14 12 14C16.418 14 20 16.686 20 20"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+  </Svg>
+);
+
+export const BlockIcon = ({ color = '#000', size = 24 }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="9" stroke={color} strokeWidth="2" />
+    <Path d="M5.5 5.5L18.5 18.5" stroke={color} strokeWidth="2" strokeLinecap="round" />
+  </Svg>
+);
+
+export const GiftIcon = ({ color = '#000', size = 24 }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Rect x="3" y="8" width="18" height="13" rx="2" stroke={color} strokeWidth="2" />
+    <Path d="M12 8V21" stroke={color} strokeWidth="2" />
+    <Path d="M3 13H21" stroke={color} strokeWidth="2" />
+    <Path
+      d="M12 8C12 8 12 5 9.5 4C7 3 6 5 7 6.5C8 8 12 8 12 8Z"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path
+      d="M12 8C12 8 12 5 14.5 4C17 3 18 5 17 6.5C16 8 12 8 12 8Z"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
+export const TrashIcon = ({ color = '#000', size = 24 }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path d="M3 6H21" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Path d="M8 6V4C8 3.448 8.448 3 9 3H15C15.552 3 16 3.448 16 4V6" stroke={color} strokeWidth="2" />
+    <Path
+      d="M5 6L6 20C6 20.552 6.448 21 7 21H17C17.552 21 18 20.552 18 20L19 6"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Path d="M10 10V17" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Path d="M14 10V17" stroke={color} strokeWidth="2" strokeLinecap="round" />
+  </Svg>
+);
+
+export const CloseXIcon = ({ color = '#000', size = 24 }: IconProps) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path d="M6 6L18 18" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Path d="M18 6L6 18" stroke={color} strokeWidth="2" strokeLinecap="round" />
+  </Svg>
+);
