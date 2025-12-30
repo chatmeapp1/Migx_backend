@@ -1,13 +1,10 @@
 import React, { useCallback, useMemo, useEffect, useState } from 'react';
-import { View, StyleSheet, Dimensions, StatusBar, Keyboard, Platform, Alert } from 'react-native';
-import { useRoomMessagesData, usePrivateMessagesData } from '@/stores/useRoomTabsStore';
+import { View, StyleSheet, Dimensions, Keyboard, Platform, Alert } from 'react-native';
+import { usePrivateMessagesData, useRoomTabsStore } from '@/stores/useRoomTabsStore';
 import { ChatRoomContent } from './ChatRoomContent';
-import { PrivateChatHeader } from './PrivateChatHeader';
 import { PrivateChatInput, PrivateChatInputRef } from './PrivateChatInput';
 import { EmojiPicker, EMOJI_PICKER_HEIGHT } from './EmojiPicker';
 import { useThemeCustom } from '@/theme/provider';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRoomTabsStore } from '@/stores/useRoomTabsStore';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import API_BASE_URL from '@/utils/api';
@@ -40,7 +37,6 @@ export const PrivateChatInstance = React.memo(function PrivateChatInstance({
   // 🔑 Use PM store instead of room messages
   const messages = usePrivateMessagesData(userId);
   const { theme } = useThemeCustom();
-  const insets = useSafeAreaInsets();
   const inputRef = React.useRef<PrivateChatInputRef>(null);
   const [emojiVisible, setEmojiVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -184,19 +180,6 @@ export const PrivateChatInstance = React.memo(function PrivateChatInstance({
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <StatusBar barStyle="light-content" backgroundColor="#0a5229" />
-      
-      {/* Header */}
-      <PrivateChatHeader 
-        username={targetUsername}
-        targetUserId={userId || undefined}
-        roomId={roomId}
-        onViewProfile={handleViewProfile}
-        onBlockUser={handleBlockUser}
-        onClearChat={handleClearChat}
-        onCloseChat={handleCloseChat}
-      />
-
       {/* Messages - flex: 1 to take remaining space */}
       <View style={styles.messagesContainer}>
         <ChatRoomContent 

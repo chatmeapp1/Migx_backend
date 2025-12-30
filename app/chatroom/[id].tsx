@@ -565,13 +565,11 @@ export default function ChatRoomScreen() {
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <StatusBar backgroundColor={HEADER_COLOR} barStyle="light-content" />
       
-      {/* Header - Hanya untuk regular rooms, bukan private chat */}
-      {!isPrivateChat && (
-        <ChatRoomHeader
-          onBack={handleHeaderBack}
-          onMenuPress={() => setMenuVisible(true)}
-        />
-      )}
+      {/* Header - Untuk semua tabs termasuk private chat */}
+      <ChatRoomHeader
+        onBack={handleHeaderBack}
+        onMenuPress={() => setMenuVisible(true)}
+      />
 
       <ChatRoomTabs
         bottomPadding={isPrivateChat ? 0 : (70 + insets.bottom)}

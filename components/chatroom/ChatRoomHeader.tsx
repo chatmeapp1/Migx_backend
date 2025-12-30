@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-nati
 import { useRouter } from 'expo-router';
 import { BackIcon, MenuGridIcon } from '@/components/ui/SvgIcons';
 import { RoomIndicatorDots } from './RoomIndicatorDots';
-import { useActiveIndex, useActiveRoom, useOpenRooms } from '@/stores/useRoomTabsStore';
+import { useActiveIndex, useActiveRoom, useOpenRooms, useActiveRoomId } from '@/stores/useRoomTabsStore';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -19,9 +19,12 @@ export function ChatRoomHeader({
   const router = useRouter();
   const activeIndex = useActiveIndex();
   const activeRoom = useActiveRoom();
+  const activeRoomId = useActiveRoomId();
   const openRooms = useOpenRooms();
   
-  const roomName = activeRoom?.name || 'Room';
+  const isPrivateChat = activeRoomId?.startsWith('pm_') || false;
+  const displayName = activeRoom?.name || 'Room';
+  const subtitle = isPrivateChat ? 'Private Chat' : 'Chatroom';
 
   return (
     <View style={[styles.container, { backgroundColor: '#0a5229' }]}>
@@ -36,9 +39,9 @@ export function ChatRoomHeader({
         
         <View style={styles.centerContent}>
           <Text style={styles.roomName} numberOfLines={1}>
-            {roomName}
+            {displayName}
           </Text>
-          <Text style={styles.subtitle}>Chatroom</Text>
+          <Text style={styles.subtitle}>{subtitle}</Text>
           
           <RoomIndicatorDots 
             openRooms={openRooms}
