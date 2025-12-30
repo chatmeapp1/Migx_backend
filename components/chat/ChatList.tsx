@@ -151,18 +151,38 @@ export function ChatList() {
           }
         });
         
-        // Add DMs (if any)
+        // Add DMs from API
         data.dms?.forEach((dm: any) => {
           formattedData.push({
-            type: 'user',
+            type: 'pm',
             name: dm.username,
             username: dm.username,
+            userId: dm.userId,
             message: dm.lastMessage?.message,
             time: dm.lastMessage?.timestamp 
               ? formatTime(dm.lastMessage.timestamp) 
               : undefined,
             isOnline: dm.isOnline || false,
           });
+        });
+        
+        // Add PMs from store (for new PMs not yet saved to Redis)
+        Object.entries(privateMessages).forEach(([userId, messages]) => {
+          if (messages && messages.length > 0) {
+            const pmExists = formattedData.some(chat => chat.userId === userId);
+            if (!pmExists) {
+              const lastMsg = messages[messages.length - 1];
+              formattedData.push({
+                type: 'pm',
+                name: lastMsg.username || `User ${userId}`,
+                username: lastMsg.username || `User ${userId}`,
+                userId,
+                message: lastMsg.message,
+                time: lastMsg.timestamp ? formatTime(lastMsg.timestamp) : formatTime(Date.now()),
+                isOnline: true,
+              });
+            }
+          }
         });
         
         console.log(`✅ Loaded ${formattedData.length} chats`);

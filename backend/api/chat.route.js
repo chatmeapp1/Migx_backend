@@ -112,12 +112,49 @@ router.get('/list/:username', async (req, res) => {
 
     const validRooms = enrichedRooms.filter(r => r !== null);
 
-    console.log(`✅ Returning ${validRooms.length} rooms for ${username} from REDIS`);
+    // FETCH PRIVATE MESSAGES (DMs) - Use correct Redis format
+    const dms = [];
+    try {
+      // Get all DM conversations from user:dm:${username} set
+      const dmDataSet = await redis.sMembers(`user:dm:${username}`);
+      
+      for (const dmData of dmDataSet) {
+        try {
+          const parsed = JSON.parse(dmData);
+          const targetUsername = parsed.username;
+          
+          if (!targetUsername) continue;
+          
+          // Get last message from dm:lastmsg:${[username, target].sort().join(':')}
+          const sortedKey = [username, targetUsername].sort().join(':');
+          const lastMsgData = await redis.get(`dm:lastmsg:${sortedKey}`);
+          
+          if (lastMsgData) {
+            const lastMsg = JSON.parse(lastMsgData);
+            dms.push({
+              userId: targetUsername, // Store username as userId for now
+              username: targetUsername,
+              lastMessage: {
+                message: lastMsg.message,
+                timestamp: lastMsg.timestamp || Date.now()
+              },
+              isOnline: true
+            });
+          }
+        } catch (err) {
+          // Skip malformed DM data
+        }
+      }
+    } catch (err) {
+      console.warn('⚠️ Error fetching DMs:', err.message);
+    }
+
+    console.log(`✅ Returning ${validRooms.length} rooms and ${dms.length} DMs for ${username} from REDIS`);
 
     res.json({
       success: true,
       rooms: validRooms,
-      dms: []
+      dms: dms
     });
 
   } catch (error) {
