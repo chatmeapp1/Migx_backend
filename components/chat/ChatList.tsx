@@ -8,7 +8,7 @@ import { useRoomTabsStore } from '@/stores/useRoomTabsStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface ChatData {
-  type: 'user' | 'room';
+  type: 'user' | 'room' | 'pm';
   name: string;
   message?: string;
   time?: string;
@@ -16,6 +16,7 @@ interface ChatData {
   tags?: string[];
   username?: string;
   roomId?: string;
+  userId?: string;
   avatar?: string;
 }
 
@@ -25,6 +26,7 @@ export function ChatList() {
   const [loading, setLoading] = useState(true);
   const [username, setUsername] = useState<string>('');
   const socket = useRoomTabsStore((state) => state.socket);
+  const privateMessages = useRoomTabsStore((state) => state.privateMessages);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastLoadRef = useRef<number>(0);
 
@@ -59,6 +61,10 @@ export function ChatList() {
         socket.on('chatlist:update', handleChatListUpdate);
         socket.on('chatlist:roomJoined', handleRoomJoined);
         socket.on('chatlist:roomLeft', handleRoomLeft);
+        socket.on('room:user:joined', handleUserActivity);
+        socket.on('room:user:left', handleUserActivity);
+        socket.on('message:new', handleNewMessage);
+        socket.on('pm:receive', handlePrivateMessageUpdate);
       }
     }
 
@@ -67,12 +73,23 @@ export function ChatList() {
         socket.off('chatlist:update', handleChatListUpdate);
         socket.off('chatlist:roomJoined', handleRoomJoined);
         socket.off('chatlist:roomLeft', handleRoomLeft);
+        socket.off('room:user:joined', handleUserActivity);
+        socket.off('room:user:left', handleUserActivity);
+        socket.off('message:new', handleNewMessage);
+        socket.off('pm:receive', handlePrivateMessageUpdate);
       }
       if (debounceRef.current) {
         clearTimeout(debounceRef.current);
       }
     };
   }, [username]); // Remove socket from dependency to prevent re-runs on socket changes
+
+  // Update chatlist when private messages change
+  useEffect(() => {
+    if (chatData.length > 0 && Object.keys(privateMessages).length > 0) {
+      updateChatDataWithPrivateMessages();
+    }
+  }, [privateMessages]);
 
   const loadUsername = async () => {
     try {
@@ -182,6 +199,80 @@ export function ChatList() {
     );
     // Don't reload - local state update is enough
   }, []);
+
+  // Handle user enter/leave room
+  const handleUserActivity = useCallback((data: any) => {
+    console.log('👤 User activity:', data.eventType, data.username, 'in', data.roomId);
+    const activityMessage = data.eventType === 'joined' 
+      ? `${data.username} entered` 
+      : `${data.username} left`;
+    
+    setChatData((prevData) =>
+      prevData.map((chat) =>
+        chat.roomId === data.roomId
+          ? { ...chat, message: activityMessage, time: formatTime(Date.now()) }
+          : chat
+      )
+    );
+  }, []);
+
+  // Handle new message in room
+  const handleNewMessage = useCallback((data: any) => {
+    console.log('💬 New message in room:', data.roomId, 'from', data.username);
+    if (data.roomId && data.username && data.message) {
+      setChatData((prevData) =>
+        prevData.map((chat) =>
+          chat.roomId === data.roomId
+            ? { ...chat, message: `${data.username}: ${data.message}`, time: formatTime(Date.now()) }
+            : chat
+        )
+      );
+    }
+  }, []);
+
+  // Handle private message updates
+  const handlePrivateMessageUpdate = useCallback((data: any) => {
+    console.log('📩 PM update:', data.fromUsername);
+    setChatData((prevData) => {
+      const pmExists = prevData.some((chat) => chat.userId === data.fromUserId);
+      if (pmExists) {
+        return prevData.map((chat) =>
+          chat.userId === data.fromUserId
+            ? { ...chat, message: `${data.fromUsername}: ${data.message}`, time: formatTime(Date.now()) }
+            : chat
+        );
+      }
+      return prevData;
+    });
+  }, []);
+
+  // Merge private messages into chatData
+  const updateChatDataWithPrivateMessages = useCallback(() => {
+    setChatData((prevData) => {
+      const pmChats: ChatData[] = [];
+      
+      Object.entries(privateMessages).forEach(([userId, messages]) => {
+        if (messages && messages.length > 0) {
+          const lastMsg = messages[messages.length - 1];
+          const pmExists = prevData.some((chat) => chat.userId === userId);
+          
+          if (!pmExists) {
+            pmChats.push({
+              type: 'pm',
+              name: lastMsg.username || `User ${userId}`,
+              username: lastMsg.username || `User ${userId}`,
+              userId,
+              message: lastMsg.message,
+              time: lastMsg.timestamp ? formatTime(lastMsg.timestamp) : formatTime(Date.now()),
+              isOnline: true,
+            });
+          }
+        }
+      });
+      
+      return [...prevData, ...pmChats];
+    });
+  }, [privateMessages]);
 
   const formatTime = (timestamp: string | number) => {
     const date = new Date(Number(timestamp));

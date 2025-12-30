@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { useThemeCustom } from '@/theme/provider';
 
 interface ChatItemProps {
-  type: 'user' | 'room' | 'group';
+  type: 'user' | 'room' | 'group' | 'pm';
   name: string;
   message?: string;
   time?: string;
@@ -13,6 +13,7 @@ interface ChatItemProps {
   avatar?: string;
   tags?: string[];
   roomId?: string;
+  userId?: string;
   username?: string;
 }
 
@@ -39,11 +40,23 @@ const RoomIcon = ({ size = 60, theme }: { size?: number; theme: any }) => (
   </View>
 );
 
-export function ChatItem({ type, name, message, time, isOnline, avatar, tags, roomId, username }: ChatItemProps) {
+export function ChatItem({ type, name, message, time, isOnline, avatar, tags, roomId, userId, username }: ChatItemProps) {
   const router = useRouter();
   const { theme } = useThemeCustom();
 
   const handlePress = () => {
+    // Handle PM navigation
+    if (type === 'pm' && userId) {
+      router.push({
+        pathname: '/chatroom/[id]',
+        params: { 
+          id: `pm_${userId}`, 
+          name,
+          type: 'pm',
+        },
+      });
+      return;
+    }
     // Use actual roomId from backend for rooms
     router.push({
       pathname: '/chatroom/[id]',
