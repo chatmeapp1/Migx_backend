@@ -18,17 +18,15 @@ interface ChatItemProps {
 }
 
 const UserAvatar = ({ avatar, isOnline, theme }: { avatar?: string; isOnline?: boolean; theme: any }) => {
-  if (avatar) {
-    return (
-      <View style={styles.avatarContainer}>
-        <View style={[styles.avatarPlaceholder, { backgroundColor: theme.card }]}>
-          <Text style={styles.avatarText}>👤</Text>
-        </View>
-        {isOnline && <View style={[styles.onlineIndicator, { borderColor: theme.background }]} />}
-      </View>
-    );
-  }
-  return null;
+  return (
+    <View style={styles.avatarContainer}>
+      <Image
+        source={require('../../assets/icons/ic_chat.png')}
+        style={{ width: 50, height: 50, borderRadius: 25 }}
+      />
+      {isOnline && <View style={[styles.onlineIndicator, { borderColor: theme.background }]} />}
+    </View>
+  );
 };
 
 const RoomIcon = ({ size = 60, theme }: { size?: number; theme: any }) => (
@@ -71,7 +69,7 @@ export function ChatItem({ type, name, message, time, isOnline, avatar, tags, ro
   return (
     <TouchableOpacity style={[styles.container, { backgroundColor: theme.background, borderBottomColor: theme.border }]} onPress={handlePress}>
       <View style={styles.leftSection}>
-        {type === 'user' ? (
+        {type === 'user' || type === 'pm' ? (
           <UserAvatar avatar={avatar} isOnline={isOnline} theme={theme} />
         ) : (
           <RoomIcon theme={theme} />

@@ -112,8 +112,8 @@ router.get('/list/:username', async (req, res) => {
 
     const validRooms = enrichedRooms.filter(r => r !== null);
 
-    // FETCH PRIVATE MESSAGES (DMs) - Use correct Redis format
-    const dms = [];
+    // FETCH PRIVATE MESSAGES (DMs) - Use correct Redis format with deduplication
+    const dmsMap = new Map(); // Use Map to deduplicate by username
     try {
       // Get all DM conversations from user:dm:${username} set
       const dmDataSet = await redis.sMembers(`user:dm:${username}`);
@@ -123,7 +123,7 @@ router.get('/list/:username', async (req, res) => {
           const parsed = JSON.parse(dmData);
           const targetUsername = parsed.username;
           
-          if (!targetUsername) continue;
+          if (!targetUsername || dmsMap.has(targetUsername)) continue;
           
           // Get last message from dm:lastmsg:${[username, target].sort().join(':')}
           const sortedKey = [username, targetUsername].sort().join(':');
@@ -131,8 +131,8 @@ router.get('/list/:username', async (req, res) => {
           
           if (lastMsgData) {
             const lastMsg = JSON.parse(lastMsgData);
-            dms.push({
-              userId: targetUsername, // Store username as userId for now
+            dmsMap.set(targetUsername, {
+              userId: targetUsername,
               username: targetUsername,
               lastMessage: {
                 message: lastMsg.message,
@@ -148,6 +148,7 @@ router.get('/list/:username', async (req, res) => {
     } catch (err) {
       console.warn('⚠️ Error fetching DMs:', err.message);
     }
+    const dms = Array.from(dmsMap.values());
 
     console.log(`✅ Returning ${validRooms.length} rooms and ${dms.length} DMs for ${username} from REDIS`);
 

@@ -266,36 +266,49 @@ export function ChatList() {
     });
   }, []);
 
-  // Merge private messages into chatData
+  // Merge private messages into chatData (update existing or add new)
   const updateChatDataWithPrivateMessages = useCallback(() => {
     setChatData((prevData) => {
-      const pmChats: ChatData[] = [];
+      const updatedData = [...prevData];
       
-      Object.entries(privateMessages).forEach(([userId, messages]) => {
+      Object.entries(privateMessages).forEach(([oderId, messages]) => {
         if (messages && messages.length > 0) {
           const lastMsg = messages[messages.length - 1];
-          const pmExists = prevData.some((chat) => chat.userId === userId);
+          const existingIndex = updatedData.findIndex((chat) => 
+            chat.type === 'pm' && (chat.userId === oderId || chat.username === lastMsg.username)
+          );
           
-          if (!pmExists) {
-            pmChats.push({
-              type: 'pm',
-              name: lastMsg.username || `User ${userId}`,
-              username: lastMsg.username || `User ${userId}`,
-              userId,
-              message: lastMsg.message,
-              time: lastMsg.timestamp ? formatTime(lastMsg.timestamp) : formatTime(Date.now()),
-              isOnline: true,
-            });
+          const pmData: ChatData = {
+            type: 'pm',
+            name: lastMsg.username || `User ${oderId}`,
+            username: lastMsg.username || `User ${oderId}`,
+            userId: oderId,
+            message: lastMsg.message,
+            time: formatTime(lastMsg.timestamp || Date.now()),
+            isOnline: true,
+          };
+          
+          if (existingIndex >= 0) {
+            updatedData[existingIndex] = pmData;
+          } else {
+            updatedData.push(pmData);
           }
         }
       });
       
-      return [...prevData, ...pmChats];
+      return updatedData;
     });
   }, [privateMessages]);
 
-  const formatTime = (timestamp: string | number) => {
-    const date = new Date(Number(timestamp));
+  const formatTime = (timestamp: string | number | undefined) => {
+    if (!timestamp) return '';
+    let date: Date;
+    if (typeof timestamp === 'string') {
+      date = new Date(timestamp);
+    } else {
+      date = new Date(timestamp);
+    }
+    if (isNaN(date.getTime())) return '';
     const hours = date.getHours();
     const minutes = date.getMinutes();
     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
