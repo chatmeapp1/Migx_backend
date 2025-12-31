@@ -13,6 +13,8 @@ export interface NormalizedPost {
   image_url?: string;
   userId?: number | string;
   user_id?: number | string;
+  role?: string;
+  level?: number;
 }
 
 export const normalizeFeedItem = (item: any): NormalizedPost => {
@@ -42,6 +44,8 @@ export const normalizeFeedItem = (item: any): NormalizedPost => {
     image_url: mediaUrl, // Keep for compatibility
     userId: item.userId ?? item.user_id,
     user_id: item.userId ?? item.user_id,
+    role: item.role ?? 'user',
+    level: item.level ?? 1,
   };
 };
 

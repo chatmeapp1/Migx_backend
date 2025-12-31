@@ -537,7 +537,8 @@ export default function FeedScreen() {
       if (lowerRole === 'admin') return '#FF9800'; // Orange for admin
       if (lowerRole === 'merchant') return '#9C27B0'; // Purple for merchant
       if (lowerRole === 'cs') return '#4CAF50'; // Green for CS
-      return '#2196F3'; // Blue for regular user (including mentor)
+      if (lowerRole === 'mentor') return '#FF0000'; // Red for mentor
+      return '#2196F3'; // Blue for regular user
     };
 
     return (
