@@ -172,14 +172,40 @@ export function ChatList() {
           }
         });
         
-        // Add PMs from store (for new PMs not yet saved to Redis, exclude own account)
+        // Add PMs from store (for new PMs not yet saved to Redis)
+        // Find OTHER user's name (not current user) from messages or openRoomsById
+        const { openRoomsById } = useRoomTabsStore.getState();
+        
         Object.entries(privateMessages).forEach(([oderId, messages]) => {
           if (messages && messages.length > 0) {
             const lastMsg = messages[messages.length - 1];
-            const pmUsername = lastMsg.username || `User ${oderId}`;
             
-            // Skip if this is the user's own account
-            if (pmUsername.toLowerCase() === username.toLowerCase()) {
+            // Find the OTHER user's name - look for a message NOT from current user
+            let otherUserName = '';
+            for (const msg of messages) {
+              if (!msg.isOwnMessage && msg.username && msg.username.toLowerCase() !== username.toLowerCase()) {
+                otherUserName = msg.username;
+                break;
+              }
+            }
+            
+            // Fallback: check openRoomsById for the PM tab name
+            if (!otherUserName) {
+              const pmRoomKey = Object.keys(openRoomsById).find(key => 
+                key.startsWith('private:') && key.includes(`:${oderId}`)
+              );
+              if (pmRoomKey && openRoomsById[pmRoomKey]) {
+                otherUserName = openRoomsById[pmRoomKey].name;
+              }
+            }
+            
+            // Final fallback
+            if (!otherUserName) {
+              otherUserName = `User ${oderId}`;
+            }
+            
+            // Skip if this somehow ended up being our own account
+            if (otherUserName.toLowerCase() === username.toLowerCase()) {
               return;
             }
             
@@ -187,8 +213,8 @@ export function ChatList() {
             if (!pmExists) {
               formattedData.push({
                 type: 'pm',
-                name: pmUsername,
-                username: pmUsername,
+                name: otherUserName,
+                username: otherUserName,
                 userId: oderId,
                 message: lastMsg.message,
                 time: lastMsg.timestamp ? formatTime(lastMsg.timestamp) : formatTime(Date.now()),
@@ -297,29 +323,54 @@ export function ChatList() {
     });
   }, []);
 
-  // Merge private messages into chatData (update existing or add new, exclude own account)
+  // Merge private messages into chatData (update existing or add new)
+  // Always find OTHER user's name, never show current user's name
   const updateChatDataWithPrivateMessages = useCallback(() => {
     setChatData((prevData) => {
       const updatedData = [...prevData];
+      const { openRoomsById } = useRoomTabsStore.getState();
       
       Object.entries(privateMessages).forEach(([oderId, messages]) => {
         if (messages && messages.length > 0) {
           const lastMsg = messages[messages.length - 1];
-          const pmUsername = lastMsg.username || `User ${oderId}`;
           
-          // Skip if this is the user's own account
-          if (pmUsername.toLowerCase() === username.toLowerCase()) {
+          // Find the OTHER user's name - look for a message NOT from current user
+          let otherUserName = '';
+          for (const msg of messages) {
+            if (!msg.isOwnMessage && msg.username && msg.username.toLowerCase() !== username.toLowerCase()) {
+              otherUserName = msg.username;
+              break;
+            }
+          }
+          
+          // Fallback: check openRoomsById for the PM tab name
+          if (!otherUserName) {
+            const pmRoomKey = Object.keys(openRoomsById).find(key => 
+              key.startsWith('private:') && key.includes(`:${oderId}`)
+            );
+            if (pmRoomKey && openRoomsById[pmRoomKey]) {
+              otherUserName = openRoomsById[pmRoomKey].name;
+            }
+          }
+          
+          // Final fallback
+          if (!otherUserName) {
+            otherUserName = `User ${oderId}`;
+          }
+          
+          // Skip if this somehow ended up being our own account
+          if (otherUserName.toLowerCase() === username.toLowerCase()) {
             return;
           }
           
           const existingIndex = updatedData.findIndex((chat) => 
-            chat.type === 'pm' && (chat.userId === oderId || chat.username === pmUsername)
+            chat.type === 'pm' && (chat.userId === oderId || chat.username === otherUserName)
           );
           
           const pmData: ChatData = {
             type: 'pm',
-            name: pmUsername,
-            username: pmUsername,
+            name: otherUserName,
+            username: otherUserName,
             userId: oderId,
             message: lastMsg.message,
             time: formatTime(lastMsg.timestamp || Date.now()),
