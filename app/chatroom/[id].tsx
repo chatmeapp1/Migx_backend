@@ -653,7 +653,10 @@ export default function ChatRoomScreen() {
 
   const handlePrivateChatClearChat = useCallback(() => {
     if (!activeRoomId) return;
-    const clearChat = useRoomTabsStore.getState().clearChat;
+    const userId = getOtherUserIdFromPM();
+    if (!userId) return;
+    
+    const clearPrivateMessages = useRoomTabsStore.getState().clearPrivateMessages;
     Alert.alert(
       'Clear Chat',
       'Are you sure you want to clear all messages in this chat?',
@@ -663,12 +666,12 @@ export default function ChatRoomScreen() {
           text: 'Clear',
           style: 'destructive',
           onPress: () => {
-            clearChat(activeRoomId);
+            clearPrivateMessages(userId);
           },
         },
       ]
     );
-  }, [activeRoomId]);
+  }, [activeRoomId, getOtherUserIdFromPM]);
 
   const handlePrivateChatCloseChat = useCallback(() => {
     if (!activeRoomId) return;
