@@ -267,8 +267,8 @@ export default function PeoplePage() {
           style={[
             styles.roleHeader,
             {
-              backgroundColor: '#2E4A3E',
-              borderColor: '#2E4A3E',
+              backgroundColor: '#072b15',
+              borderColor: '#072b15',
             }
           ]}
           onPress={() => toggleRole(role)}
