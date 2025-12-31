@@ -96,14 +96,20 @@ export const ChatMessage = React.memo(({
     );
   }
 
-  if (isCmd) {
-    // Determine color based on message type
-    let textColor = '#C96F4A';
-    if (messageType === 'cmdFollow' || messageType === 'cmdUnfollow') {
-      textColor = '#8B6F47'; // Brown for follow/unfollow
-    } else if (messageType === 'modPromotion' || messageType === 'modRemoval') {
-      textColor = '#8B6F47'; // Brown for moderator promotion/removal
-    }
+  // Check if message is a command (from prop or messageType)
+  const isCommandMessage = isCmd || 
+    messageType === 'cmd' || 
+    messageType === 'cmdMe' || 
+    messageType === 'cmdRoll' || 
+    messageType === 'cmdGift' ||
+    messageType === 'cmdFollow' ||
+    messageType === 'cmdUnfollow' ||
+    messageType === 'modPromotion' ||
+    messageType === 'modRemoval';
+
+  if (isCommandMessage) {
+    // All commands use brown color
+    const textColor = '#8B6F47';
     
     return (
       <View style={styles.messageContainer}>
