@@ -4,6 +4,7 @@ const creditService = require('../services/creditService');
 const userService = require('../services/userService');
 const crypto = require('crypto');
 const logger = require('../utils/logger');
+const { addNotification } = require('../services/notificationService');
 
 router.post('/transfer', async (req, res) => {
   const { fromUserId, toUserId, amount, message, pin } = req.body;
@@ -81,6 +82,26 @@ router.post('/transfer', async (req, res) => {
     }
     
     console.log(`✅ Transfer completed: ${fromUserId} → ${toUserId} (${normalizedAmount} credits)`);
+    
+    // Send notification to recipient via Redis (for NotificationModal)
+    try {
+      const fromUser = await userService.getUserById(fromUserId);
+      const toUser = await userService.getUserById(toUserId);
+      if (fromUser && toUser) {
+        await addNotification(toUser.username, {
+          id: crypto.randomBytes(8).toString('hex'),
+          type: 'credit',
+          from: fromUser.username,
+          fromUserId: fromUserId,
+          amount: normalizedAmount,
+          message: `${fromUser.username} sent you ${normalizedAmount.toLocaleString()} credits`
+        });
+        console.log(`📬 Credit notification sent to ${toUser.username} from ${fromUser.username}`);
+      }
+    } catch (notifError) {
+      console.error('⚠️ Error sending credit notification:', notifError.message);
+    }
+    
     res.json({
       success: true,
       transactionId: result.transactionId,
