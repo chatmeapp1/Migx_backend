@@ -517,7 +517,8 @@ export default function FeedScreen() {
       if (lowerRole === 'admin') return require('@/assets/badge role/ic_admin.png');
       if (lowerRole === 'mentor') return require('@/assets/badge role/ic_mentor.png');
       if (lowerRole === 'merchant') return require('@/assets/badge role/ic_merchant.png');
-      return 'user'; // String indicator for special User badge
+      if (lowerRole === 'cs') return require('@/assets/badge role/badge_cs.png');
+      return require('@/assets/badge role/badge_user.png'); // Default user badge
     };
 
     const userLevel = (item as any).level || 1;
@@ -534,9 +535,9 @@ export default function FeedScreen() {
       }
       const lowerRole = userRole?.toLowerCase();
       if (lowerRole === 'admin') return '#FF9800'; // Orange for admin
-      if (lowerRole === 'mentor') return '#FF0000'; // Red for mentor
       if (lowerRole === 'merchant') return '#9C27B0'; // Purple for merchant
-      return '#2196F3'; // Blue for regular user
+      if (lowerRole === 'cs') return '#4CAF50'; // Green for CS
+      return '#2196F3'; // Blue for regular user (including mentor)
     };
 
     return (
@@ -561,13 +562,9 @@ export default function FeedScreen() {
               <Text style={styles.levelBadgeText}>{userLevel}</Text>
             </View>
             {/* Role Badge */}
-            {roleBadge === 'user' ? (
-              <View style={styles.userBadgeCircle}>
-                <Text style={styles.userBadgeText}>U</Text>
-              </View>
-            ) : roleBadge ? (
+            {roleBadge && (
               <Image source={roleBadge} style={styles.roleBadgeIcon} resizeMode="contain" />
-            ) : null}
+            )}
           </View>
           <Text style={[styles.timestamp, { color: theme.secondary }]}>{formatTime(item.created_at)}</Text>
         </View>
