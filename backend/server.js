@@ -546,21 +546,54 @@ const startServer = async () => {
   }
 };
 
-process.on('SIGTERM', async () => {
-  console.log('SIGTERM received. Shutting down gracefully...');
-  server.close(() => {
-    console.log('HTTP server closed');
-    process.exit(0);
-  });
-});
+// Graceful shutdown handler - notify all clients before restart
+const gracefulShutdown = async (signal) => {
+  console.log(`${signal} received. Notifying all clients and shutting down gracefully...`);
+  
+  try {
+    const chatNamespace = io.of('/chat');
+    
+    // Broadcast restart notification to all currently connected sockets
+    chatNamespace.emit('server:restarting', {
+      message: 'Server is restarting. You will be disconnected.',
+      timestamp: Date.now()
+    });
+    
+    console.log(`📢 Sent restart notification to all connected clients`);
+    
+    // Give clients 2 seconds to receive the message before closing
+    setTimeout(async () => {
+      try {
+        // Re-fetch sockets right before disconnect to catch any new connections
+        const socketsToDisconnect = await chatNamespace.fetchSockets();
+        console.log(`🔌 Disconnecting ${socketsToDisconnect.length} sockets...`);
+        
+        socketsToDisconnect.forEach(socket => {
+          socket.disconnect(true);
+        });
+      } catch (err) {
+        console.error('Error disconnecting sockets:', err.message);
+      }
+      
+      server.close(() => {
+        console.log('HTTP server closed');
+        process.exit(0);
+      });
+      
+      // Force exit after 5 seconds if server hasn't closed
+      setTimeout(() => {
+        console.log('Forcing exit...');
+        process.exit(0);
+      }, 5000);
+    }, 2000);
+  } catch (err) {
+    console.error('Error during graceful shutdown:', err.message);
+    process.exit(1);
+  }
+};
 
-process.on('SIGINT', async () => {
-  console.log('SIGINT received. Shutting down gracefully...');
-  server.close(() => {
-    console.log('HTTP server closed');
-    process.exit(0);
-  });
-});
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 startServer();
 

@@ -346,6 +346,50 @@ export default function ChatRoomScreen() {
         console.log('📩 [PM] Synced sent PM to:', data.toUsername, 'id:', data.toUserId);
       });
 
+      // 🔴 SERVER RESTART HANDLER - MIG33 style: disconnect all, redirect to login
+      let serverRestartHandled = false;
+      newSocket.on('server:restarting', async (data: any) => {
+        // Prevent duplicate handling
+        if (serverRestartHandled) return;
+        serverRestartHandled = true;
+        
+        console.log('🔴 [SERVER RESTART] Received notification:', data.message);
+        
+        // Disable auto-reconnect to prevent reconnecting after server restart
+        newSocket.io.opts.reconnection = false;
+        
+        // Disconnect the socket immediately
+        newSocket.disconnect();
+        
+        // Clear all rooms and tabs
+        const { clearAllRooms, setSocket } = useRoomTabsStore.getState();
+        clearAllRooms();
+        
+        // Clear socket reference
+        setSocket(null);
+        globalSocketInitializing = false;
+        lastSocketUsername = null;
+        
+        // Clear user session (correct key is user_data)
+        await AsyncStorage.removeItem('user_data');
+        
+        // Show alert and redirect to login
+        Alert.alert(
+          'Server Restart',
+          'Server sedang restart. Anda akan diarahkan ke halaman login.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                // Navigate to login
+                router.replace('/');
+              }
+            }
+          ],
+          { cancelable: false }
+        );
+      });
+
       // Store socket globally for MenuParticipantsModal
       (window as any).__GLOBAL_SOCKET__ = newSocket;
 

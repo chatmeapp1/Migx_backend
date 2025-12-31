@@ -201,92 +201,89 @@ module.exports = (io, socket) => {
         }))
       );
 
-      // Only send welcome and enter messages if user wasn't already in room
-      if (!alreadyInRoom) {
-        // Create user list string for welcome message
-        const userListString = currentUsersList.length > 0
-          ? currentUsersList.join(', ')
-          : username;
+      // ALWAYS send room info messages (Welcome, managed by, users) - MIG33 style
+      // Create user list string for welcome message
+      const userListString = currentUsersList.length > 0
+        ? currentUsersList.join(', ')
+        : username;
 
-        // MIG33-style welcome messages - send to the joining user only
-        const welcomeMsg1 = `Welcome to ${room.name}...`;
-        const welcomeMsg3 = `Currently users in the room: ${userListString}`;
+      // MIG33-style welcome messages - send to the joining user only
+      const welcomeMsg1 = `Welcome to ${room.name}...`;
 
-        // Send welcome messages in correct order
-        socket.emit('chat:message', {
-          id: Date.now().toString() + '-1',
-          roomId,
-          username: room.name,
-          message: welcomeMsg1,
-          timestamp: new Date().toISOString(),
-          type: 'system',
-          messageType: 'system'
-        });
+      // Send welcome messages in correct order
+      socket.emit('chat:message', {
+        id: Date.now().toString() + '-1',
+        roomId,
+        username: room.name,
+        message: welcomeMsg1,
+        timestamp: new Date().toISOString(),
+        type: 'system',
+        messageType: 'system'
+      });
 
-        // Only send "managed by" message for official rooms
-        if (room.category === 'official') {
-          const welcomeMsg2 = `This room is managed by ${room.owner_name || room.creator_name || 'migx'}`;
-          setTimeout(() => {
-            socket.emit('chat:message', {
-              id: Date.now().toString() + '-2',
-              roomId,
-              username: room.name,
-              message: welcomeMsg2,
-              timestamp: new Date().toISOString(),
-              type: 'system',
-              messageType: 'system'
-            });
-          }, 100);
-        }
-
-        setTimeout(async () => {
-          // Fetch fresh user list from Redis TTL keys at the last moment
-          const freshUsersList = await getRoomPresenceUsers(roomId);
-          const freshUserListString = freshUsersList.length > 0
-            ? freshUsersList.join(', ')
-            : username;
-
+      // Only send "managed by" message for official rooms
+      if (room.category === 'official') {
+        const welcomeMsg2 = `This room is managed by ${room.owner_name || room.creator_name || 'migx'}`;
+        setTimeout(() => {
           socket.emit('chat:message', {
-            id: Date.now().toString() + '-3',
+            id: Date.now().toString() + '-2',
             roomId,
             username: room.name,
-            message: `Currently users in the room: ${freshUserListString}`,
+            message: welcomeMsg2,
             timestamp: new Date().toISOString(),
             type: 'system',
             messageType: 'system'
           });
-        }, 200);
+        }, 100);
+      }
 
-        // MIG33-style enter message to all users in room (presence event - not saved to Redis)
-        // Skip this for silent rejoins (e.g., coming back from background)
-        if (!silent) {
-          setTimeout(async () => {
-            const userLevelData = await getUserLevel(userId);
-            const userLevel = userLevelData?.level || 1;
-            const enterMsg = `${username} [${userLevel}] has entered`;
-            const enterMessage = {
-              id: `presence-enter-${Date.now()}-${Math.random()}`,
-              roomId,
-              username: room.name,
-              message: enterMsg,
-              timestamp: new Date().toISOString(),
-              type: 'presence',
-              messageType: 'presence'
-            };
+      setTimeout(async () => {
+        // Fetch fresh user list from Redis TTL keys at the last moment
+        const freshUsersList = await getRoomPresenceUsers(roomId);
+        const freshUserListString = freshUsersList.length > 0
+          ? freshUsersList.join(', ')
+          : username;
 
-            // Broadcast to ALL users including the joining user
-            io.to(`room:${roomId}`).emit('chat:message', enterMessage);
-            // Note: Presence events are NOT saved to Redis - they are realtime only
-          }, 300);
+        socket.emit('chat:message', {
+          id: Date.now().toString() + '-3',
+          roomId,
+          username: room.name,
+          message: `Currently users in the room: ${freshUserListString}`,
+          timestamp: new Date().toISOString(),
+          type: 'system',
+          messageType: 'system'
+        });
+      }, 200);
 
-          io.to(`room:${roomId}`).emit('room:user:joined', {
+      // MIG33-style enter message to all users in room (presence event - not saved to Redis)
+      // Skip this for silent rejoins OR if user was already in room (e.g., coming back from background)
+      if (!silent && !alreadyInRoom) {
+        setTimeout(async () => {
+          const userLevelData = await getUserLevel(userId);
+          const userLevel = userLevelData?.level || 1;
+          const enterMsg = `${username} [${userLevel}] has entered`;
+          const enterMessage = {
+            id: `presence-enter-${Date.now()}-${Math.random()}`,
             roomId,
-            user: userWithPresence,
-            users: usersWithPresence
-          });
-        }
-      } else {
-        console.log(`✅ User ${username} already in room ${roomId}, skipping duplicate join messages`);
+            username: room.name,
+            message: enterMsg,
+            timestamp: new Date().toISOString(),
+            type: 'presence',
+            messageType: 'presence'
+          };
+
+          // Broadcast to ALL users including the joining user
+          io.to(`room:${roomId}`).emit('chat:message', enterMessage);
+          // Note: Presence events are NOT saved to Redis - they are realtime only
+        }, 300);
+
+        io.to(`room:${roomId}`).emit('room:user:joined', {
+          roomId,
+          user: userWithPresence,
+          users: usersWithPresence
+        });
+      } else if (alreadyInRoom) {
+        console.log(`✅ User ${username} already in room ${roomId}, showing room info but skipping enter message`);
       }
 
       console.log('📤 Sending room:joined event:', {
