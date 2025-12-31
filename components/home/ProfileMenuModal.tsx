@@ -235,22 +235,7 @@ export function ProfileMenuModal({ visible, onClose, userData }: ProfileMenuModa
               showDivider={true}
             />
 
-            <MenuItem 
-              icon={<SettingsIcon size={24} />}
-              title="Security"
-              onPress={handleSettings}
-              theme={theme}
-            />
-
             <ModeToggle />
-
-            <MenuItem 
-              icon={<Ionicons name="log-out-outline" size={24} color="#FF3B30" />}
-              title="Logout"
-              onPress={handleLogout}
-              theme={theme}
-              showDivider={isMerchant || isMentor || isSuperAdmin}
-            />
 
             {isMerchant && (
               <MenuItem 
@@ -258,7 +243,6 @@ export function ProfileMenuModal({ visible, onClose, userData }: ProfileMenuModa
                 title="Merchant Dashboard"
                 onPress={handleMerchantDashboard}
                 theme={theme}
-                showDivider={false}
               />
             )}
 
@@ -268,7 +252,6 @@ export function ProfileMenuModal({ visible, onClose, userData }: ProfileMenuModa
                 title="Mentor Dashboard"
                 onPress={handleMentorDashboard}
                 theme={theme}
-                showDivider={false}
               />
             )}
 
@@ -278,9 +261,23 @@ export function ProfileMenuModal({ visible, onClose, userData }: ProfileMenuModa
                 title="Admin Panel"
                 onPress={handleAdminPanel}
                 theme={theme}
-                showDivider={false}
               />
             )}
+
+            <MenuItem 
+              icon={<SettingsIcon size={24} />}
+              title="Settings"
+              onPress={handleSettings}
+              theme={theme}
+            />
+
+            <MenuItem 
+              icon={<Ionicons name="log-out-outline" size={24} color="#FF3B30" />}
+              title="Logout"
+              onPress={handleLogout}
+              theme={theme}
+              showDivider={false}
+            />
           </View>
         </ScrollView>
       </View>
