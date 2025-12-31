@@ -154,7 +154,7 @@ export default function ChatRoomScreen() {
 
   useEffect(() => {
     const loadUserData = async () => {
-      // First check if store already has valid user info - don't overwrite with guest
+      // First check if store already has valid user info - don't overwrite
       const storeState = useRoomTabsStore.getState();
       if (storeState.currentUsername && storeState.currentUsername !== 'guest' && storeState.currentUserId && storeState.currentUserId !== 'guest-id') {
         console.log('📱 [Chatroom] Using existing userInfo from store:', storeState.currentUsername);
@@ -165,21 +165,20 @@ export default function ChatRoomScreen() {
         const userDataStr = await AsyncStorage.getItem('user_data');
         if (userDataStr) {
           const userData = JSON.parse(userDataStr);
-          console.log('📱 [Chatroom] Loaded user_data for userInfo:', userData.username);
-          setUserInfo(userData.username || 'guest', userData.id?.toString() || 'guest-id');
-        } else {
-          console.warn('📱 [Chatroom] No user_data found in AsyncStorage for userInfo');
-          // Don't set guest if store already has valid data
-          if (!storeState.currentUsername || storeState.currentUsername === 'guest') {
-            setUserInfo('guest', 'guest-id');
+          if (userData.username && userData.id) {
+            console.log('📱 [Chatroom] Loaded user_data for userInfo:', userData.username);
+            setUserInfo(userData.username, userData.id?.toString());
+          } else {
+            console.error('📱 [Chatroom] Invalid user_data - redirecting to login');
+            router.replace('/login');
           }
+        } else {
+          console.error('📱 [Chatroom] No user_data found - redirecting to login');
+          router.replace('/login');
         }
       } catch (error) {
-        console.error('📱 [Chatroom] Error loading user_data for userInfo:', error);
-        // Don't set guest if store already has valid data
-        if (!storeState.currentUsername || storeState.currentUsername === 'guest') {
-          setUserInfo('guest', 'guest-id');
-        }
+        console.error('📱 [Chatroom] Error loading user_data - redirecting to login:', error);
+        router.replace('/login');
       }
     };
     loadUserData();
