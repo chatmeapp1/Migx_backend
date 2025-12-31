@@ -1,15 +1,11 @@
 import React, { forwardRef, useImperativeHandle } from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useThemeCustom } from '@/theme/provider';
 import { ContactItem } from './ContactItem';
-import { API_ENDPOINTS } from '@/utils/api';
+import API_BASE_URL, { API_ENDPOINTS } from '@/utils/api';
 import { useRoomTabsStore, buildConversationId } from '@/stores/useRoomTabsStore';
-
-const API_BASE_URL = Platform.OS === 'web'
-  ? 'https://d1a7ddfc-5415-44f9-92c0-a278e94f8f08-00-1i8qhqy6zm7hx.sisko.replit.dev'
-  : 'https://d1a7ddfc-5415-44f9-92c0-a278e94f8f08-00-1i8qhqy6zm7hx.sisko.replit.dev';
 
 type PresenceStatus = 'online' | 'away' | 'busy' | 'offline';
 

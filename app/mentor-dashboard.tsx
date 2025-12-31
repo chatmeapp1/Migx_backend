@@ -5,8 +5,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useThemeCustom } from '@/theme/provider';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
+import API_BASE_URL from '@/utils/api';
 
-const BASE_URL = 'https://d1a7ddfc-5415-44f9-92c0-a278e94f8f08-00-1i8qhqy6zm7hx.sisko.replit.dev';
+const BASE_URL = API_BASE_URL;
 
 export default function MentorDashboard() {
   const { theme } = useThemeCustom();
