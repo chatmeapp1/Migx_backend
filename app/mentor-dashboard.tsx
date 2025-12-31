@@ -64,16 +64,54 @@ export default function MentorDashboard() {
     }
   };
 
+  const handleDeleteMerchant = (merchant: any) => {
+    Alert.alert(
+      'Delete Merchant',
+      `Are you sure you want to remove ${merchant.username} as merchant? They will be reverted to regular user.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const token = await AsyncStorage.getItem('auth_token');
+              const response = await axios.delete(`${BASE_URL}/api/mentor/merchant/${merchant.id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+              });
+              if (response.data.success) {
+                Alert.alert('Success', 'Merchant removed successfully');
+                fetchMerchants();
+              } else {
+                Alert.alert('Error', response.data.error || 'Failed to remove merchant');
+              }
+            } catch (error) {
+              Alert.alert('Error', 'Failed to remove merchant');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const renderMerchantItem = ({ item }: { item: any }) => (
     <View style={[styles.merchantItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
-      <View>
+      <View style={styles.merchantInfo}>
         <Text style={[styles.merchantName, { color: theme.text }]}>{item.username}</Text>
         <Text style={[styles.expiryText, { color: theme.secondary }]}>
           Expires: {new Date(item.merchant_expired_at).toLocaleDateString()}
         </Text>
       </View>
-      <View style={[styles.statusBadge, { backgroundColor: '#4CAF5020' }]}>
-        <Text style={{ color: '#4CAF50', fontSize: 12 }}>Active</Text>
+      <View style={styles.merchantActions}>
+        <View style={[styles.statusBadge, { backgroundColor: '#4CAF5020' }]}>
+          <Text style={{ color: '#4CAF50', fontSize: 12 }}>Active</Text>
+        </View>
+        <TouchableOpacity 
+          style={styles.deleteButton}
+          onPress={() => handleDeleteMerchant(item)}
+        >
+          <Ionicons name="trash-outline" size={20} color="#F44336" />
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -180,12 +218,23 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 12,
   },
+  merchantInfo: {
+    flex: 1,
+  },
   merchantName: { fontSize: 16, fontWeight: 'bold' },
   expiryText: { fontSize: 12, marginTop: 4 },
+  merchantActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
+  },
+  deleteButton: {
+    padding: 8,
   },
   emptyText: { textAlign: 'center', marginTop: 40, fontSize: 14 }
 });

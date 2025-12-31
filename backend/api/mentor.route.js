@@ -52,4 +52,35 @@ router.post('/add-merchant', auth, async (req, res) => {
   }
 });
 
+// Delete a merchant (revert to user role)
+router.delete('/merchant/:id', auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (req.user.role !== 'mentor') {
+      return res.status(403).json({ success: false, error: 'Access denied' });
+    }
+
+    // Check if the merchant belongs to this mentor
+    const merchantRes = await query(
+      'SELECT id FROM users WHERE id = $1 AND mentor_id = $2 AND role = \'merchant\'',
+      [id, req.user.id]
+    );
+
+    if (merchantRes.rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Merchant not found' });
+    }
+
+    // Revert to user role
+    await query(
+      'UPDATE users SET role = \'user\', mentor_id = NULL, merchant_expired_at = NULL WHERE id = $1',
+      [id]
+    );
+
+    res.json({ success: true, message: 'Merchant removed successfully' });
+  } catch (error) {
+    console.error('Error deleting merchant:', error);
+    res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
 module.exports = router;
