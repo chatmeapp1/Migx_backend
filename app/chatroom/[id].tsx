@@ -921,8 +921,8 @@ export default function ChatRoomScreen() {
         onClose={() => setCmdListVisible(false)}
         onSelectCmd={(cmdKey, requiresTarget) => {
           setCmdListVisible(false);
-          if (inputRef.current && 'insertText' in inputRef.current) {
-            (inputRef.current as any).insertText(`/${cmdKey} `);
+          if (inputRef.current) {
+            inputRef.current.insertText(`/${cmdKey} `);
           }
         }}
       />

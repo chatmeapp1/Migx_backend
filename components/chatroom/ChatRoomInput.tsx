@@ -31,6 +31,7 @@ interface ChatRoomInputProps {
 
 export interface ChatRoomInputRef {
   insertEmoji: (code: string) => void;
+  insertText: (text: string) => void;
 }
 
 const MenuIcon = ({ size = 20, color = '#666' }) => (
@@ -89,6 +90,10 @@ export const ChatRoomInput = forwardRef<ChatRoomInputRef, ChatRoomInputProps>(({
   useImperativeHandle(ref, () => ({
     insertEmoji: (code: string) => {
       setMessage((prev) => prev + code);
+    },
+    insertText: (text: string) => {
+      setMessage(text);
+      textInputRef.current?.focus();
     },
   }));
 
