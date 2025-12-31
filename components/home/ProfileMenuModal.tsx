@@ -76,6 +76,7 @@ export function ProfileMenuModal({ visible, onClose, userData }: ProfileMenuModa
 
   const userRole = userData.role || 'user';
   const isMerchant = userRole === 'merchant';
+  const isMentor = userRole === 'mentor';
   const isSuperAdmin = userRole === 'super_admin';
 
   const handleEditProfile = () => {
@@ -111,6 +112,11 @@ export function ProfileMenuModal({ visible, onClose, userData }: ProfileMenuModa
   const handleMerchantDashboard = () => {
     onClose();
     console.log('Merchant Dashboard pressed');
+  };
+
+  const handleMentorDashboard = () => {
+    onClose();
+    router.push('/mentor-dashboard');
   };
 
   const handleSettings = () => {
@@ -243,7 +249,7 @@ export function ProfileMenuModal({ visible, onClose, userData }: ProfileMenuModa
               title="Logout"
               onPress={handleLogout}
               theme={theme}
-              showDivider={isMerchant || isSuperAdmin}
+              showDivider={isMerchant || isMentor || isSuperAdmin}
             />
 
             {isMerchant && (
@@ -252,7 +258,17 @@ export function ProfileMenuModal({ visible, onClose, userData }: ProfileMenuModa
                 title="Merchant Dashboard"
                 onPress={handleMerchantDashboard}
                 theme={theme}
-                showDivider={!isSuperAdmin}
+                showDivider={false}
+              />
+            )}
+
+            {isMentor && (
+              <MenuItem 
+                icon={<DashboardIcon size={24} />}
+                title="Mentor Dashboard"
+                onPress={handleMentorDashboard}
+                theme={theme}
+                showDivider={false}
               />
             )}
 
