@@ -9,11 +9,11 @@ import API_BASE_URL from '@/utils/api';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-const ROLE_COLORS: Record<string, { bg: string; text: string; label: string }> = {
-  admin: { bg: '#FF4444', text: '#FFFFFF', label: 'A' },
-  moderator: { bg: '#4CAF50', text: '#FFFFFF', label: 'M' },
-  vip: { bg: '#FFD700', text: '#000000', label: 'V' },
-  merchant: { bg: '#9C27B0', text: '#FFFFFF', label: '$' },
+const ROLE_BADGES: Record<string, any> = {
+  admin: require('@/assets/badge role/ic_admin.png'),
+  moderator: require('@/assets/badge role/ic_mentor.png'),
+  mentor: require('@/assets/badge role/ic_mentor.png'),
+  merchant: require('@/assets/badge role/ic_merchant.png'),
 };
 
 interface ChatRoomHeaderProps {
@@ -142,18 +142,12 @@ export function ChatRoomHeader({
                   resizeMode="contain"
                 />
                 
-                {targetUserData?.role && ROLE_COLORS[targetUserData.role] && (
-                  <View style={[
-                    styles.roleBadge,
-                    { backgroundColor: ROLE_COLORS[targetUserData.role].bg }
-                  ]}>
-                    <Text style={[
-                      styles.roleBadgeText,
-                      { color: ROLE_COLORS[targetUserData.role].text }
-                    ]}>
-                      {ROLE_COLORS[targetUserData.role].label}
-                    </Text>
-                  </View>
+                {targetUserData?.role && ROLE_BADGES[targetUserData.role] && (
+                  <Image 
+                    source={ROLE_BADGES[targetUserData.role]} 
+                    style={styles.roleBadge}
+                    resizeMode="contain"
+                  />
                 )}
               </View>
               
@@ -309,12 +303,5 @@ const styles = StyleSheet.create({
   roleBadge: {
     width: 16,
     height: 16,
-    borderRadius: 3,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  roleBadgeText: {
-    fontSize: 10,
-    fontWeight: 'bold',
   },
 });
