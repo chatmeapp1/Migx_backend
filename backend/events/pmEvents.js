@@ -202,6 +202,10 @@ module.exports = (io, socket) => {
       // Private messages are NOT saved to database - only real-time Socket.IO for privacy
       await addXp(fromUserId, XP_REWARDS.SEND_MESSAGE, 'send_pm', io);
 
+      // Get sender's role for username color
+      const senderUser = await userService.getUserById(fromUserId);
+      const fromRole = senderUser?.role || 'user';
+
       const messageData = {
         id: clientMsgId || generateMessageId(), // 🔑 Use client ID for dedup
         fromUserId,
@@ -210,6 +214,7 @@ module.exports = (io, socket) => {
         toUsername: recipientUsername,
         message,
         messageType: 'pm', // 🔑 PM identifier
+        fromRole, // 🔑 Sender's role for username color
         timestamp: new Date().toISOString(),
         isRead: false
       };

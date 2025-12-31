@@ -271,7 +271,7 @@ export default function ChatRoomScreen() {
 
       // 🔑 GLOBAL PM LISTENER - Append to existing conversation only
       newSocket.on('pm:receive', (data: any) => {
-        console.log('📩 [PM-RECEIVE] Message from:', data.fromUsername, '| Type:', data.messageType);
+        console.log('📩 [PM-RECEIVE] Message from:', data.fromUsername, '| Type:', data.messageType, '| Role:', data.fromRole);
         
         const senderUsername = data.fromUsername;
         const senderId = data.fromUserId;
@@ -285,11 +285,22 @@ export default function ChatRoomScreen() {
         // 🔑 Only add to PM storage if conversation is already open - don't auto-open
         const { addPrivateMessage } = useRoomTabsStore.getState();
         
+        // Map role to userType for color (moderator/owner stay blue, others get role color)
+        const roleToUserType = (role: string) => {
+          if (role === 'admin') return 'admin';
+          if (role === 'mentor') return 'mentor';
+          if (role === 'merchant') return 'merchant';
+          if (role === 'customer_service') return 'customer_service';
+          // moderator and owner stay as 'normal' for blue color in PM
+          return 'normal';
+        };
+        
         const pmMessage: Message = {
           id: data.id,
           username: senderUsername,
           message: message,
           isOwnMessage: false,
+          userType: roleToUserType(data.fromRole || 'user'),
           timestamp: data.timestamp || new Date().toISOString(),
         };
 
@@ -309,13 +320,23 @@ export default function ChatRoomScreen() {
       newSocket.on('pm:sent', (data: any) => {
         console.log('📩 [PM-SENT] Echo for sent message to:', data.toUsername);
         
-        const { addPrivateMessage } = useRoomTabsStore.getState();
+        const { addPrivateMessage, currentUsername } = useRoomTabsStore.getState();
+        
+        // Map role to userType for color
+        const roleToUserType = (role: string) => {
+          if (role === 'admin') return 'admin';
+          if (role === 'mentor') return 'mentor';
+          if (role === 'merchant') return 'merchant';
+          if (role === 'customer_service') return 'customer_service';
+          return 'normal';
+        };
         
         const pmMessage: Message = {
           id: data.id,
-          username: 'You',
+          username: data.fromUsername || currentUsername,
           message: data.message,
           isOwnMessage: true,
+          userType: roleToUserType(data.fromRole || 'user'),
           timestamp: data.timestamp || new Date().toISOString(),
         };
 
@@ -439,7 +460,7 @@ export default function ChatRoomScreen() {
         const { addPrivateMessage } = useRoomTabsStore.getState();
         const localMessage = {
           id: `local_${Date.now()}`,
-          username: 'You',
+          username: currentUsername, // Use actual username, not "You"
           message: message.trim(),
           isOwnMessage: true,
           timestamp: new Date().toISOString(),
