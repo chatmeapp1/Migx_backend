@@ -43,11 +43,32 @@ export function ProfileMenuModal({ visible, onClose, userData }: ProfileMenuModa
 
   if (!userData) return null;
 
-  const avatarUri = userData.avatar?.startsWith('http') 
-    ? userData.avatar 
-    : userData.avatar 
-      ? `${API_BASE_URL}${userData.avatar}` 
-      : null;
+  // Check multiple avatar sources - prioritize full URLs
+  const getAvatarUri = () => {
+    // Check avatarUrl first (usually full URL from API)
+    if (userData.avatarUrl && typeof userData.avatarUrl === 'string' && userData.avatarUrl.startsWith('http')) {
+      return userData.avatarUrl;
+    }
+    // Check avatar_url 
+    if (userData.avatar_url && typeof userData.avatar_url === 'string' && userData.avatar_url.startsWith('http')) {
+      return userData.avatar_url;
+    }
+    // Check avatar field
+    if (userData.avatar && typeof userData.avatar === 'string') {
+      // Skip if it's an emoji or invalid
+      if (userData.avatar.length <= 2 || userData.avatar === '👤') {
+        return null;
+      }
+      if (userData.avatar.startsWith('http')) {
+        return userData.avatar;
+      }
+      // It's a relative path - construct full URL
+      const cleanPath = userData.avatar.startsWith('/') ? userData.avatar : `/${userData.avatar}`;
+      return `${API_BASE_URL}${cleanPath}`;
+    }
+    return null;
+  };
+  const avatarUri = getAvatarUri();
 
   const userRole = userData.role || 'user';
   const isMerchant = userRole === 'merchant';
