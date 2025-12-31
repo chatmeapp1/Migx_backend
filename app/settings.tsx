@@ -76,6 +76,14 @@ export default function SettingsScreen() {
               onPress={() => router.push('/notification')}
               theme={theme}
             />
+            
+            <SettingsItem
+              icon="shield-outline"
+              title="Privacy"
+              subtitle="Chat, Profile, Block list"
+              onPress={() => router.push('/privacy')}
+              theme={theme}
+            />
           </View>
         </View>
       </SafeAreaView>
