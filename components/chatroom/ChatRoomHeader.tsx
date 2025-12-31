@@ -11,7 +11,6 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const ROLE_BADGES: Record<string, any> = {
   admin: require('@/assets/badge role/ic_admin.png'),
-  moderator: require('@/assets/badge role/ic_mentor.png'),
   mentor: require('@/assets/badge role/ic_mentor.png'),
   merchant: require('@/assets/badge role/ic_merchant.png'),
 };
