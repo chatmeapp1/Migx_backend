@@ -11,6 +11,7 @@ import {
 import { router } from 'expo-router';
 import { useThemeCustom } from '@/theme/provider';
 import { Ionicons } from '@expo/vector-icons';
+import Svg, { Path } from 'react-native-svg';
 
 const STATUSBAR_HEIGHT = Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 0;
 
@@ -42,6 +43,12 @@ function SettingsItem({ icon, title, subtitle, onPress, theme }: SettingsItemPro
     </TouchableOpacity>
   );
 }
+
+const AppearanceIcon = ({ size = 24, color = '#00bcd4' }: { size?: number; color?: string }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
 
 export default function SettingsScreen() {
   const { theme } = useThemeCustom();
@@ -90,6 +97,14 @@ export default function SettingsScreen() {
               title="About"
               subtitle="Policy, Terms, Version"
               onPress={() => router.push('/about')}
+              theme={theme}
+            />
+
+            <SettingsItem
+              icon="color-wand-outline"
+              title="Appearance"
+              subtitle="Font size, Color schema"
+              onPress={() => router.push('/appearance')}
               theme={theme}
             />
           </View>
