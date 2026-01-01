@@ -5,7 +5,7 @@ import { useThemeCustom } from '@/theme/provider';
 
 const STATUSBAR_HEIGHT = Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 0;
 
-export default function PrivacyPolicyScreen() {
+export default function TermsScreen() {
   const { theme } = useThemeCustom();
   
   return (
@@ -15,45 +15,42 @@ export default function PrivacyPolicyScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <Text style={[styles.backText, { color: theme.primary }]}>← Back</Text>
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>Privacy Policy</Text>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>Terms and Conditions</Text>
           <View style={styles.placeholder} />
         </View>
 
         <ScrollView style={styles.content} contentContainerStyle={styles.scrollContent}>
-          <Text style={[styles.sectionTitle, { color: theme.primary }]}>Last updated: January 2026</Text>
+          <Text style={[styles.sectionTitle, { color: theme.primary }]}>Last updated: December 2024</Text>
           
-          <Text style={[styles.heading, { color: theme.text }]}>1. Information We Collect</Text>
+          <Text style={[styles.heading, { color: theme.text }]}>1. Acceptance of Terms</Text>
           <Text style={[styles.text, { color: theme.secondary }]}>
-            We collect information you provide directly to us, including username, email address, 
-            country, and gender when you create an account.
+            By accessing and using this application, you accept and agree to be bound by the terms 
+            and provision of this agreement.
           </Text>
           
-          <Text style={[styles.heading, { color: theme.text }]}>2. How We Use Your Information</Text>
+          <Text style={[styles.heading, { color: theme.text }]}>2. User Conduct</Text>
           <Text style={[styles.text, { color: theme.secondary }]}>
-            We use the information we collect to provide, maintain, and improve our services, 
-            to communicate with you, and to ensure account security.
+            You agree to use the application only for lawful purposes and in a way that does not 
+            infringe the rights of, restrict or inhibit anyone else's use and enjoyment of the application.
           </Text>
           
-          <Text style={[styles.heading, { color: theme.text }]}>3. Information Sharing</Text>
+          <Text style={[styles.heading, { color: theme.text }]}>3. Account Responsibilities</Text>
           <Text style={[styles.text, { color: theme.secondary }]}>
-            We do not share your personal information with third parties except as necessary 
-            to provide our services or as required by law.
+            You are responsible for maintaining the confidentiality of your account and password 
+            and for restricting access to your device.
           </Text>
           
-          <Text style={[styles.heading, { color: theme.text }]}>4. Data Security</Text>
+          <Text style={[styles.heading, { color: theme.text }]}>4. Termination</Text>
           <Text style={[styles.text, { color: theme.secondary }]}>
-            We implement appropriate security measures to protect your personal information 
-            from unauthorized access, alteration, or destruction.
+            We reserve the right to terminate or suspend access to our application immediately, 
+            without prior notice or liability, for any reason whatsoever.
           </Text>
           
-          <Text style={[styles.heading, { color: theme.text }]}>5. Your Rights</Text>
+          <Text style={[styles.heading, { color: theme.text }]}>5. Limitation of Liability</Text>
           <Text style={[styles.text, { color: theme.secondary }]}>
-            You have the right to access, update, or delete your personal information at any time.
-          </Text>
-          
-          <Text style={[styles.heading, { color: theme.text }]}>6. Contact Us</Text>
-          <Text style={[styles.text, { color: theme.secondary }]}>
-            If you have any questions about this Privacy Policy, please contact us.
+            In no event shall the application, nor its directors, employees, partners, agents, 
+            suppliers, or affiliates, be liable for any indirect, incidental, special, consequential 
+            or punitive damages.
           </Text>
         </ScrollView>
       </SafeAreaView>
