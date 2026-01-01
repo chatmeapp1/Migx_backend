@@ -65,7 +65,7 @@ export default function AboutScreen() {
 
           <TouchableOpacity 
             style={[styles.menuItem, { borderBottomColor: theme.border }]}
-            onPress={() => {}}
+            onPress={() => router.push('/privacy-policy')}
             activeOpacity={0.7}
           >
             <View style={styles.iconContainer}>
