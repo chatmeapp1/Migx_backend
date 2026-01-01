@@ -8,12 +8,14 @@ import {
   Platform,
   StatusBar,
   ScrollView,
-  Linking
+  Linking,
+  Alert
 } from 'react-native';
 import { router } from 'expo-router';
 import { useThemeCustom } from '@/theme/provider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Svg, { Path, Rect } from 'react-native-svg';
+import * as IntentLauncher from 'expo-intent-launcher';
 
 const STATUSBAR_HEIGHT = Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 0;
 
@@ -119,6 +121,20 @@ export default function NotificationScreen() {
     }
   };
 
+  const openSoundSettings = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        await IntentLauncher.startActivityAsync(
+          IntentLauncher.ActivityAction.NOTIFICATION_SETTINGS
+        );
+      } catch (error) {
+        Alert.alert('Error', 'Cannot open sound settings');
+      }
+    } else if (Platform.OS === 'ios') {
+      Linking.openURL('app-settings:');
+    }
+  };
+
   const iconColor = theme.primary;
 
   return (
@@ -153,7 +169,7 @@ export default function NotificationScreen() {
 
           <TouchableOpacity 
             style={[styles.menuItem, { borderBottomColor: theme.border }]}
-            onPress={() => {}}
+            onPress={openSoundSettings}
             activeOpacity={0.7}
           >
             <View style={styles.iconContainer}>
@@ -166,7 +182,7 @@ export default function NotificationScreen() {
 
           <TouchableOpacity 
             style={[styles.menuItem, { borderBottomColor: theme.border }]}
-            onPress={() => {}}
+            onPress={openSoundSettings}
             activeOpacity={0.7}
           >
             <View style={styles.iconContainer}>
