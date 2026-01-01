@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import { BackIcon, MenuGridIcon, MenuDotsIcon } from '@/components/ui/SvgIcons';
+import { BackIcon, MenuDotsIcon } from '@/components/ui/SvgIcons';
 import { RoomIndicatorDots } from './RoomIndicatorDots';
 import { useActiveIndex, useActiveRoom, useOpenRooms, useActiveRoomId, useRoomTabsStore } from '@/stores/useRoomTabsStore';
 import { getLevelConfig } from '@/utils/levelMapping';
@@ -201,7 +201,7 @@ export function ChatRoomHeader({
           style={styles.iconButton}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <MenuGridIcon color="#FFFFFF" size={24} />
+          <MenuDotsIcon color="#FFFFFF" size={24} />
         </TouchableOpacity>
       </View>
     </View>
