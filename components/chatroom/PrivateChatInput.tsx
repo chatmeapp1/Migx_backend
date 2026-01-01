@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 12,
     paddingTop: 10,
-    paddingBottom: Platform.OS === 'android' ? 24 : 10,
+    paddingBottom: Platform.OS === 'android' ? 40 : 14,
     borderTopWidth: 1,
     borderTopColor: '#333',
   },

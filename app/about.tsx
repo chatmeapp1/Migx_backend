@@ -107,7 +107,7 @@ export default function AboutScreen() {
               <VersionIcon size={24} color={iconColor} />
             </View>
             <View style={styles.menuContent}>
-              <Text style={[styles.menuTitle, { color: theme.text }]}>Version</Text>
+              <Text style={[styles.menuTitle, { color: theme.text }]}>Migx Version</Text>
               <Text style={[styles.menuSubtitle, { color: theme.secondary }]}>v1.0.0</Text>
             </View>
           </View>
