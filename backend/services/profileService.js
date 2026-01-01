@@ -381,25 +381,26 @@ const updateBackground = async (userId, backgroundUrl) => {
 const getPrivacySettings = async (userId) => {
   try {
     const result = await query(
-      'SELECT allow_private_chat, profile_privacy FROM users WHERE id = $1',
+      'SELECT allow_private_chat, profile_privacy, allow_share_location FROM users WHERE id = $1',
       [userId]
     );
     if (result.rows.length === 0) {
-      return { allowPrivateChat: 'everyone', profilePrivacy: 'everyone' };
+      return { allowPrivateChat: 'everyone', profilePrivacy: 'everyone', allowShareLocation: false };
     }
     return { 
       allowPrivateChat: result.rows[0].allow_private_chat || 'everyone',
-      profilePrivacy: result.rows[0].profile_privacy || 'everyone'
+      profilePrivacy: result.rows[0].profile_privacy || 'everyone',
+      allowShareLocation: result.rows[0].allow_share_location || false
     };
   } catch (error) {
     console.error('Error getting privacy settings:', error);
-    return { allowPrivateChat: 'everyone', profilePrivacy: 'everyone' };
+    return { allowPrivateChat: 'everyone', profilePrivacy: 'everyone', allowShareLocation: false };
   }
 };
 
 const updatePrivacySettings = async (userId, settings) => {
   try {
-    const { allowPrivateChat, profilePrivacy } = settings;
+    const { allowPrivateChat, profilePrivacy, allowShareLocation } = settings;
     const validChatOptions = ['everyone', 'only_friends'];
     const validProfileOptions = ['everyone', 'only_friends', 'only_me'];
     
@@ -417,6 +418,11 @@ const updatePrivacySettings = async (userId, settings) => {
       const profileValue = validProfileOptions.includes(profilePrivacy) ? profilePrivacy : 'everyone';
       updates.push(`profile_privacy = $${paramIndex++}`);
       values.push(profileValue);
+    }
+
+    if (allowShareLocation !== undefined) {
+      updates.push(`allow_share_location = $${paramIndex++}`);
+      values.push(allowShareLocation);
     }
     
     if (updates.length === 0) {

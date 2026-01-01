@@ -617,13 +617,17 @@ router.get('/privacy/:userId', async (req, res) => {
 router.put('/privacy/:userId', authMiddleware, async (req, res) => {
   try {
     const { userId } = req.params;
-    const { allowPrivateChat } = req.body;
+    const { allowPrivateChat, profilePrivacy, allowShareLocation } = req.body;
     
     if (req.user.id !== parseInt(userId)) {
       return res.status(403).json({ error: 'Unauthorized' });
     }
     
-    const result = await profileService.updatePrivacySettings(userId, { allowPrivateChat });
+    const result = await profileService.updatePrivacySettings(userId, { 
+      allowPrivateChat, 
+      profilePrivacy, 
+      allowShareLocation 
+    });
     res.json(result);
   } catch (error) {
     console.error('Update privacy settings error:', error);

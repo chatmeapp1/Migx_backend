@@ -91,6 +91,7 @@ export default function PrivacyScreen() {
           const response = await axios.get(`${API_BASE_URL}/api/profile/privacy/${userData.id}`);
           const chatValue = response.data.allowPrivateChat;
           const profileValue = response.data.profilePrivacy;
+          const locationValue = response.data.allowShareLocation;
           
           const chatDisplay = chatValue === 'only_friends' ? 'Only Friends' : 'Everyone';
           setAllowPrivateChat(chatDisplay);
@@ -99,6 +100,8 @@ export default function PrivacyScreen() {
           if (profileValue === 'only_friends') profileDisplay = 'Only Friends';
           else if (profileValue === 'only_me') profileDisplay = 'Only Me';
           setProfilePrivacy(profileDisplay);
+
+          setAllowShareLocation(!!locationValue);
         } catch (err) {
           console.log('Using local settings');
         }
@@ -136,10 +139,22 @@ export default function PrivacyScreen() {
     }
   };
 
-  const toggleShareLocation = () => {
+  const toggleShareLocation = async () => {
     const newValue = !allowShareLocation;
     setAllowShareLocation(newValue);
     saveSettings({ allowShareLocation: newValue });
+
+    if (userId && token) {
+      try {
+        await axios.put(
+          `${API_BASE_URL}/api/profile/privacy/${userId}`,
+          { allowShareLocation: newValue },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } catch (err) {
+        console.error('Error saving location privacy to backend:', err);
+      }
+    }
   };
 
   const selectPrivateChatOption = async (option: string) => {
