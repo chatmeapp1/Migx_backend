@@ -5,6 +5,7 @@ import { LightTheme, DarkTheme, ThemeType, ThemeMode } from './index';
 
 const THEME_STORAGE_KEY = '@app_theme_mode';
 const FONT_SIZE_STORAGE_KEY = '@app_font_size';
+const BASE_FONT_SIZE = 16;
 
 // Storage abstraction that works on web and mobile
 const storage = {
@@ -28,6 +29,8 @@ interface ThemeContextType {
   mode: ThemeMode;
   isDark: boolean;
   fontSize: number;
+  fontScale: number;
+  scaleSize: (size: number) => number;
   toggleTheme: () => void;
   setThemeMode: (mode: ThemeMode) => void;
   setFontSize: (size: number) => void;
@@ -119,11 +122,19 @@ export function ThemeProviderCustom({ children }: ThemeProviderProps) {
     saveFontSize(size);
   }, []);
 
+  const fontScale = fontSize / BASE_FONT_SIZE;
+
+  const scaleSize = useCallback((size: number) => {
+    return Math.round(size * fontScale);
+  }, [fontScale]);
+
   const value: ThemeContextType = {
     theme: getActiveTheme(),
     mode,
     isDark: isDark(),
     fontSize,
+    fontScale,
+    scaleSize,
     toggleTheme,
     setThemeMode,
     setFontSize,

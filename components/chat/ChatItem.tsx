@@ -60,8 +60,14 @@ const formatMessagePreview = (msg: string | undefined): string => {
 
 export function ChatItem({ type, name, message, time, isOnline, avatar, tags, roomId, userId, username, hasUnread }: ChatItemProps) {
   const router = useRouter();
-  const { theme } = useThemeCustom();
+  const { theme, scaleSize } = useThemeCustom();
   const displayMessage = formatMessagePreview(message);
+  
+  const dynamicStyles = {
+    name: { fontSize: scaleSize(16) },
+    message: { fontSize: scaleSize(14) },
+    time: { fontSize: scaleSize(12) },
+  };
 
   const handlePress = () => {
     // Handle PM navigation
@@ -106,7 +112,7 @@ export function ChatItem({ type, name, message, time, isOnline, avatar, tags, ro
         )}
         <View style={styles.contentSection}>
           <View style={styles.nameRow}>
-            <Text style={[styles.name, { color: theme.primary }]}>{name}</Text>
+            <Text style={[styles.name, dynamicStyles.name, { color: theme.primary }]}>{name}</Text>
             {hasUnread && <View style={styles.unreadDot} />}
             {tags && tags.length > 0 && (
               <View style={styles.tagsContainer}>
@@ -118,10 +124,10 @@ export function ChatItem({ type, name, message, time, isOnline, avatar, tags, ro
               </View>
             )}
           </View>
-          {displayMessage && <Text style={[styles.message, { color: theme.secondary }]} numberOfLines={1}>{displayMessage}</Text>}
+          {displayMessage && <Text style={[styles.message, dynamicStyles.message, { color: theme.secondary }]} numberOfLines={1}>{displayMessage}</Text>}
         </View>
       </View>
-      {time && <Text style={[styles.time, { color: theme.secondary }]}>{time}</Text>}
+      {time && <Text style={[styles.time, dynamicStyles.time, { color: theme.secondary }]}>{time}</Text>}
     </TouchableOpacity>
   );
 }

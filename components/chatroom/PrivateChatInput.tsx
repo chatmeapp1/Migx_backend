@@ -83,7 +83,7 @@ export const PrivateChatInput = forwardRef<PrivateChatInputRef, PrivateChatInput
   const [message, setMessage] = useState('');
   const [inputHeight, setInputHeight] = useState(42);
   const [uploading, setUploading] = useState(false);
-  const { theme } = useThemeCustom();
+  const { theme, scaleSize } = useThemeCustom();
   const textInputRef = useRef<TextInputType>(null);
 
   useImperativeHandle(ref, () => ({
@@ -188,6 +188,7 @@ export const PrivateChatInput = forwardRef<PrivateChatInputRef, PrivateChatInput
             { 
               color: theme.text,
               height: inputHeight,
+              fontSize: scaleSize(15),
             }
           ]}
           placeholder="Type a message..."

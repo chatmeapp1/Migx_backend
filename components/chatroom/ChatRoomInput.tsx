@@ -80,7 +80,7 @@ export const ChatRoomInput = forwardRef<ChatRoomInputRef, ChatRoomInputProps>(({
   const [cmdListVisible, setCmdListVisible] = useState(false);
   const [giftModalVisible, setGiftModalVisible] = useState(false);
   const [inputHeight, setInputHeight] = useState(42);
-  const { theme } = useThemeCustom();
+  const { theme, scaleSize } = useThemeCustom();
   const textInputRef = useRef<TextInputType>(null);
   const insets = useSafeAreaInsets();
 
@@ -220,7 +220,7 @@ export const ChatRoomInput = forwardRef<ChatRoomInputRef, ChatRoomInputProps>(({
         <View style={[styles.inputContainer, { backgroundColor: theme.card, maxHeight: 120 }]}>
           <TextInput
             ref={textInputRef}
-            style={[styles.input, { color: theme.text, height: inputHeight }]}
+            style={[styles.input, { color: theme.text, height: inputHeight, fontSize: scaleSize(14) }]}
             placeholder="Type a message..."
             placeholderTextColor={theme.secondary}
             value={message}

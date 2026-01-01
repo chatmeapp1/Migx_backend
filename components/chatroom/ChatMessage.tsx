@@ -103,7 +103,29 @@ export const ChatMessage = React.memo(({
   topLikeRewardExpiry
 }: ChatMessageProps) => {
   
-  const { theme } = useThemeCustom();
+  const { theme, scaleSize } = useThemeCustom();
+  
+  const dynamicStyles = {
+    messageWrapper: {
+      fontSize: scaleSize(13),
+      lineHeight: scaleSize(18),
+    },
+    username: {
+      fontSize: scaleSize(13),
+    },
+    message: {
+      fontSize: scaleSize(13),
+    },
+    cmdText: {
+      fontSize: scaleSize(13),
+    },
+    errorText: {
+      fontSize: scaleSize(13),
+    },
+    noticeText: {
+      fontSize: scaleSize(13),
+    },
+  };
 
   const getUsernameColor = () => {
     if (isSystem) return '#FF8C00';
@@ -144,7 +166,7 @@ export const ChatMessage = React.memo(({
     const displayMessage = messageType === 'notInRoom' ? `Error:${message}` : `Error: ${message}`;
     return (
       <View style={styles.messageContainer}>
-        <Text style={[styles.errorText]}>
+        <Text style={[styles.errorText, dynamicStyles.errorText]}>
           {displayMessage}
         </Text>
       </View>
@@ -168,7 +190,7 @@ export const ChatMessage = React.memo(({
     
     return (
       <View style={styles.messageContainer}>
-        <Text style={[styles.cmdText, { color: textColor }]}>
+        <Text style={[styles.cmdText, dynamicStyles.cmdText, { color: textColor }]}>
           {message}
         </Text>
       </View>
@@ -178,7 +200,7 @@ export const ChatMessage = React.memo(({
   if (isNotice) {
     return (
       <View style={[styles.noticeContainer, { backgroundColor: theme.card }]}>
-        <Text style={[styles.noticeText, { color: theme.primary }]}>{message}</Text>
+        <Text style={[styles.noticeText, dynamicStyles.noticeText, { color: theme.primary }]}>{message}</Text>
       </View>
     );
   }
@@ -200,11 +222,11 @@ export const ChatMessage = React.memo(({
   if (hasOnlyText) {
     return (
       <View style={styles.messageContainer}>
-        <Text style={styles.messageWrapper}>
-          <Text style={[styles.username, { color: getUsernameColor() }]}>
+        <Text style={[styles.messageWrapper, dynamicStyles.messageWrapper]}>
+          <Text style={[styles.username, dynamicStyles.username, { color: getUsernameColor() }]}>
             {username}{hasTopMerchantBadge && <BadgeTop1 />}:{' '}
           </Text>
-          <Text style={[styles.message, { color: getMessageColor() }]}>
+          <Text style={[styles.message, dynamicStyles.message, { color: getMessageColor() }]}>
             {message}
           </Text>
         </Text>
@@ -214,8 +236,8 @@ export const ChatMessage = React.memo(({
 
   return (
     <View style={styles.messageContainer}>
-      <Text style={styles.messageWrapper}>
-        <Text style={[styles.username, { color: getUsernameColor() }]}>
+      <Text style={[styles.messageWrapper, dynamicStyles.messageWrapper]}>
+        <Text style={[styles.username, dynamicStyles.username, { color: getUsernameColor() }]}>
           {username}{hasTopMerchantBadge && <BadgeTop1 />}:{' '}
         </Text>
         {parsedMessage.map((item, index) => {
@@ -232,7 +254,7 @@ export const ChatMessage = React.memo(({
             );
           }
           return (
-            <Text key={item.key} style={[styles.message, { color: getMessageColor() }]}>
+            <Text key={item.key} style={[styles.message, dynamicStyles.message, { color: getMessageColor() }]}>
               {item.content}
             </Text>
           );
