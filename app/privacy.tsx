@@ -71,6 +71,7 @@ export default function PrivacyScreen() {
   const [allowShareLocation, setAllowShareLocation] = useState(false);
   const [blockListCount, setBlockListCount] = useState(0);
   const [privateChatModalVisible, setPrivateChatModalVisible] = useState(false);
+  const [profilePrivacyModalVisible, setProfilePrivacyModalVisible] = useState(false);
 
   useEffect(() => {
     loadSettings();
@@ -88,9 +89,16 @@ export default function PrivacyScreen() {
         
         try {
           const response = await axios.get(`${API_BASE_URL}/api/profile/privacy/${userData.id}`);
-          const backendValue = response.data.allowPrivateChat;
-          const displayValue = backendValue === 'only_friends' ? 'Only Friends' : 'Everyone';
-          setAllowPrivateChat(displayValue);
+          const chatValue = response.data.allowPrivateChat;
+          const profileValue = response.data.profilePrivacy;
+          
+          const chatDisplay = chatValue === 'only_friends' ? 'Only Friends' : 'Everyone';
+          setAllowPrivateChat(chatDisplay);
+          
+          let profileDisplay = 'Everyone';
+          if (profileValue === 'only_friends') profileDisplay = 'Only Friends';
+          else if (profileValue === 'only_me') profileDisplay = 'Only Me';
+          setProfilePrivacy(profileDisplay);
         } catch (err) {
           console.log('Using local settings');
         }
@@ -153,6 +161,28 @@ export default function PrivacyScreen() {
     }
   };
 
+  const selectProfilePrivacyOption = async (option: string) => {
+    setProfilePrivacy(option);
+    saveSettings({ profilePrivacy: option });
+    setProfilePrivacyModalVisible(false);
+    
+    if (userId && token) {
+      try {
+        let backendValue = 'everyone';
+        if (option === 'Only Friends') backendValue = 'only_friends';
+        else if (option === 'Only Me') backendValue = 'only_me';
+        
+        await axios.put(
+          `${API_BASE_URL}/api/profile/privacy/${userId}`,
+          { profilePrivacy: backendValue },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } catch (err) {
+        console.error('Error saving profile privacy to backend:', err);
+      }
+    }
+  };
+
   const iconColor = theme.primary;
 
   return (
@@ -185,7 +215,7 @@ export default function PrivacyScreen() {
 
           <TouchableOpacity 
             style={[styles.menuItem, { borderBottomColor: theme.border }]}
-            onPress={() => {}}
+            onPress={() => setProfilePrivacyModalVisible(true)}
             activeOpacity={0.7}
           >
             <View style={styles.iconContainer}>
@@ -262,6 +292,54 @@ export default function PrivacyScreen() {
             <TouchableOpacity 
               style={styles.cancelButton}
               onPress={() => setPrivateChatModalVisible(false)}
+            >
+              <Text style={[styles.cancelText, { color: theme.text }]}>BATALKAN</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      <Modal
+        visible={profilePrivacyModalVisible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setProfilePrivacyModalVisible(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setProfilePrivacyModalVisible(false)}
+        >
+          <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>Profile Privacy</Text>
+            
+            <TouchableOpacity 
+              style={styles.optionItem}
+              onPress={() => selectProfilePrivacyOption('Everyone')}
+            >
+              <RadioButton selected={profilePrivacy === 'Everyone'} color={iconColor} />
+              <Text style={[styles.optionText, { color: theme.text }]}>Everyone</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.optionItem}
+              onPress={() => selectProfilePrivacyOption('Only Friends')}
+            >
+              <RadioButton selected={profilePrivacy === 'Only Friends'} color={iconColor} />
+              <Text style={[styles.optionText, { color: theme.text }]}>Only Friends</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.optionItem}
+              onPress={() => selectProfilePrivacyOption('Only Me')}
+            >
+              <RadioButton selected={profilePrivacy === 'Only Me'} color={iconColor} />
+              <Text style={[styles.optionText, { color: theme.text }]}>Only Me</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.cancelButton}
+              onPress={() => setProfilePrivacyModalVisible(false)}
             >
               <Text style={[styles.cancelText, { color: theme.text }]}>BATALKAN</Text>
             </TouchableOpacity>

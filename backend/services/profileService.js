@@ -381,32 +381,57 @@ const updateBackground = async (userId, backgroundUrl) => {
 const getPrivacySettings = async (userId) => {
   try {
     const result = await query(
-      'SELECT allow_private_chat FROM users WHERE id = $1',
+      'SELECT allow_private_chat, profile_privacy FROM users WHERE id = $1',
       [userId]
     );
     if (result.rows.length === 0) {
-      return { allowPrivateChat: 'everyone' };
+      return { allowPrivateChat: 'everyone', profilePrivacy: 'everyone' };
     }
     return { 
-      allowPrivateChat: result.rows[0].allow_private_chat || 'everyone' 
+      allowPrivateChat: result.rows[0].allow_private_chat || 'everyone',
+      profilePrivacy: result.rows[0].profile_privacy || 'everyone'
     };
   } catch (error) {
     console.error('Error getting privacy settings:', error);
-    return { allowPrivateChat: 'everyone' };
+    return { allowPrivateChat: 'everyone', profilePrivacy: 'everyone' };
   }
 };
 
 const updatePrivacySettings = async (userId, settings) => {
   try {
-    const { allowPrivateChat } = settings;
-    const validOptions = ['everyone', 'only_friends'];
-    const value = validOptions.includes(allowPrivateChat) ? allowPrivateChat : 'everyone';
+    const { allowPrivateChat, profilePrivacy } = settings;
+    const validChatOptions = ['everyone', 'only_friends'];
+    const validProfileOptions = ['everyone', 'only_friends', 'only_me'];
+    
+    const updates = [];
+    const values = [];
+    let paramIndex = 1;
+    
+    if (allowPrivateChat !== undefined) {
+      const chatValue = validChatOptions.includes(allowPrivateChat) ? allowPrivateChat : 'everyone';
+      updates.push(`allow_private_chat = $${paramIndex++}`);
+      values.push(chatValue);
+    }
+    
+    if (profilePrivacy !== undefined) {
+      const profileValue = validProfileOptions.includes(profilePrivacy) ? profilePrivacy : 'everyone';
+      updates.push(`profile_privacy = $${paramIndex++}`);
+      values.push(profileValue);
+    }
+    
+    if (updates.length === 0) {
+      return { success: false, error: 'No valid settings to update' };
+    }
+    
+    updates.push('updated_at = CURRENT_TIMESTAMP');
+    values.push(userId);
     
     await query(
-      'UPDATE users SET allow_private_chat = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
-      [value, userId]
+      `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramIndex}`,
+      values
     );
-    return { success: true, allowPrivateChat: value };
+    
+    return { success: true };
   } catch (error) {
     console.error('Error updating privacy settings:', error);
     return { success: false, error: 'Failed to update' };
