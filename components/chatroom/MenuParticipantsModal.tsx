@@ -162,11 +162,11 @@ export function MenuParticipantsModal({ visible, onClose, roomId, onUserMenuPres
           return;
         }
         
-        const { useRoomTabsStore } = await import('@/stores/useRoomTabsStore');
+        const { useRoomTabsStore, buildConversationId } = await import('@/stores/useRoomTabsStore');
         const store = useRoomTabsStore.getState();
         
-        // Create private chat room ID with userId
-        const privateChatId = `pm_${data.id}`;
+        // Use stable conversation ID to prevent duplicates
+        const privateChatId = buildConversationId(store.currentUserId, data.id.toString());
         
         // Open as new tab with username as display name
         store.openRoom(privateChatId, selectedUser);

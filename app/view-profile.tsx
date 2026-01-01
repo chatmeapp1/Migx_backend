@@ -156,8 +156,11 @@ export default function ViewProfileScreen() {
     const targetUserId = profileData.user.id;
     const targetUsername = profileData.user.username;
     
-    // Create private message room ID with consistent format: pm_{targetUserId}
-    const pmRoomId = `pm_${targetUserId}`;
+    // Import buildConversationId for stable conversation ID
+    const { buildConversationId } = require('@/stores/useRoomTabsStore');
+    
+    // Use stable conversation ID to prevent duplicates
+    const pmRoomId = buildConversationId(currentUser.id.toString(), targetUserId.toString());
     
     // Open the private chat room in the store
     const { openRoom } = useRoomTabsStore.getState();
