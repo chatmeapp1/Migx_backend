@@ -8,14 +8,35 @@ import {
   Platform,
   StatusBar,
   ScrollView,
-  Linking
+  Linking,
+  Modal,
+  FlatList
 } from 'react-native';
 import { router } from 'expo-router';
 import { useThemeCustom } from '@/theme/provider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Svg, { Path, Rect } from 'react-native-svg';
+import Svg, { Path, Rect, Circle } from 'react-native-svg';
 
 const STATUSBAR_HEIGHT = Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 0;
+
+const SOUND_OPTIONS = [
+  { id: 'none', name: 'Tidak ada' },
+  { id: 'default', name: 'Bawaan' },
+  { id: 'simple', name: 'Simpel' },
+  { id: 'crystal', name: 'Jernih Kristal' },
+  { id: 'echo', name: 'Bergema' },
+  { id: 'rise', name: 'Bangkit' },
+  { id: 'ripple', name: 'Riak' },
+  { id: 'harp', name: 'Harpa' },
+  { id: 'high_note', name: 'Nada Tinggi' },
+  { id: 'percussion', name: 'Perkusi' },
+  { id: 'joy', name: 'Kegembiraan' },
+  { id: 'twinkle', name: 'Kelap-Kelip' },
+  { id: 'instant', name: 'Instan' },
+  { id: 'cheerful', name: 'Keceriaan' },
+  { id: 'soft', name: 'Lembut' },
+  { id: 'bell', name: 'Lonceng' },
+];
 
 const VibrateIcon = ({ size = 24, color = '#00bcd4' }: { size?: number; color?: string }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -58,12 +79,21 @@ const CheckIcon = ({ size = 24, color = '#00bcd4' }: { size?: number; color?: st
   </Svg>
 );
 
+const RadioButton = ({ selected, color }: { selected: boolean; color: string }) => (
+  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="10" stroke={selected ? color : '#666'} strokeWidth="2" />
+    {selected && <Circle cx="12" cy="12" r="6" fill={color} />}
+  </Svg>
+);
+
 export default function NotificationScreen() {
   const { theme } = useThemeCustom();
   const [vibrate, setVibrate] = useState(true);
   const [chatRoomSound, setChatRoomSound] = useState('default');
-  const [privateChatSound, setPrivateChatSound] = useState('notification_007');
+  const [privateChatSound, setPrivateChatSound] = useState('default');
   const [onlyWhenMinimized, setOnlyWhenMinimized] = useState(false);
+  const [soundModalVisible, setSoundModalVisible] = useState(false);
+  const [soundModalType, setSoundModalType] = useState<'chatroom' | 'private'>('private');
 
   useEffect(() => {
     loadSettings();
@@ -76,7 +106,7 @@ export default function NotificationScreen() {
         const parsed = JSON.parse(settings);
         setVibrate(parsed.vibrate ?? true);
         setChatRoomSound(parsed.chatRoomSound ?? 'default');
-        setPrivateChatSound(parsed.privateChatSound ?? 'notification_007');
+        setPrivateChatSound(parsed.privateChatSound ?? 'default');
         setOnlyWhenMinimized(parsed.onlyWhenMinimized ?? false);
       }
     } catch (error) {
@@ -119,15 +149,40 @@ export default function NotificationScreen() {
     }
   };
 
-  const openSoundSettings = () => {
-    if (Platform.OS === 'android') {
-      Linking.openSettings();
-    } else if (Platform.OS === 'ios') {
-      Linking.openURL('app-settings:');
+  const openSoundModal = (type: 'chatroom' | 'private') => {
+    setSoundModalType(type);
+    setSoundModalVisible(true);
+  };
+
+  const selectSound = (soundId: string) => {
+    if (soundModalType === 'chatroom') {
+      setChatRoomSound(soundId);
+      saveSettings({ chatRoomSound: soundId });
+    } else {
+      setPrivateChatSound(soundId);
+      saveSettings({ privateChatSound: soundId });
     }
+    setSoundModalVisible(false);
+  };
+
+  const getSoundName = (soundId: string) => {
+    const sound = SOUND_OPTIONS.find(s => s.id === soundId);
+    return sound?.name || 'Bawaan';
   };
 
   const iconColor = theme.primary;
+  const currentSound = soundModalType === 'chatroom' ? chatRoomSound : privateChatSound;
+
+  const renderSoundItem = ({ item }: { item: typeof SOUND_OPTIONS[0] }) => (
+    <TouchableOpacity
+      style={[styles.soundItem, { borderBottomColor: theme.border }]}
+      onPress={() => selectSound(item.id)}
+      activeOpacity={0.7}
+    >
+      <Text style={[styles.soundItemText, { color: theme.text }]}>{item.name}</Text>
+      <RadioButton selected={currentSound === item.id} color={iconColor} />
+    </TouchableOpacity>
+  );
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -161,7 +216,7 @@ export default function NotificationScreen() {
 
           <TouchableOpacity 
             style={[styles.menuItem, { borderBottomColor: theme.border }]}
-            onPress={openSoundSettings}
+            onPress={() => openSoundModal('chatroom')}
             activeOpacity={0.7}
           >
             <View style={styles.iconContainer}>
@@ -169,12 +224,13 @@ export default function NotificationScreen() {
             </View>
             <View style={styles.menuContent}>
               <Text style={[styles.menuTitle, { color: theme.text }]}>Chat room sound</Text>
+              <Text style={[styles.menuSubtitle, { color: theme.secondary }]}>{getSoundName(chatRoomSound)}</Text>
             </View>
           </TouchableOpacity>
 
           <TouchableOpacity 
             style={[styles.menuItem, { borderBottomColor: theme.border }]}
-            onPress={openSoundSettings}
+            onPress={() => openSoundModal('private')}
             activeOpacity={0.7}
           >
             <View style={styles.iconContainer}>
@@ -182,7 +238,7 @@ export default function NotificationScreen() {
             </View>
             <View style={styles.menuContent}>
               <Text style={[styles.menuTitle, { color: theme.text }]}>Private chat sound</Text>
-              <Text style={[styles.menuSubtitle, { color: theme.secondary }]}>{privateChatSound}</Text>
+              <Text style={[styles.menuSubtitle, { color: theme.secondary }]}>{getSoundName(privateChatSound)}</Text>
             </View>
           </TouchableOpacity>
 
@@ -216,6 +272,34 @@ export default function NotificationScreen() {
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
+
+      <Modal
+        visible={soundModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setSoundModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: theme.border }]}>
+              <TouchableOpacity onPress={() => setSoundModalVisible(false)}>
+                <Text style={[styles.modalCancel, { color: theme.secondary }]}>← Kembali</Text>
+              </TouchableOpacity>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>
+                {soundModalType === 'chatroom' ? 'Nada Chat Room' : 'Nada Peringatan'}
+              </Text>
+              <View style={{ width: 60 }} />
+            </View>
+            
+            <FlatList
+              data={SOUND_OPTIONS}
+              renderItem={renderSoundItem}
+              keyExtractor={(item) => item.id}
+              style={styles.soundList}
+            />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -291,5 +375,43 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  modalCancel: {
+    fontSize: 16,
+  },
+  soundList: {
+    paddingHorizontal: 16,
+  },
+  soundItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    borderBottomWidth: 0.5,
+  },
+  soundItemText: {
+    fontSize: 16,
   },
 });
