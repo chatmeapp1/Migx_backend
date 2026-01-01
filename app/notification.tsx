@@ -8,14 +8,12 @@ import {
   Platform,
   StatusBar,
   ScrollView,
-  Linking,
-  Alert
+  Linking
 } from 'react-native';
 import { router } from 'expo-router';
 import { useThemeCustom } from '@/theme/provider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Svg, { Path, Rect } from 'react-native-svg';
-import * as IntentLauncher from 'expo-intent-launcher';
 
 const STATUSBAR_HEIGHT = Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 0;
 
@@ -121,15 +119,9 @@ export default function NotificationScreen() {
     }
   };
 
-  const openSoundSettings = async () => {
+  const openSoundSettings = () => {
     if (Platform.OS === 'android') {
-      try {
-        await IntentLauncher.startActivityAsync(
-          IntentLauncher.ActivityAction.NOTIFICATION_SETTINGS
-        );
-      } catch (error) {
-        Alert.alert('Error', 'Cannot open sound settings');
-      }
+      Linking.openSettings();
     } else if (Platform.OS === 'ios') {
       Linking.openURL('app-settings:');
     }
