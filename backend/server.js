@@ -26,6 +26,7 @@ const messageRouter = require('./api/message.route');
 const notificationRouter = require('./api/notification.route');
 const abuseRoutes = require('./api/abuse.route');
 const streakRoutes = require('./api/streak.route');
+const supportRoutes = require('./api/support.route');
 const giftsRoute = require('./api/gifts.route');
 const uploadRoute = require('./api/upload.route');
 
@@ -262,6 +263,7 @@ app.use('/api/credit', creditRoutes);
 app.use('/api/mentor', mentorRoutes);
 app.use('/api/merchant', merchantRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/support', supportRoutes);
 app.use('/api/chat', chatRoutes);
 
 const announcementRoute = require('./api/announcement.route');

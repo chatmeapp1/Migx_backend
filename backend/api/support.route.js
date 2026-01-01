@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/auth');
-const { query } = require('../db');
+const { query } = require('../db/db');
 
 router.post('/report-bug', authMiddleware, async (req, res) => {
   try {
