@@ -94,7 +94,7 @@ function LoginPage({ onLogin }) {
         throw new Error('⛔ Admin access denied. Only super admin users can access this panel.');
       }
 
-      localStorage.setItem('adminToken', data.token);
+      localStorage.setItem('adminToken', data.accessToken);
       localStorage.setItem('adminUser', JSON.stringify(data.user));
       onLogin();
     } catch (err) {
