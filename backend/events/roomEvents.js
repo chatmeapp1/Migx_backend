@@ -261,6 +261,7 @@ module.exports = (io, socket) => {
         setTimeout(async () => {
           const userLevelData = await getUserLevel(userId);
           const userLevel = userLevelData?.level || 1;
+          const userType = user?.type || 'normal';
           const enterMsg = `${username} [${userLevel}] has entered`;
           const enterMessage = {
             id: `presence-enter-${Date.now()}-${Math.random()}`,
@@ -269,7 +270,8 @@ module.exports = (io, socket) => {
             message: enterMsg,
             timestamp: new Date().toISOString(),
             type: 'presence',
-            messageType: 'presence'
+            messageType: 'presence',
+            userType: userType
           };
 
           // Broadcast to ALL users including the joining user

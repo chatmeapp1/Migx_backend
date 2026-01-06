@@ -32,6 +32,22 @@ const BadgeTop1 = () => (
   />
 );
 
+const RoleBadge = ({ userType }: { userType?: string }) => {
+  if (userType === 'admin') {
+    return <Image source={require('@/assets/badge role/ic_admin.png')} style={{ width: 16, height: 16, marginLeft: 4 }} resizeMode="contain" />;
+  }
+  if (userType === 'mentor') {
+    return <Image source={require('@/assets/badge role/ic_mentor.png')} style={{ width: 16, height: 16, marginLeft: 4 }} resizeMode="contain" />;
+  }
+  if (userType === 'merchant') {
+    return <Image source={require('@/assets/badge role/ic_merchant.png')} style={{ width: 16, height: 16, marginLeft: 4 }} resizeMode="contain" />;
+  }
+  if (userType === 'customer_service' || userType === 'cs') {
+    return <Image source={require('@/assets/badge role/badge_cs.png')} style={{ width: 16, height: 16, marginLeft: 4 }} resizeMode="contain" />;
+  }
+  return null;
+};
+
 const parseImageTags = (message: string): { hasImage: boolean; imageUrl: string | null; textContent: string } => {
   const imgRegex = /\[img\](.*?)\[\/img\]/i;
   const match = message.match(imgRegex);
@@ -224,7 +240,7 @@ export const ChatMessage = React.memo(({
       <View style={styles.messageContainer}>
         <Text style={[styles.messageWrapper, dynamicStyles.messageWrapper]}>
           <Text style={[styles.username, dynamicStyles.username, { color: getUsernameColor() }]}>
-            {username}{hasTopMerchantBadge && <BadgeTop1 />}:{' '}
+            {username}{hasTopMerchantBadge && <BadgeTop1 />}{isPresence && <RoleBadge userType={userType} />}:{' '}
           </Text>
           <Text style={[styles.message, dynamicStyles.message, { color: getMessageColor() }]}>
             {message}
@@ -238,7 +254,7 @@ export const ChatMessage = React.memo(({
     <View style={styles.messageContainer}>
       <Text style={[styles.messageWrapper, dynamicStyles.messageWrapper]}>
         <Text style={[styles.username, dynamicStyles.username, { color: getUsernameColor() }]}>
-          {username}{hasTopMerchantBadge && <BadgeTop1 />}:{' '}
+          {username}{hasTopMerchantBadge && <BadgeTop1 />}{isPresence && <RoleBadge userType={userType} />}:{' '}
         </Text>
         {parsedMessage.map((item, index) => {
           if (item.type === 'emoji') {
