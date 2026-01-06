@@ -261,7 +261,7 @@ module.exports = (io, socket) => {
         setTimeout(async () => {
           const userLevelData = await getUserLevel(userId);
           const userLevel = userLevelData?.level || 1;
-          const userType = user?.type || 'normal';
+          const userType = user?.role || 'normal';
           const enterMsg = `${username} [${userLevel}] has entered`;
           const enterMessage = {
             id: `presence-enter-${Date.now()}-${Math.random()}`,
@@ -445,7 +445,7 @@ module.exports = (io, socket) => {
       const userLevelData = await getUserLevel(presenceUserId);
       const userLevel = userLevelData?.level || 1;
       const user = await userService.getUserById(presenceUserId);
-      const userType = user?.type || 'normal';
+      const userType = user?.role || 'normal';
       const leftMsg = `${username} [${userLevel}] has left`;
       const leftMessage = {
         id: `presence-left-${Date.now()}-${Math.random()}`,
