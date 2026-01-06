@@ -149,11 +149,10 @@ router.post('/background/upload', authMiddleware, cloudinaryUpload.single('backg
 
 // ==================== AVATAR ====================
 
-router.post('/avatar/upload', authMiddleware, upload.single('avatar'), async (req, res) => {
+router.post('/avatar/upload', authMiddleware, cloudinaryUpload.single('avatar'), async (req, res) => {
   try {
     console.log('📥 Avatar upload request received');
     console.log('📋 Authenticated user:', req.user);
-    console.log('📋 File:', req.file ? req.file.filename : 'No file');
     
     if (!req.file) {
       console.log('❌ No file uploaded');
@@ -175,10 +174,29 @@ router.post('/avatar/upload', authMiddleware, upload.single('avatar'), async (re
     }
     
     console.log('✅ Uploading avatar for user:', userId);
-    console.log('📁 File saved as:', req.file.filename);
     
-    // Generate avatar URL
-    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+    // Upload to Cloudinary for persistent storage
+    const cloudinaryResult = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: 'migx/avatars',
+          resource_type: 'image',
+          public_id: `avatar_${userId}_${Date.now()}`,
+          transformation: [
+            { width: 400, height: 400, crop: 'fill', gravity: 'face' },
+            { quality: 'auto' }
+          ]
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+      stream.end(req.file.buffer);
+    });
+
+    const avatarUrl = cloudinaryResult.secure_url;
+    console.log('☁️ Cloudinary upload successful:', avatarUrl);
     
     // Update user avatar in database
     const result = await profileService.updateAvatar(userId, avatarUrl);
