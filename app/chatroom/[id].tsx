@@ -767,8 +767,10 @@ export default function ChatRoomScreen() {
   }, [activeRoomId, getOtherUserIdFromPM]);
 
   const handlePrivateChatCloseChat = useCallback(() => {
+    if (!activeRoomId) return;
+    closeRoom(activeRoomId);
     router.back();
-  }, [router]);
+  }, [activeRoomId, closeRoom, router]);
 
   const handlePrivateChatSendGift = useCallback(() => {
     setPmGiftModalVisible(true);
