@@ -112,7 +112,7 @@ export function ProfileMenuModal({ visible, onClose, userData }: ProfileMenuModa
 
   const handleMerchantDashboard = () => {
     onClose();
-    console.log('Merchant Dashboard pressed');
+    router.push('/merchant-dashboard');
   };
 
   const handleMentorDashboard = () => {
