@@ -29,6 +29,7 @@ import { PrivateChatMenuModal } from '@/components/chatroom/PrivateChatMenuModal
 import { GiftModal } from '@/components/chatroom/GiftModal';
 import { CmdList } from '@/components/chatroom/CmdList';
 import { HeaderOptionsMenu } from '@/components/chatroom/HeaderOptionsMenu';
+import { BackgroundChangeModal } from '@/components/chatroom/BackgroundChangeModal';
 import { useRoomTabsStore, useActiveRoom, useActiveRoomId, useOpenRooms } from '@/stores/useRoomTabsStore';
 
 const HEADER_COLOR = '#0a5229';
@@ -75,6 +76,12 @@ export default function ChatRoomScreen() {
   const [roomInfoModalVisible, setRoomInfoModalVisible] = useState(false);
   const [roomInfoData, setRoomInfoData] = useState<any>(null);
   const [reportAbuseModalVisible, setReportAbuseModalVisible] = useState(false);
+  const [backgroundModalVisible, setBackgroundModalVisible] = useState(false);
+  const [userRole, setUserRole] = useState<string>('user');
+  const [roomOwnerId, setRoomOwnerId] = useState<string | null>(null);
+  const [currentRoomBackground, setCurrentRoomBackground] = useState<string | null>(null);
+  
+  const updateRoomBackground = useRoomTabsStore(state => state.updateRoomBackground);
   
   const [activeVote, setActiveVote] = useState<{
     target: string;
@@ -173,6 +180,9 @@ export default function ChatRoomScreen() {
           if (userData.username && userData.id) {
             console.log('📱 [Chatroom] Loaded user_data for userInfo:', userData.username);
             setUserInfo(userData.username, userData.id?.toString());
+            if (userData.role) {
+              setUserRole(userData.role);
+            }
           } else {
             console.error('📱 [Chatroom] Invalid user_data - redirecting to login');
             router.replace('/login');
@@ -558,6 +568,25 @@ export default function ChatRoomScreen() {
     setHasVoted(true);
   };
 
+  useEffect(() => {
+    if (!currentActiveRoomId || currentActiveRoomId.startsWith('private:') || currentActiveRoomId.startsWith('pm_')) {
+      return;
+    }
+    
+    fetch(`${API_BASE_URL}/api/rooms/${currentActiveRoomId}/info`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.success && data.roomInfo) {
+          setRoomOwnerId(data.roomInfo.owner_id?.toString() || null);
+          if (data.roomInfo.background_image) {
+            setCurrentRoomBackground(data.roomInfo.background_image);
+            updateRoomBackground(currentActiveRoomId, data.roomInfo.background_image);
+          }
+        }
+      })
+      .catch(() => {});
+  }, [currentActiveRoomId, updateRoomBackground]);
+
   const handleOpenRoomInfo = useCallback(() => {
     setRoomInfoModalVisible(true);
     
@@ -941,8 +970,23 @@ export default function ChatRoomScreen() {
           router.push('/store');
         }}
         onChangeBackground={() => {
-          Alert.alert('Coming Soon', 'Change Background feature is coming soon!');
+          setBackgroundModalVisible(true);
         }}
+      />
+
+      <BackgroundChangeModal
+        visible={backgroundModalVisible}
+        onClose={() => setBackgroundModalVisible(false)}
+        roomId={currentActiveRoomId}
+        currentBackground={activeRoom?.backgroundImage || null}
+        onBackgroundChanged={(newUrl) => {
+          updateRoomBackground(currentActiveRoomId, newUrl || null);
+          setCurrentRoomBackground(newUrl || null);
+        }}
+        canChangeBackground={
+          ['admin', 'super_admin'].includes(userRole) || 
+          (roomOwnerId !== null && currentUserId === roomOwnerId)
+        }
       />
 
       <CmdList

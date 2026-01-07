@@ -21,12 +21,14 @@ router.get('/:roomId/info', async (req, res) => {
         r.id,
         r.name,
         r.description,
+        r.owner_id as "owner_id",
         COALESCE(u.username, 'Unknown') as "ownerName",
         r.created_at as "createdAt",
         r.updated_at as "updatedAt",
         r.room_code as "roomCode",
         r.max_users as "maxUsers",
-        r.is_private as "isPrivate"
+        r.is_private as "isPrivate",
+        r.background_image as "background_image"
        FROM rooms r
        LEFT JOIN users u ON r.owner_id = u.id
        WHERE r.id = $1`,
@@ -61,12 +63,14 @@ router.get('/:roomId/info', async (req, res) => {
       id: room.id,
       name: room.name,
       description: room.description || 'No description',
+      owner_id: room.owner_id,
       ownerName: room.ownerName,
       createdAt: room.createdAt,
       updatedAt: room.updatedAt,
       roomCode: room.roomCode,
       maxUsers: room.maxUsers || 25,
       isPrivate: room.isPrivate || false,
+      background_image: room.background_image,
       currentUsers,
       participants: moderators
     };

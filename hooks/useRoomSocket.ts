@@ -14,6 +14,7 @@ export function useRoomSocket({ roomId, onRoomJoined, onUsersUpdated }: UseRoomS
   const currentUserId = useRoomTabsStore(state => state.currentUserId);
   const addMessage = useRoomTabsStore(state => state.addMessage);
   const updateRoomName = useRoomTabsStore(state => state.updateRoomName);
+  const updateRoomBackground = useRoomTabsStore(state => state.updateRoomBackground);
   const markRoomJoined = useRoomTabsStore(state => state.markRoomJoined);
   const markRoomLeft = useRoomTabsStore(state => state.markRoomLeft);
   const isRoomJoined = useRoomTabsStore(state => state.isRoomJoined);
@@ -82,6 +83,10 @@ export function useRoomSocket({ roomId, onRoomJoined, onUsersUpdated }: UseRoomS
       updateRoomName(joinedRoomId, data.room.name);
     }
     
+    if (data.room?.background_image) {
+      updateRoomBackground(joinedRoomId, data.room.background_image);
+    }
+    
     const usernames = data.users 
       ? data.users.map((u: any) => u.username || u)
       : data.currentUsers || [];
@@ -93,7 +98,7 @@ export function useRoomSocket({ roomId, onRoomJoined, onUsersUpdated }: UseRoomS
     if (onUsersUpdated) {
       onUsersUpdated(usernames);
     }
-  }, [updateRoomName, onRoomJoined, onUsersUpdated]);
+  }, [updateRoomName, updateRoomBackground, onRoomJoined, onUsersUpdated]);
 
   // Handle message history from database
   const prependHistoryMessages = useRoomTabsStore(state => state.prependHistoryMessages);
