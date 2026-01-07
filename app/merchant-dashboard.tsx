@@ -180,7 +180,7 @@ export default function MerchantDashboard() {
             {formatNumber(totalCommission)} Credits
           </Text>
           <Text style={[styles.cardSubtitle, { color: theme.secondary }]}>
-            Komisi 10% dari kemenangan user yang tag @{dashboard.username}
+            Komisi 10% dari kemenangan user yang tag @{dashboard.username} saat menang game
           </Text>
         </View>
 
