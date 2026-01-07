@@ -141,14 +141,100 @@ module.exports = (io, socket) => {
             });
             return;
           }
-          io.to(`room:${roomId}`).emit('chat:message', {
-            id: generateMessageId(),
-            roomId,
-            message: `** ${username} sent [${giftName}] to ${targetUser} **`,
-            messageType: 'cmdGift',
-            type: 'cmdGift',
-            timestamp: new Date().toISOString()
-          });
+
+          try {
+            const pool = require('../db/db');
+            const userService = require('../services/userService');
+            
+            // Find gift in database (case-insensitive)
+            const giftResult = await pool.query(
+              'SELECT * FROM gifts WHERE LOWER(name) = LOWER($1)',
+              [giftName.trim()]
+            );
+            
+            if (giftResult.rows.length === 0) {
+              socket.emit('system:message', {
+                roomId,
+                message: `Gift "${giftName}" not found.`,
+                timestamp: new Date().toISOString(),
+                type: 'warning'
+              });
+              return;
+            }
+            
+            const gift = giftResult.rows[0];
+            
+            // Check if target user exists
+            const targetUserData = await userService.getUserByUsername(targetUser);
+            if (!targetUserData) {
+              socket.emit('system:message', {
+                roomId,
+                message: `User "${targetUser}" not found.`,
+                timestamp: new Date().toISOString(),
+                type: 'warning'
+              });
+              return;
+            }
+            
+            // Check sender's balance
+            const senderResult = await pool.query(
+              'SELECT credits FROM users WHERE id = $1',
+              [userId]
+            );
+            
+            if (senderResult.rows.length === 0 || senderResult.rows[0].credits < gift.price) {
+              socket.emit('system:message', {
+                roomId,
+                message: `Not enough credits. Gift costs ${gift.price} IDR.`,
+                timestamp: new Date().toISOString(),
+                type: 'warning'
+              });
+              return;
+            }
+            
+            // Deduct credits from sender
+            await pool.query(
+              'UPDATE users SET credits = credits - $1 WHERE id = $2',
+              [gift.price, userId]
+            );
+            
+            // Log the transaction
+            await pool.query(
+              `INSERT INTO credit_logs (user_id, amount, type, description, created_at)
+               VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)`,
+              [userId, -gift.price, 'gift_sent', `Sent ${gift.name} to ${targetUser}`]
+            );
+            
+            // Broadcast gift message with image
+            io.to(`room:${roomId}`).emit('chat:message', {
+              id: generateMessageId(),
+              roomId,
+              message: `<${username} sent [GIFT_IMAGE:${gift.image_url || '🎁'}] to ${targetUser}>`,
+              messageType: 'cmdGift',
+              type: 'cmdGift',
+              giftData: {
+                name: gift.name,
+                image_url: gift.image_url,
+                price: gift.price,
+                sender: username,
+                receiver: targetUser
+              },
+              timestamp: new Date().toISOString()
+            });
+            
+            // Emit balance update to sender
+            const newBalance = senderResult.rows[0].credits - gift.price;
+            socket.emit('credits:updated', { balance: newBalance });
+            
+          } catch (error) {
+            console.error('Error processing /gift command:', error);
+            socket.emit('system:message', {
+              roomId,
+              message: `Failed to send gift.`,
+              timestamp: new Date().toISOString(),
+              type: 'warning'
+            });
+          }
           return;
         }
 

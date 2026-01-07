@@ -13,10 +13,9 @@ interface Gift {
 interface GiftModalProps {
   visible: boolean;
   onClose: () => void;
-  onSendGift?: (gift: { id: number; name: string; price: number; image: string | null }) => void;
 }
 
-export function GiftModal({ visible, onClose, onSendGift }: GiftModalProps) {
+export function GiftModal({ visible, onClose }: GiftModalProps) {
   const { theme } = useThemeCustom();
   const screenWidth = Dimensions.get('window').width;
   const itemsPerRow = 5;
@@ -52,18 +51,6 @@ export function GiftModal({ visible, onClose, onSendGift }: GiftModalProps) {
     }
   };
 
-  const handleGiftPress = (gift: Gift) => {
-    if (onSendGift) {
-      onSendGift({
-        id: gift.id,
-        name: gift.name,
-        price: gift.price,
-        image: gift.image_url
-      });
-    }
-    onClose();
-  };
-
   return (
     <Modal
       visible={visible}
@@ -89,6 +76,15 @@ export function GiftModal({ visible, onClose, onSendGift }: GiftModalProps) {
               </TouchableOpacity>
             </View>
 
+            <View style={styles.instructionContainer}>
+              <Text style={[styles.instructionText, { color: theme.secondary }]}>
+                Use command to send gift:
+              </Text>
+              <Text style={[styles.commandText, { color: '#4CAF50' }]}>
+                /gift [gift_name] [username]
+              </Text>
+            </View>
+
             {loading ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#0a5229" />
@@ -109,10 +105,9 @@ export function GiftModal({ visible, onClose, onSendGift }: GiftModalProps) {
               <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                 <View style={styles.giftGrid}>
                   {gifts.map((gift) => (
-                    <TouchableOpacity
+                    <View
                       key={gift.id}
                       style={[styles.giftItem, { width: itemSize }]}
-                      onPress={() => handleGiftPress(gift)}
                     >
                       <View style={[styles.giftImageContainer, { backgroundColor: theme.card }]}>
                         {gift.image_url ? (
@@ -131,7 +126,7 @@ export function GiftModal({ visible, onClose, onSendGift }: GiftModalProps) {
                       <Text style={[styles.giftPrice, { color: theme.text }]}>
                         {gift.price} IDR
                       </Text>
-                    </TouchableOpacity>
+                    </View>
                   ))}
                 </View>
               </ScrollView>
@@ -177,13 +172,27 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '300',
   },
+  instructionContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  instructionText: {
+    fontSize: 13,
+    marginBottom: 4,
+  },
+  commandText: {
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: 'monospace',
+  },
   scrollView: {
     paddingHorizontal: 10,
   },
   giftGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingTop: 16,
+    paddingTop: 8,
     paddingHorizontal: 5,
   },
   giftItem: {

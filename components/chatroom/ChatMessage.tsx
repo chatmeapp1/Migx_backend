@@ -200,6 +200,41 @@ export const ChatMessage = React.memo(({
 
   if (isCommandMessage) {
     const textColor = '#8B6F47';
+    
+    // Handle gift messages with images
+    if (messageType === 'cmdGift') {
+      const giftImageMatch = message.match(/<(.+?) sent \[GIFT_IMAGE:(.*?)\] to (.+?)>/);
+      if (giftImageMatch) {
+        const sender = giftImageMatch[1];
+        const giftImageUrl = giftImageMatch[2];
+        const receiver = giftImageMatch[3];
+        
+        const isImageUrl = giftImageUrl.startsWith('http');
+        
+        return (
+          <View style={[styles.messageContainer, styles.giftMessageContainer]}>
+            <Text style={[styles.cmdText, dynamicStyles.cmdText, { color: textColor }]}>
+              {'<'}{sender} sent{' '}
+            </Text>
+            {isImageUrl ? (
+              <Image 
+                source={{ uri: giftImageUrl }} 
+                style={styles.giftImage} 
+                resizeMode="contain" 
+              />
+            ) : (
+              <Text style={[styles.cmdText, dynamicStyles.cmdText, { color: textColor }]}>
+                {giftImageUrl}
+              </Text>
+            )}
+            <Text style={[styles.cmdText, dynamicStyles.cmdText, { color: textColor }]}>
+              {' '}to {receiver}{'>'}
+            </Text>
+          </View>
+        );
+      }
+    }
+    
     return (
       <View style={styles.messageContainer}>
         <Text style={[styles.cmdText, dynamicStyles.cmdText, { color: textColor }]}>
@@ -372,5 +407,14 @@ const styles = StyleSheet.create({
   fullScreenImage: {
     width: SCREEN_WIDTH,
     height: SCREEN_HEIGHT * 0.8,
+  },
+  giftMessageContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  },
+  giftImage: {
+    width: 30,
+    height: 30,
   },
 });
