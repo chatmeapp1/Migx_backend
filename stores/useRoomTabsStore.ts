@@ -29,6 +29,7 @@ export interface Message {
   isCmd?: boolean;
   isPresence?: boolean;
   timestamp?: string;
+  messageType?: string;
   hasTopMerchantBadge?: boolean;
   hasTopLikeReward?: boolean;
   topLikeRewardExpiry?: string;
