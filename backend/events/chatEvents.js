@@ -200,9 +200,9 @@ module.exports = (io, socket) => {
             
             // Log the transaction
             await pool.query(
-              `INSERT INTO credit_logs (user_id, amount, type, description, created_at)
-               VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)`,
-              [userId, -gift.price, 'gift_sent', `Sent ${gift.name} to ${targetUser}`]
+              `INSERT INTO credit_logs (from_user_id, to_user_id, amount, transaction_type, description, from_username, to_username, created_at)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)`,
+              [userId, targetUserData.id, -gift.price, 'gift_sent', `Sent ${gift.name} to ${targetUser}`, username, targetUser]
             );
             
             // Broadcast gift message with image
