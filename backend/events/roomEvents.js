@@ -247,58 +247,63 @@ module.exports = (io, socket) => {
       );
 
       // ALWAYS send room info messages (Welcome, managed by, users) - MIG33 style
-      // Create user list string for welcome message
-      const userListString = currentUsersList.length > 0
-        ? currentUsersList.join(', ')
-        : username;
-
-      // MIG33-style welcome messages - send to the joining user only
-      const welcomeMsg1 = `Welcome to ${room.name}...`;
-
-      // Send welcome messages in correct order
-      socket.emit('chat:message', {
-        id: Date.now().toString() + '-1',
-        roomId,
-        username: room.name,
-        message: welcomeMsg1,
-        timestamp: new Date().toISOString(),
-        type: 'system',
-        messageType: 'system'
-      });
-
-      // Only send "managed by" message for official rooms
-      if (room.category === 'official') {
-        const welcomeMsg2 = `This room is managed by ${room.owner_name || room.creator_name || 'migx'}`;
-        setTimeout(() => {
-          socket.emit('chat:message', {
-            id: Date.now().toString() + '-2',
-            roomId,
-            username: room.name,
-            message: welcomeMsg2,
-            timestamp: new Date().toISOString(),
-            type: 'system',
-            messageType: 'system'
-          });
-        }, 100);
-      }
-
-      setTimeout(async () => {
-        // Fetch fresh user list from Redis TTL keys at the last moment
-        const freshUsersList = await getRoomPresenceUsers(roomId);
-        const freshUserListString = freshUsersList.length > 0
-          ? freshUsersList.join(', ')
+      // Skip welcome messages for silent reconnects (app resume from background)
+      if (!silent) {
+        // Create user list string for welcome message
+        const userListString = currentUsersList.length > 0
+          ? currentUsersList.join(', ')
           : username;
 
+        // MIG33-style welcome messages - send to the joining user only
+        const welcomeMsg1 = `Welcome to ${room.name}...`;
+
+        // Send welcome messages in correct order
         socket.emit('chat:message', {
-          id: Date.now().toString() + '-3',
+          id: Date.now().toString() + '-1',
           roomId,
           username: room.name,
-          message: `Currently users in the room: ${freshUserListString}`,
+          message: welcomeMsg1,
           timestamp: new Date().toISOString(),
           type: 'system',
           messageType: 'system'
         });
-      }, 200);
+
+        // Only send "managed by" message for official rooms
+        if (room.category === 'official') {
+          const welcomeMsg2 = `This room is managed by ${room.owner_name || room.creator_name || 'migx'}`;
+          setTimeout(() => {
+            socket.emit('chat:message', {
+              id: Date.now().toString() + '-2',
+              roomId,
+              username: room.name,
+              message: welcomeMsg2,
+              timestamp: new Date().toISOString(),
+              type: 'system',
+              messageType: 'system'
+            });
+          }, 100);
+        }
+
+        setTimeout(async () => {
+          // Fetch fresh user list from Redis TTL keys at the last moment
+          const freshUsersList = await getRoomPresenceUsers(roomId);
+          const freshUserListString = freshUsersList.length > 0
+            ? freshUsersList.join(', ')
+            : username;
+
+          socket.emit('chat:message', {
+            id: Date.now().toString() + '-3',
+            roomId,
+            username: room.name,
+            message: `Currently users in the room: ${freshUserListString}`,
+            timestamp: new Date().toISOString(),
+            type: 'system',
+            messageType: 'system'
+          });
+        }, 200);
+      } else {
+        console.log(`🔇 [Room ${roomId}] Silent reconnect - skipping welcome messages for ${username}`);
+      }
 
       // MIG33-style enter message to all users in room (presence event - not saved to Redis)
       // Skip this for silent rejoins, invisible admins, OR if user was already in room
