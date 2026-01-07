@@ -21,8 +21,7 @@ interface Contact {
 const ContactListComponent = forwardRef<{ refreshContacts: () => Promise<void> }>((props, ref) => {
   const { theme } = useThemeCustom();
   const router = useRouter();
-  const [onlineFriends, setOnlineFriends] = React.useState<Contact[]>([]);
-  const [mig33Contacts, setMig33Contacts] = React.useState<Contact[]>([]);
+  const [allContacts, setAllContacts] = React.useState<Contact[]>([]);
   const [onlineCollapsed, setOnlineCollapsed] = React.useState(false);
   const [offlineCollapsed, setOfflineCollapsed] = React.useState(false);
 
@@ -37,17 +36,20 @@ const ContactListComponent = forwardRef<{ refreshContacts: () => Promise<void> }
 
   const loadContacts = async () => {
     try {
-      // Load following users
       const userDataStr = await AsyncStorage.getItem('user_data');
       if (!userDataStr) return;
 
       const userData = JSON.parse(userDataStr);
+      
+      // Load following users (friends list)
       const response = await fetch(`${API_ENDPOINTS.PROFILE.FOLLOWING(userData.id)}`);
       const data = await response.json();
 
       if (data.following) {
-        const contacts: Contact[] = data.following.map((user: any) => {
-          // Convert avatar path to full URL
+        // Use a Map to deduplicate by user ID
+        const contactMap = new Map<string, Contact>();
+        
+        data.following.forEach((user: any) => {
           let avatarUrl = '👤';
           if (user.avatar) {
             if (user.avatar.startsWith('http')) {
@@ -57,66 +59,30 @@ const ContactListComponent = forwardRef<{ refreshContacts: () => Promise<void> }
             }
           }
           const presence = user.presence_status || 'offline';
-          return {
+          
+          contactMap.set(String(user.id), {
             id: String(user.id),
             name: user.username,
             status: user.status_message || '',
             presence: presence as PresenceStatus,
-            // Only show last seen when user is offline
             lastSeen: presence === 'offline' && user.last_login_date
               ? `Last seen ${new Date(user.last_login_date).toLocaleString()}`
               : '',
             avatar: avatarUrl,
-          };
-        });
-        setOnlineFriends(contacts);
-      }
-
-      // Load all users as mig33 contacts
-      const allUsersResponse = await fetch(`${API_ENDPOINTS.PEOPLE.ALL}`);
-      const allUsersData = await allUsersResponse.json();
-
-      if (allUsersData) {
-        // Flatten all users from different role categories
-        const allUsers = [
-          ...(allUsersData.admin?.users || []),
-          ...(allUsersData.care_service?.users || []),
-          ...(allUsersData.mentor?.users || []),
-          ...(allUsersData.merchant?.users || [])
-        ];
-
-        const allContacts: Contact[] = allUsers
-          .filter((u: any) => u.id !== userData.id)
-          .slice(0, 10)
-          .map((user: any) => {
-            // Convert avatar path to full URL
-            let avatarUrl = '👤';
-            if (user.avatar) {
-              if (user.avatar.startsWith('http')) {
-                avatarUrl = user.avatar;
-              } else if (user.avatar.startsWith('/')) {
-                avatarUrl = `${API_BASE_URL}${user.avatar}`;
-              }
-            }
-            const presence = user.presence_status || 'offline';
-            return {
-              id: String(user.id),
-              name: user.username,
-              status: user.status_message || '',
-              presence: presence as PresenceStatus,
-              // Only show last seen when user is offline
-              lastSeen: presence === 'offline' && user.last_login_date
-                ? `Last seen ${new Date(user.last_login_date).toLocaleString()}`
-                : '',
-              avatar: avatarUrl,
-            };
           });
-        setMig33Contacts(allContacts);
+        });
+        
+        // Convert map to array
+        setAllContacts(Array.from(contactMap.values()));
       }
     } catch (error) {
       console.error('Error loading contacts:', error);
     }
   };
+  
+  // Separate contacts into online and offline lists
+  const onlineUsers = allContacts.filter(c => c.presence !== 'offline');
+  const offlineUsers = allContacts.filter(c => c.presence === 'offline');
 
   const handleContactPress = async (contact: Contact) => {
     // Get current user ID from store or AsyncStorage
@@ -150,19 +116,10 @@ const ContactListComponent = forwardRef<{ refreshContacts: () => Promise<void> }
   };
 
   const updateStatusMessage = async (contactName: string, newStatus: string) => {
-    // Placeholder for API call to update status message
     console.log(`Updating status for ${contactName} to: ${newStatus}`);
-    // In a real application, you would make an API call here.
-    // For now, we'll simulate a delay and then update the local state if needed.
     await new Promise(resolve => setTimeout(resolve, 500));
     console.log(`Status for ${contactName} updated successfully.`);
-    // Here you would typically re-fetch contacts or update the specific contact's status
-    // For demonstration purposes, we'll assume the update is successful.
   };
-
-  // Count online and offline users
-  const onlineCount = onlineFriends.filter(f => f.presence === 'online').length;
-  const offlineCount = mig33Contacts.filter(c => c.presence === 'offline').length;
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.background }]} showsVerticalScrollIndicator={false}>
@@ -172,22 +129,22 @@ const ContactListComponent = forwardRef<{ refreshContacts: () => Promise<void> }
         activeOpacity={0.7}
       >
         <Text style={[styles.sectionTitle, { color: theme.secondary }]}>
-          User Online ({onlineCount})
+          User Online ({onlineUsers.length})
         </Text>
       </TouchableOpacity>
 
       {!onlineCollapsed && (
         <View style={styles.section}>
-          {onlineFriends.map((friend, index) => (
+          {onlineUsers.map((user) => (
             <ContactItem
-              key={`online-${index}`}
-              name={friend.name}
-              status={friend.status}
-              presence={friend.presence}
-              lastSeen={friend.lastSeen}
-              avatar={friend.avatar}
-              onPress={() => handleContactPress(friend)}
-              onStatusUpdate={(newStatus) => updateStatusMessage(friend.name, newStatus)}
+              key={`online-${user.id}`}
+              name={user.name}
+              status={user.status}
+              presence={user.presence}
+              lastSeen={user.lastSeen}
+              avatar={user.avatar}
+              onPress={() => handleContactPress(user)}
+              onStatusUpdate={(newStatus) => updateStatusMessage(user.name, newStatus)}
             />
           ))}
         </View>
@@ -199,22 +156,22 @@ const ContactListComponent = forwardRef<{ refreshContacts: () => Promise<void> }
         activeOpacity={0.7}
       >
         <Text style={[styles.sectionTitle, { color: theme.secondary }]}>
-          User Offline ({offlineCount})
+          User Offline ({offlineUsers.length})
         </Text>
       </TouchableOpacity>
 
       {!offlineCollapsed && (
         <View style={styles.section}>
-          {mig33Contacts.map((contact, index) => (
+          {offlineUsers.map((user) => (
             <ContactItem
-              key={`mig33-${index}`}
-              name={contact.name}
-              status={contact.status}
-              presence={contact.presence}
-              lastSeen={contact.lastSeen}
-              avatar={contact.avatar}
-              onPress={() => handleContactPress(contact)}
-              onStatusUpdate={(newStatus) => updateStatusMessage(contact.name, newStatus)}
+              key={`offline-${user.id}`}
+              name={user.name}
+              status={user.status}
+              presence={user.presence}
+              lastSeen={user.lastSeen}
+              avatar={user.avatar}
+              onPress={() => handleContactPress(user)}
+              onStatusUpdate={(newStatus) => updateStatusMessage(user.name, newStatus)}
             />
           ))}
         </View>
