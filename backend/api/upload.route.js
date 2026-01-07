@@ -125,7 +125,7 @@ router.post('/room-background', auth, upload.single('image'), async (req, res) =
       uploadStream.end(req.file.buffer);
     });
 
-    const { query } = require('../db');
+    const { query } = require('../db/db');
     await query(
       'UPDATE rooms SET background_image = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
       [result.secure_url, roomId]
