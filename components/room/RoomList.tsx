@@ -41,6 +41,7 @@ export function RoomList() {
   
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [joiningRoom, setJoiningRoom] = useState(false);
   const [allRooms, setAllRooms] = useState<Room[]>([]);
   const [recentRooms, setRecentRooms] = useState<Room[]>([]);
   const [favoriteRooms, setFavoriteRooms] = useState<Room[]>([]);
@@ -213,7 +214,12 @@ export function RoomList() {
                  favoriteRooms.find(r => r.id === roomId)?.name ||
                  officialRooms.find(r => r.id === roomId)?.name ||
                  gameRooms.find(r => r.id === roomId)?.name || 'Room';
-    router.push(`/chatroom/${roomId}?name=${encodeURIComponent(name)}`);
+    
+    setJoiningRoom(true);
+    setTimeout(() => {
+      router.push(`/chatroom/${roomId}?name=${encodeURIComponent(name)}`);
+      setJoiningRoom(false);
+    }, 800);
   };
 
   if (loading) {
@@ -322,6 +328,15 @@ export function RoomList() {
         onClose={() => setSearchModalVisible(false)}
         onRoomPress={handleRoomPress}
       />
+
+      {joiningRoom && (
+        <View style={styles.joiningOverlay}>
+          <View style={styles.joiningBox}>
+            <ActivityIndicator size="large" color="#4A90D9" />
+            <Text style={styles.joiningText}>Please wait</Text>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -370,5 +385,30 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  joiningOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  joiningBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#333',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderRadius: 8,
+    gap: 12,
+  },
+  joiningText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
