@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
+import { AppState, AppStateStatus } from 'react-native';
 import { useRoomTabsStore, Message } from '@/stores/useRoomTabsStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -236,10 +237,65 @@ export function useRoomSocket({ roomId, onRoomJoined, onUsersUpdated }: UseRoomS
       }
     }, 28000); // 28 seconds
 
+    // Step 3️⃣: AppState listener - silent reconnect when app comes back from background
+    let lastBackgroundTime = 0;
+    const appStateSubscription = AppState.addEventListener('change', async (nextAppState: AppStateStatus) => {
+      if (nextAppState === 'background' || nextAppState === 'inactive') {
+        lastBackgroundTime = Date.now();
+        console.log(`📱 [Room ${roomId}] App went to background`);
+      } else if (nextAppState === 'active') {
+        const backgroundDuration = Date.now() - lastBackgroundTime;
+        console.log(`📱 [Room ${roomId}] App resumed after ${Math.round(backgroundDuration / 1000)}s`);
+        
+        // If app was in background for more than 30 seconds, do silent reconnect
+        if (backgroundDuration > 30000 && socket) {
+          console.log(`🔄 [Room ${roomId}] Performing silent reconnect...`);
+          
+          // Check if socket is still connected
+          if (!socket.connected) {
+            console.log(`🔌 [Room ${roomId}] Socket disconnected, reconnecting...`);
+            socket.connect();
+          }
+          
+          // Silent rejoin - no "has entered" message
+          try {
+            const userData = await AsyncStorage.getItem('user_data');
+            const invisibleMode = await AsyncStorage.getItem('invisible_mode');
+            const parsedData = userData ? JSON.parse(userData) : {};
+            const userRole = parsedData.role || 'user';
+            const isInvisible = invisibleMode === 'true' && userRole === 'admin';
+            
+            socket.emit('join_room', { 
+              roomId, 
+              userId: currentUserId, 
+              username: currentUsername,
+              invisible: isInvisible,
+              role: userRole,
+              silent: true  // Silent mode - no "has entered" broadcast
+            });
+            console.log(`✅ [Room ${roomId}] Silent reconnect emitted`);
+          } catch (err) {
+            socket.emit('join_room', { 
+              roomId, 
+              userId: currentUserId, 
+              username: currentUsername,
+              silent: true
+            });
+          }
+          
+          // Refresh room users
+          setTimeout(() => {
+            socket.emit('room:users:get', { roomId });
+          }, 500);
+        }
+      }
+    });
+
     return () => {
       console.log(`🔌 [Room ${roomId}] Cleaning up socket listeners`);
       
       clearInterval(heartbeatInterval);
+      appStateSubscription.remove();
       socket.off('system:message', boundHandleSystemMessage);
       socket.off('chat:message', boundHandleChatMessage);
       socket.off('chat:messages', handleChatMessages);
