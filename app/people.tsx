@@ -90,7 +90,7 @@ const FemaleIcon = ({ size = 16, color = '#E91E63' }: { size?: number; color?: s
   </Svg>
 );
 
-type UserRole = 'admin' | 'care_service' | 'mentor' | 'merchant';
+type UserRole = 'admin' | 'care_service' | 'customer_service' | 'mentor' | 'merchant';
 
 interface User {
   id: string;
@@ -126,6 +126,13 @@ const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
     textColor: '#FFFFFF',
     abbreviation: 'CS'
   },
+  customer_service: {
+    label: 'CS',
+    color: '#4CAF50',
+    bgColor: '',
+    textColor: '#FFFFFF',
+    abbreviation: 'CS'
+  },
   mentor: {
     label: 'MENTOR',
     color: '#E74C3C',
@@ -145,7 +152,7 @@ const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
 export default function PeoplePage() {
   const { theme } = useThemeCustom();
   const [expandedRole, setExpandedRole] = useState<UserRole | null>(null);
-  const [usersData, setUsersData] = useState<Record<UserRole, User[]>>({
+  const [usersData, setUsersData] = useState<Record<string, User[]>>({
     admin: [],
     care_service: [],
     mentor: [],
@@ -187,6 +194,7 @@ export default function PeoplePage() {
       case 'admin':
         return require('@/assets/badge role/ic_admin.png');
       case 'care_service':
+      case 'customer_service':
         return require('@/assets/badge role/badge_cs.png');
       case 'mentor':
         return require('@/assets/badge role/ic_mentor.png');
