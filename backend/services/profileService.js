@@ -191,7 +191,7 @@ const getFollowers = async (userId, limit = 50, offset = 0) => {
 const getFollowing = async (userId, limit = 50, offset = 0) => {
   try {
     const result = await query(
-      `SELECT u.id, u.username, u.avatar, u.status, u.status_message, uf.created_at as followed_at
+      `SELECT u.id, u.username, u.avatar, u.status, u.status_message, u.last_login_date, uf.created_at as followed_at
        FROM user_follows uf
        JOIN users u ON uf.following_id = u.id
        WHERE uf.follower_id = $1
