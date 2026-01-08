@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { FlatList, StyleSheet, View, ImageBackground } from 'react-native';
 import { ChatMessage } from './ChatMessage';
 
@@ -27,15 +27,24 @@ interface ChatRoomContentProps {
 
 export const ChatRoomContent = React.memo(({ messages, bottomPadding = 70, backgroundImage }: ChatRoomContentProps) => {
   const flatListRef = useRef<FlatList>(null);
-  
-  const reversedMessages = [...messages].reverse();
+  const prevMessageCount = useRef(messages.length);
+  const hasScrolledToBottom = useRef(false);
+
+  useEffect(() => {
+    if (messages.length > prevMessageCount.current || !hasScrolledToBottom.current) {
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: hasScrolledToBottom.current });
+        hasScrolledToBottom.current = true;
+      }, 50);
+    }
+    prevMessageCount.current = messages.length;
+  }, [messages.length]);
 
   const renderFlatList = () => (
     <FlatList
       ref={flatListRef}
-      data={reversedMessages}
+      data={messages}
       keyExtractor={(item) => item.id}
-      inverted={true}
       renderItem={({ item }) => (
         <ChatMessage
           username={item.username}
@@ -55,13 +64,19 @@ export const ChatRoomContent = React.memo(({ messages, bottomPadding = 70, backg
           hasBackground={!!backgroundImage}
         />
       )}
-      contentContainerStyle={[styles.container, { paddingTop: bottomPadding }]}
+      contentContainerStyle={[styles.container, { paddingBottom: bottomPadding }]}
       removeClippedSubviews={true}
       maxToRenderPerBatch={10}
       windowSize={10}
       initialNumToRender={15}
       keyboardShouldPersistTaps="handled"
       automaticallyAdjustKeyboardInsets={true}
+      onLayout={() => {
+        if (!hasScrolledToBottom.current && messages.length > 0) {
+          flatListRef.current?.scrollToEnd({ animated: false });
+          hasScrolledToBottom.current = true;
+        }
+      }}
     />
   );
 
