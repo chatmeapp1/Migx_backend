@@ -1,5 +1,5 @@
-import React, { useRef, useEffect, useCallback } from 'react';
-import { FlatList, StyleSheet, View, ImageBackground, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { FlatList, StyleSheet, View, ImageBackground } from 'react-native';
 import { ChatMessage } from './ChatMessage';
 
 interface Message {
@@ -27,17 +27,22 @@ interface ChatRoomContentProps {
 
 export const ChatRoomContent = React.memo(({ messages, bottomPadding = 70, backgroundImage }: ChatRoomContentProps) => {
   const flatListRef = useRef<FlatList>(null);
-  const isNearBottom = useRef(true);
   const prevMessageCount = useRef(messages.length);
 
-  const reversedMessages = [...messages].reverse();
+  useEffect(() => {
+    if (messages.length > prevMessageCount.current) {
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+    prevMessageCount.current = messages.length;
+  }, [messages.length]);
 
   const renderFlatList = () => (
     <FlatList
       ref={flatListRef}
-      data={reversedMessages}
+      data={messages}
       keyExtractor={(item) => item.id}
-      inverted={true}
       renderItem={({ item }) => (
         <ChatMessage
           username={item.username}
@@ -57,11 +62,14 @@ export const ChatRoomContent = React.memo(({ messages, bottomPadding = 70, backg
           hasBackground={!!backgroundImage}
         />
       )}
-      contentContainerStyle={[styles.containerInverted, { paddingTop: bottomPadding }]}
+      contentContainerStyle={[styles.container, { paddingBottom: bottomPadding }]}
       removeClippedSubviews={true}
       maxToRenderPerBatch={10}
       windowSize={10}
       initialNumToRender={15}
+      onContentSizeChange={() => {
+        flatListRef.current?.scrollToEnd({ animated: false });
+      }}
     />
   );
 
