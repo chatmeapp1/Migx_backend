@@ -7,14 +7,14 @@ const logger = require('../utils/logger');
 
 // Get user profile by ID
 router.get('/:userId', async (req, res) => {
+  const { userId } = req.params;
+  const { viewerId } = req.query; // User yang melihat profile
+  
   try {
-    const { userId } = req.params;
-    const { viewerId } = req.query; // User yang melihat profile
-    
     // Get user basic info
     const userResult = await query(
       `SELECT u.id, u.username, u.avatar, u.role, u.status, u.status_message, 
-              u.gender, u.age, u.country, u.created_at, u.username_color, ul.level, ul.xp,
+              u.gender, u.country, u.created_at, u.username_color, ul.level, ul.xp,
               u.has_top_like_reward, u.top_like_reward_expiry
        FROM users u
        LEFT JOIN user_levels ul ON u.id = ul.user_id
@@ -76,7 +76,6 @@ router.get('/:userId', async (req, res) => {
         status: user.status,
         statusMessage: user.status_message,
         gender: user.gender,
-        age: user.age,
         country: user.country,
         level: user.level || 1,
         xp: user.xp || 0,
