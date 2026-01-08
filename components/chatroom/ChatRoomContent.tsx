@@ -25,7 +25,7 @@ interface ChatRoomContentProps {
   backgroundImage?: string;
 }
 
-export const ChatRoomContent = React.memo(({ messages, bottomPadding = 70, backgroundImage }: ChatRoomContentProps) => {
+export const ChatRoomContent = React.memo(({ messages, bottomPadding = 85, backgroundImage }: ChatRoomContentProps) => {
   const flatListRef = useRef<FlatList>(null);
   
   const reversedMessages = [...messages].reverse();
